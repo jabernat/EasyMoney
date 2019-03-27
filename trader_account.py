@@ -9,17 +9,25 @@ from trader import Trader
         #TRADER_ACCOUNT_UPDATED
 
 class FrozenError (ValueError):
+    """
     An exception raised when attempting to buy or sell with this account after
     it was frozen.
+    """
 class InsufficientBalanceError (ValueError):
+    """
     An exception raised when attempting to buy more stock shares than this
     trader’s account can afford.
+    """
 class InsufficientStockSharesError (ValueError):
+    """
     An exception raised when attempting to sell more stock shares than this
     trader’s account currently holds.
+    """
 class StockShareQuantityError (ValueError):
+    """
     An exception raised when attempting to buy or sell an invalid non-positive
     quantity of stock shares
+    """
 
 class TraderAccount:
     
