@@ -34,3 +34,9 @@ class WindowView(object):
         """
         """
         return self._sim_controller
+
+
+    def run() -> None:
+        """
+        """
+        pass

@@ -6,16 +6,20 @@ __copyright__ = 'Copyright © 2019, Erik Anderson, James Abernathy, and Tyler Ge
 __license__ = 'MIT'
 
 
-import model
-import controller
-import view
+from model.sim_model import SimModel
+from controller.sim_controller import SimController
+from view.window_view import WindowView
 
 
 
 
 def main() -> None:
     """Program entry point that opens the application window."""
-    pass
+    sim_model = SimModel()
+    sim_controller = SimController(sim_model)
+    window_view = WindowView(sim_controller)
+
+    window_view.run()
 
 
 
