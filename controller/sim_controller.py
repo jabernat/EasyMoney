@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Defines `SimController` and supporting classes."""
 
 
@@ -8,15 +7,15 @@ __license__ = 'MIT'
 
 import typing
 
-from sim_model import SimModel
-from market_datasource import MarketDatasource
-from market_updater import MarketUpdater
-from trader import Trader
+from model.sim_model import SimModel
+from model.trader import Trader
+from controller.market_datasource import MarketDatasource
+from controller.market_updater import MarketUpdater
 
 
 
 
-class SimController:
+class SimController(object):
     """This module unifies various controls of the simulation. It
     passes `Trader` modifications to the Simulation Model, as needed
     by the Window View model. The module also facilitates any changes to
@@ -29,7 +28,8 @@ class SimController:
     """
 
     def __init__(self,
-        model: SimModel) -> None:
+        model: SimModel
+    ) -> None:
         """Initialize without starting data sources, a paused
         updater, and an existing `SimModel` to control.
         """

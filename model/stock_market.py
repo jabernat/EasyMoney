@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Defines `StockMarket` and supporting classes."""
 
 

@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Defines `WindowView` and supporting classes."""
 
 
@@ -8,7 +7,7 @@ __license__ = 'MIT'
 
 import typing
 
-from sim_controller import SimController
+from controller.sim_controller import SimController
 
 
 
@@ -35,3 +34,9 @@ class WindowView(object):
         """
         """
         return self._sim_controller
+
+
+    def run() -> None:
+        """
+        """
+        pass

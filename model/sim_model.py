@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Defines `SimModel` and supporting classes."""
 
 
@@ -8,8 +7,8 @@ __license__ = 'MIT'
 
 import typing
 
-from stock_market import StockMarket
-from trader import Trader
+from model.stock_market import StockMarket
+from model.trader import Trader
 
 
 

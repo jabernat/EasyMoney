@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Defines `MarketDatasource` and supporting classes."""
 
 
@@ -45,7 +44,7 @@ class WrongModeError(RuntimeError):
     pass
 
 
-class MarketDatasource:
+class MarketDatasource(object):
     """Depending on the source, this component has the ability to
     collate data and pass it to the SimModel. If the source is live,
     an API key is used to connect to Alpha Vantage to retrieve the
