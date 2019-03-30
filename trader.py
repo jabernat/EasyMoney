@@ -1,170 +1,261 @@
+#!/usr/bin/env python3
+"""Defines `Trader` and supporting classes."""
+
+
+__copyright__ = 'Copyright © 2019, Erik Anderson, James Abernathy, and Tyler Gerritsen'
+__license__ = 'MIT'
+
+
+import typing
+
 from stock_market import StockMarket
 from trader_account import TraderAccount
 
-#TODO:
-    #Events:
-        #TRADER_ACCOUNT_CREATED
-        #TRADER_ALGORITHM_SETTINGS_CHANGED
-        #TRADER_INITIAL_FUNDS_CHANGED
-        #TRADER_TRADING_FEE_CHANGED
 
-class InitialFundsError (ValueError):
+
+
+class InitialFundsError(ValueError):
+    """An exception raised when attempting to set a `Trader`'s initial funds to
+    zero or a negative value.
     """
-    An exception raised when attempting to set a Trader ’s initial funds to zero
-    or a negative value.
-    """
-    pass
-    
-class TradingFeeError (ValueError):
-    """
-    An exception raised when attempting to set a Trader ’s trading fee to a
+
+    initial_funds: float
+    """The invalid initial funds value that was requested."""
+
+    def __init__(self,
+        initial_funds: float
+    ) -> None:
+        self.initial_funds = initial_funds
+        super().__init__(
+            'Initial funds must be greater than zero.')
+
+
+class TradingFeeError(ValueError):
+    """An exception raised when attempting to set a `Trader`'s trading fee to a
     negative value.
     """
-    pass
 
-class Trader:
-    def _init__ (self,
-                name : str,
-                initial_funds : float, trading_fee : float,
-                algorithm_settings : typing.Dict[str, typing.Any]
-                ) -> None:
+    trading_fee: float
+    """The invalid trading negative fee that was requested."""
+
+    def __init__(self,
+        trading_fee: float
+    ) -> None:
+        self.trading_fee = trading_fee
+        super().__init__(
+            'Trading fee cannot be negative.')
+
+
+
+
+class Trader(object):
+    """The abstract base class of simulated traders within a `SimModel`. Each
+    sub-class implements a unique trading strategy, and is identified by a
+    unique algorithm name. Traders maintain settings that persist through
+    market resets, which affect how they interact with simulated stock markets.
+
+    Traders create and expose `TraderAccount`s that store their bank funds and
+    purchased stocks for one simulation. As price samples are added to the
+    simulation's `StockMarket`, traders react by buying and selling through
+    their associated accounts.
+    """
+
+
+    _name: str
+    """The name that uniquely identifies this trader within its `SimModel`."""
+
+    _initial_funds: float
+    """The positive funds that this trader's `TraderAccounts` start with."""
+
+    _trading_fee: float
+    """The non-negative fee that this trader must pay to buy or sell stocks."""
+
+    _algorithm_settings: typing.Dict[str, typing.Any]
+    """This trader's subclass-specific configuration values."""
+
+    _account: typing.Optional[TraderAccount]
+    """This trader's active bank account and stock portfolio."""
+
+    #TODO: Events:
+    #   TRADER_ACCOUNT_CREATED
+    #   TRADER_ALGORITHM_SETTINGS_CHANGED
+    #   TRADER_INITIAL_FUNDS_CHANGED
+    #   TRADER_TRADING_FEE_CHANGED
+
+
+    def __init__(self,
+        name: str,
+        initial_funds: float,
+        trading_fee: float,
+        algorithm_settings: typing.Dict[str, typing.Any]
+    ) -> None:
+        """Initializes a trader with the given settings and no initial account.
+
+        When this new trader creates a `TraderAccount`, its balance will start
+        at `initial_funds`, measured in the same currency used by the simulated
+        `StockMarket`. Must be positive; Invalid quantities raise
+        `InitialFundsError`.
+
+        Each stock purchase or sale through a `TraderAccount` costs this trader
+        `trading_fee`. This fee must be non-negative; Invalid quantities raise
+        `TradingFeeError`.
+
+        The contents of `algorithm_settings` are validated according to the
+        instantiated subclass of `Trader`, and invalid arguments raise
+        subclasses of `TypeError` and `ValueError`.
         """
-        The trader’s constructor, which initializes it with the given settings
-        and no initial account.
+        self._name = name
+        self._account = None
 
-        When this new trader creates a TraderAccount , its balance will start at
-        initial_funds, measured in the same currency used by the StockMarket.
-        Must be positive; Invalid quantities raise Trader.InitialFundsError
-        exceptions.
+        self.set_initial_funds(initial_funds)
+        self.set_trading_fee(trading_fee)
+        # Subclass initializes algorithm settings during construction
+        #self.set_algorithm_settings(algorithm_settings)
 
-        The new trader must pay trading_fee to .buy(…) or .sell(…) through
-        created TraderAccount s. This fee must be non-negative; Invalid
-        quantities raise Trader.TradingFeeError exceptions.
 
-        The contents of algorithm_settings are validated according to the
-        instantiated Trader sub-class, and invalid arguments raise subclasses of
-        TypeError and ValueError.
+    def get_name(self
+    ) -> str:
+        """Return the name of this trader, unique within its containing
+        `SimModel`.
         """
-        pass
-        
-    def create_account (self,
-                        market : StockMarket
-                        ) -> TraderAccount:
+        return self._name
+
+
+    def get_account(self
+    ) -> typing.Optional[TraderAccount]:
+        """Return this trader's active account, created using `create_account`,
+        or `None` if not created yet.
+
+        This result changes upon `TRADER_ACCOUNT_CREATED` events.
         """
-        This trader discards any current TraderAccount , and creates a new one
-        tied to market. The new account starts with this trader’s configured
-        initial funds (see .get_initial_funds() ). Returns the newly created
+        return self._account
+
+    def create_account(self,
+        market: StockMarket
+    ) -> TraderAccount:
+        """Discard any previously created `TraderAccount`, and create a new one
+        tied to `market`. The new account starts with this trader's configured
+        initial funds (see `get_initial_funds`). Returns the newly created
         account.
-        """
-        pass
-        
-    def get_account (self) -> typing.Optional[TraderAccount]:
-        """
-        Returns this trader’s active account, created using .create_account(…),
-        or None if not created yet.
 
-        This result changes upon .TRADER_ACCOUNT_CREATED events.
+        Triggers `TRADER_ACCOUNT_CREATED` if successful.
         """
-        pass
-        
+        self._account = TraderAccount(market, self)
+        #TODO: Broadcast TRADER_ACCOUNT_CREATED
+
+
     @classmethod
-    def get_algorithm_name () -> str:
+    def get_algorithm_name(
+    ) -> str:
+        """Return this `Trader` subclass' identifying algorithm name, unique
+        to the `SimModel` that it is registered within.
         """
-        Class method that returns the name identifying this Trader sub-class’
-        trading algorithm.
+        raise NotImplementedError(
+            'Trader subclass must implement get_algorithm_name.')
+
+    @classmethod
+    def get_algorithm_settings_defaults(
+    ) -> typing.Dict[str, typing.Any]:
+        """Return a default settings `dict` appropriate for this `Trader`
+        subclass.
         """
-        pass
-    
-    def get_algorithm_settings (self) -> typing.Dict[str, typing.Any]:
+        return {}
+
+    @classmethod
+    def get_algorithm_settings_ui_definition(
+    ) -> typing.Dict[str, typing.Any]:
+        """Return a `dict` which defines how the Kivy GUI toolkit can render
+        this `Trader` subclass' configuration controls. Its contents mirror the
+        expected structure of settings dictionaries. The organization of this
+        dictionary is defined by Kivy, and used exclusively within
+        `window_view`.
         """
-        Returns this trader’s dictionary of algorithm-specific settings, used to
+        return {}
+
+
+    def get_initial_funds(self
+    ) -> float:
+        """Return the initial balance that this trader's `TraderAccount`s will
+        start with. This balance will be positive, and in the same currency as
+        the associated `StockMarket`.
+
+        This result changes upon `TRADER_INITIAL_FUNDS_CHANGED` events.
+        """
+        return self._initial_funds
+
+    def set_initial_funds(self,
+        initial_funds: float
+    ) -> None:
+        """Configure this trader to initialize all future `TraderAccount`s with
+        an initial balance of `initial_funds`.
+        
+        The `initial_funds` value is measured in the same units of currency as
+        `StockMarket` prices within this `SimModel`. It must be a positive
+        quantity, or else `InitialFundsError` is raised.
+
+        Triggers `TRADER_INITIAL_FUNDS_CHANGED` if successful.
+        """
+        if self._initial_funds == initial_funds:
+            return  # No change
+
+        elif initial_funds <= 0:
+            raise InitialFundsError(initial_funds)
+
+        self._initial_funds = initial_funds
+        #TODO: Broadcast TRADER_INITIAL_FUNDS_CHANGED
+
+
+    def get_trading_fee(self
+    ) -> float:
+        """Return the fee that this trader must pay for each purchase or sale
+        through created `TraderAccount`s. This fee is always non-negative, but
+        can be zero.
+
+        This result changes upon `TRADER_TRADING_FEE_CHANGED` events.
+        """
+        return self._trading_fee
+
+    def set_trading_fee(self,
+        trading_fee: float
+    ) -> None:
+        """Change the cost that this trader must pay in order to `buy` or
+        `sell` through created `TraderAccounts`.
+        
+        The new `trading_fee` must be non-negative, otherwise this method
+        raises `TradingFeeError`.
+
+        Triggers `TRADER_TRADING_FEE_CHANGED` if successful.
+        """
+        if self._trading_fee == trading_fee:
+            return  # No change
+
+        elif trading_fee < 0:
+            raise TradingFeeError(trading_fee)
+
+        self._trading_fee = trading_fee
+        #TODO: Broadcast TRADER_TRADING_FEE_CHANGED
+
+
+    def get_algorithm_settings(self
+    ) -> typing.Dict[str, typing.Any]:
+        """Return this trader's `dict` of algorithm-specific settings, used to
         adjust trading decisions. The structure of these settings can be
-        gathered from .get_algorithm_settings_ui_definition().
+        gathered from `get_algorithm_settings_ui_definition`.
         
-        This result changes upon .TRADER_ALGORITHM_SETTINGS_CHANGED events.
+        This result changes upon `TRADER_ALGORITHM_SETTINGS_CHANGED` events.
         """
-        pass
-        
-    @classmethod
-    def get_algorithm_settings_defaults () -> typing.Dict[str, typing.Any]:
-        """
-        Class method that returns a default settings dictionary appropriate for
-        this Trader sub-class.
-        """
-        pass
-        
-    @classmethod
-    def get_algorithm_settings_ui_definition (
-                                            ) -> typing.Dict[str, typing.Any]:
-        """
-        Class method that returns a dictionary which defines how the Kivy GUI
-        toolkit can render this Trader sub-class’ configuration controls. Its
-        contents mirror the expected structure of settings dictionaries within
-        instances. The organization of this dictionary is defined by Kivy, and
-        used exclusively by the Window View module.
-        """
-        pass
-        
-    def get_name (self) -> str:
-        """
-        Returns the name of this trader, unique within its containing SimModel.
-        """
-        pass
-        
-    def get_initial_funds (self) -> float:
-        """
-        Returns the initial balance of this trader’s TraderAccount s will start
-        with. This balance will be positive, and in the same currency as the
-        associated StockMarket.
+        return self._algorithm_settings
 
-        This result changes upon .TRADER_INITIAL_FUNDS_CHANGED events.
-        """
-        pass
-        
-    def get_trading_fee (self) -> float:
-        """
-        Returns the fee that this trader must pay when .buy(…) ing or
-        .sell(…) ing through created TraderAccounts. This fee is always
-        non-negative, but can be zero.
+    def set_algorithm_settings(self,
+        algorithm_settings: typing.Dict[str, typing.Any]
+    ) -> None:
+        """Replace this trader's algorithm-specific settings `dict` with
+        `algorithm_settings`.
 
-        This result changes upon .TRADER_TRADING_FEE_CHANGED events.
-        """
-        pass
+        These new settings are validated by the `Trader`'s subclass, and raised
+        exceptions extend `TypeError` and `ValueError`.
 
-    def set_algorithm_settings (self,
-                            algorithm_settings : typing.Dict[str, typing.Any]
-                            ) -> None:
+        Triggers `TRADER_ALGORITHM_SETTINGS_CHANGED` if successful.
         """
-        Replaces this trader’s algorithm-specific settings dictionary with
-        algorithm_settings .
-
-        These new settings are validated by the Trader ’s sub-class, and raised
-        exceptions extend TypeError and ValueError.
-        """
-        pass
-        
-    def set_initial_funds (self,
-                            initial_funds : float
-                            ) -> None:
-        """
-        Configures this trader to initialize all future TraderAccount s with an
-        initial balance equal to initial_funds.
-        
-        The initial_funds value is measured in the same units of currency as
-        StockMarket prices within this SimModel . It must be a positive
-        quantity, or else this method raises A Trader.InitialFundsError
-        exception.
-        """
-        pass
-        
-    def set_trading_fee (self,
-                        trading_fee : float
-                        ) -> None:
-        """
-        Changes the cost that this trader must pay in order to .buy(…) or
-        .sell(…) through created TraderAccounts.
-        
-        The new trading_fee must be non-negative, otherwise this method throws a
-        Trader.TradingFeeError exception.
-        """
-        pass
+        raise NotImplementedError(
+            'Trader subclass must implement set_algorithm_settings.')

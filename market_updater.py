@@ -18,7 +18,7 @@ class MarketUpdater:
     event that is broadcasted to the Window View module.
     """
 
-    def _init__ (self,
+    def __init__ (self,
                 datasource: MarketDatasource
                 ) -> None:
         """
