@@ -36,7 +36,7 @@ class TradingFeeError(ValueError):
     """
 
     trading_fee: float
-    """"""
+    """The invalid trading negative fee that was requested."""
 
     def __init__(self,
         trading_fee: float
