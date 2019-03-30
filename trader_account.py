@@ -1,164 +1,316 @@
+#!/usr/bin/env python3
+"""Defines `TraderAccount` and supporting classes."""
+
+
+__copyright__ = 'Copyright © 2019, Erik Anderson, James Abernathy, and Tyler Gerritsen'
+__license__ = 'MIT'
+
+
+import collections
+import typing
+
 from stock_market import StockMarket
 from trader import Trader
 
-#TODO:
-    #Events:
-        #TRADER_ACCOUNT_BOUGHT
-        #TRADER_ACCOUNT_FROZEN
-        #TRADER_ACCOUNT_SOLD
-        #TRADER_ACCOUNT_UPDATED
 
-class FrozenError (ValueError):
-    """
-    An exception raised when attempting to buy or sell with this account after
-    it was frozen.
-    """
-class InsufficientBalanceError (ValueError):
-    """
-    An exception raised when attempting to buy more stock shares than this
-    trader’s account can afford.
-    """
-class InsufficientStockSharesError (ValueError):
-    """
-    An exception raised when attempting to sell more stock shares than this
-    trader’s account currently holds.
-    """
-class StockShareQuantityError (ValueError):
-    """
-    An exception raised when attempting to buy or sell an invalid non-positive
-    quantity of stock shares
+
+
+class FrozenError(ValueError):
+    """An exception raised when attempting to buy or sell with this account
+    after it was frozen.
     """
 
-class TraderAccount:
-    
-    def _init__ (self,
-                market : StockMarket,
-                trader : Trader
-                ) -> None:
-        """
-        The trader account’s constructor, which initializes it with the trader’s
-        configured initial funds. All future buying and selling occurs on
-        market.
-        """
-        pass
-        
-    def buy (self,
-            stock_symbol : str,
-            shares : float
-            ) -> None:
-        """
-        Buys a quantity shares of stock_symbol using the StockMarket ’s current
-        prices, and adds these purchased shares to this account. To perform this
-        action, the account must not be frozen; Buying with a frozen account
-        raises a TraderAccount.FrozenError exception.
+    def __init__(self
+    ) -> None:
+        super().__init__('Trader cannot trade using a frozen account.')
 
-        The given stock_symbol must exist within the StockMarket linked with
-        this account. If it does not, this method raises a
-        StockMarket.StockSymbolUnrecognizedError exception.
 
-        The quantity to buy, shares , must be positive, yet less than or equal
-        to this account’s current balance. If shares is zero or less, this
-        raises a TraderAccount.StockShareQuantityError. If shares is positive
-        but greater than .get_balance() , this method raises a
-        TraderAccount.InsufficientBalanceError exception.
-        """
-        pass
-        
-    def freeze (self,
-                reason : typing.Optional[str] = None,
-                exception : typing.Optional[Exception] = None
-                ) -> None:
-        """
-        Stops this account’s trader from buying or selling. An account cannot be
-        unfrozen; its trader must instead create a new account.
+class InsufficientBalanceError(ValueError):
+    """An exception raised when attempting to buy stock shares (or pay a
+    sale trading fee) than this trader's account can't afford.
+    """
 
-        A brief reason sentence can be provided for the user, optionally with
-        the offending exception.
-        """
-        pass
-        
-    def get_balance (self) -> float:
-        """
-        Returns this account’s current bank balance, in the same unit of
-        currency as the associated StockMarket.
-        """
-        pass
-        
-    def get_statistics_daily (self) -> typing.Dict[str, typing.Any]:
-        """
-        Returns a dictionary of daily running statistics collected during a
-        simulation. The keys of this dictionary identify particular trading
-        statistics using display-language-independent English identifiers,
-        like “ AVERAGE_PROFIT ”, and the dictionary values can be converted to
-        text with str.
-        """
-        pass
-    
-    def get_statistics_overall (self) -> typing.Dict[str, typing.Any]:
-        """
-        Returns a dictionary of overall running statistics collected during a
-        simulation. The keys of this dictionary identify particular trading
-        statistics using display-language-independent English identifiers, like
-        “AVERAGE_PROFIT”, and the dictionary values can be converted to text
-        with str.
-        """
-        pass
-    
-    def get_stock_market (self) -> StockMarket:
-        """
-        Returns the StockMarket that this account was created for. All .buy(…)
-        and .sell(…) prices are sampled from this stock market.
-        """
-        pass
-    
-    def get_stocks (self) -> typing.Dict[str, float]:
-        """
-        Returns the stock shares contained within this account, owned by the
-        account’s trader. The resulting dictionary maps stock symbol keys to
-        price quantity values.
-        """
-        pass
-    
-    def get_trader (self) -> Trader:
-        """
-        Returns the Trader instance that created this account and owns its
-        contents.
-        """
-        pass
-    
-    def is_frozen (self) -> bool:
-        """
-        Returns True if this account has been frozen and can no longer trade.
-        The simulation freezes the accounts of traders that encounter errors or
-        violate simulation rules. The following violations will freeze an
-        account: selling unowned stock shares, or buying unaffordable stock
-        shares.
+    stock_symbol: str
+    """The stock symbol that a `Trader` attempted to trade."""
 
-        Frozen accounts are effectively excluded from the simulation, and the
-        trader must create a new account if they need to continue participating.
-        """
-        pass
-    
-    def sell (self,
-                stock_symbol : str,
-                shares : float
-                ) -> None:
-        """
-        Sells a quantity shares of stock_symbol contained within this account at
-        the StockMarket ’s current prices, exchanging those shares for a
-        deposit to this account’s balance. To perform this action, the account
-        must not be frozen; Selling from a frozen account raises a
-        TraderAccount.FrozenError exception.
-        
-        The given stock_symbol must exist within the StockMarket linked with
-        this account. If it does not, this method raises a
-        StockMarket.StockSymbolUnrecognizedError exception.
+    cost: float
+    """The cost of `stock_symbol` that was too expensive."""
 
-        The quantity to sell, shares , must be positive, yet less than or equal
-        to this account’s current quantity of stock_symbol . If shares is zero
-        or less, this raises a TraderAccount.StockShareQuantityError. If shares
-        is positive but greater than the quantity of stock_symbol owned, this
-        method raises a TraderAccount.InsufficientStockSharesError exception.
+    balance: float
+    """The `Trader`'s insufficient balance."""
+
+    def __init__(self,
+        stock_symbol: str,
+        cost: float,
+        balance: float
+    ) -> None:
+        self.stock_symbol = stock_symbol
+        self.cost = cost
+        self.balance = balance
+        super().__init__(
+            "Trader with ${:.2f} can't afford ${:.2f} charge for {!r} stock.".format(
+                balance, cost, stock_symbol))
+
+
+class InsufficientStockSharesError(ValueError):
+    """An exception raised when attempting to sell more stock shares than this
+    trader's account currently holds.
+    """
+
+    stock_symbol: str
+    """The stock symbol that a `Trader` attempted to sell."""
+
+    shares: float
+    """The invalid quantity of shares that was greater than `shares_owned`."""
+
+    shares_owned: float
+    """The `Trader`'s owned quantity of `stock_symbol`."""
+
+    def __init__(self,
+        stock_symbol: str,
+        shares: float,
+        shares_owned: float
+    ) -> None:
+        self.stock_symbol = stock_symbol
+        self.shares = shares
+        self.shares_owned = shares_owned
+        super().__init__(
+            'Trader attempted to sell {:.2f} shares of {!r} stock, but only owns {:.2f}.'.format(
+                shares, stock_symbol, shares_owned))
+
+
+class StockShareQuantityError(ValueError):
+    """An exception raised when attempting to buy or sell an invalid
+    non-positive quantity of stock shares.
+    """
+
+    stock_symbol: str
+    """The stock symbol that a `Trader` attempted to trade."""
+
+    shares: float
+    """The non-positive stock share quantity that was provided."""
+
+    def __init__(self,
+        stock_symbol: str,
+        shares: float
+    ) -> None:
+        self.stock_symbol = stock_symbol
+        self.shares = shares
+        super().__init__(
+            'Trader attempted to trade an invalid non-positive {!r} stock quantity {:.2f}.'.format(
+                shares, stock_symbol))
+
+
+
+
+class TraderAccount(object):
+    """The bank balance and stock portfolio of an owning `Trader`, tied to a
+    particular `StockMarket`. The account provides methods for traders to buy
+    and sell their stocks, and statistics collection for later analysis.
+
+    If a trader encounters an exception, or violates simulation rules, it gets
+    frozen and cannot make any more trades. The following violations will
+    freeze an account: selling unowned stock shares, or buying unaffordable
+    stock shares. Accounts can also be manually frozen. Frozen accounts are
+    effectively excluded from the simulation, and so traders must create new
+    accounts if they need to continue participating.
+    """
+
+
+    _stock_market: StockMarket
+    """The market that this account consults to check prices."""
+
+    _trader: Trader
+    """The trader that created and controls this account."""
+
+    _balance_initial: float
+    """The non-negative starting bank account balance of this account that was
+    configured for the owning `_trader` at account creation.
+    """
+
+    _balance: float
+    """The non-negative bank account balance of this account, in the same
+    currency as `_stock_market`'s price data.
+    """
+
+    _stocks: typing.DefaultDict[str, float]
+    """A `collections.defaultdict` of owned stock symbols mapped to
+    non-negative quantities owned, defaulting to `0.0` for new keys.
+    """
+
+    _frozen: bool
+    """When `True`, this account can no longer be used to `buy` or `sell`."""
+
+    #TODO: Events:
+    #   TRADER_ACCOUNT_BOUGHT
+    #   TRADER_ACCOUNT_FROZEN
+    #   TRADER_ACCOUNT_SOLD
+    #   TRADER_ACCOUNT_UPDATED
+
+
+    def __init__(self,
+        market: StockMarket,
+        trader: Trader
+    ) -> None:
+        """Initialize this account with `trader`'s configured initial funds.
+        All future `buy`ing and `sell`ing occurs on `market`.
         """
-        pass
-    
+        self._stock_market = market
+        self._trader = trader
+
+        self._balance_initial = trader.get_initial_balance()
+        self._balance = self._balance_initial
+        self._stocks = collections.defaultdict(float)  # Default to 0.0
+        self._frozen = False
+
+
+    def get_stock_market(self
+    ) -> StockMarket:
+        """Return the market that this account consults for prices."""
+        return self._stock_market
+
+    def get_trader(self
+    ) -> Trader:
+        """Return the trader that created this account and owns its contents.
+        """
+        return self._trader
+
+
+    def get_balance(self
+    ) -> float:
+        """Return this account's current bank balance, in the same unit of
+        currency as `_stock_market`. This value is always non-negative.
+        """
+        return self._balance
+
+    def get_stocks(self
+    ) -> typing.Dict[str, float]:
+        """Return the quantities of stock shares that this account holds as a
+        `dict` mapping stock symbols to non-negative quantities.
+        """
+        return self._stocks.copy()
+
+
+    def is_frozen(self
+    ) -> bool:
+        """Return `True` if this account has been frozen and can no longer
+        `buy` or `sell` stocks. See the class' documentation for a description
+        of the frozen state and why accounts freeze.
+        """
+        return self._frozen
+
+    def freeze(self,
+        reason: typing.Optional[str] = None,
+        exception: typing.Optional[Exception] = None
+    ) -> None:
+        """Stops this account's trader from further `buy`ing or `sell`ing. An
+        account cannot be unfrozen; its trader must instead create a new
+        account.
+
+        A brief `reason` sentence can be provided to be displayed to the user,
+        optionally with the offending `exception`.
+        """
+        if self.is_frozen():
+            return
+
+        self._frozen = True
+        #TODO: Broadcast TRADER_ACCOUNT_FROZEN
+
+
+    def buy(self,
+        stock_symbol: str,
+        shares: float
+    ) -> None:
+        """Buy a quantity `shares` of `stock_symbol` at the current `_market`
+        price, deducting from this account's balance and adding to its stock
+        portfolio. The account must not be frozen; Buying with a frozen account
+        raises `FrozenError`.
+
+        The given `stock_symbol` must exist within `_market`. If it doesn't,
+        this method raises `stock_market.StockSymbolUnrecognizedError`.
+
+        The quantity `shares` to buy must be positive; If `shares` is zero or
+        less, this raises `StockShareQuantityError`. If the cost to buy
+        `shares` from `_market` plus the owning trader's trading fee is greater
+        than this account's balance, `InsufficientBalanceError` is raised.
+        """
+        if self.is_frozen():
+            raise FrozenError()
+
+        if shares <= 0:
+            raise StockShareQuantityError(stock_symbol, shares)
+
+        price_per_share = self._market.get_stock_symbol_price(stock_symbol)
+        cost = shares * price_per_share + self._trader.get_trading_fee()
+        if cost > self.get_balance():
+            raise InsufficientBalanceError(
+                stock_symbol, cost, self.get_balance())
+
+        # Make transaction
+        self._balance -= cost
+        self._stocks[stock_symbol] += shares
+        #TODO: Broadcast TRADER_ACCOUNT_BOUGHT
+        #TODO: Broadcast TRADER_ACCOUNT_UPDATED
+
+    def sell(self,
+        stock_symbol: str,
+        shares: float
+    ) -> None:
+        """Sell a quantity `shares` of `stock_symbol` from this account at the
+        `_market`'s current prices, exchanging those shares for a deposit into
+        this account's balance minus the trader's trading fee. The account must
+        not be frozen; Selling with a frozen account raises `FrozenError`.
+
+        The given `stock_symbol` must exist within `_market`; Unrecognized
+        stock symbols raise `stock_market.StockSymbolUnrecognizedError`.
+
+        The quantity `shares` to sell must be positive, yet less than or equal
+        to this account's currently owned quantity. If `shares` is zero or
+        less, this raises `StockShareQuantityError`. If `shares` is positive
+        but greater than the quantity of `stock_symbol` owned, this
+        method raises `InsufficientStockSharesError`. If this account cannot
+        afford to pay the trading fee, `InsufficientBalanceError` is raised.
+        """
+        if self.is_frozen():
+            raise FrozenError()
+
+        if shares <= 0:
+            raise StockShareQuantityError(stock_symbol, shares)
+        elif shares > self._stocks[stock_sybol]:
+            raise InsufficientStockSharesError(
+                stock_symbol, shares, self._stocks[stock_sybol])
+
+        price_per_share = self._market.get_stock_symbol_price(stock_symbol)
+        profit = shares * price_per_share - self._trader.get_trading_fee()
+        if self.get_balance() + profit < 0:
+            # Trading fee made profit negative
+            raise InsufficientBalanceError(
+                stock_symbol, -profit, self.get_balance())
+
+        # Make transaction
+        self._balance += profit
+        self._stocks[stock_symbol] -= shares
+        #TODO: Broadcast TRADER_ACCOUNT_SOLD
+        #TODO: Broadcast TRADER_ACCOUNT_UPDATED
+
+
+    def get_statistics_daily(self
+    ) -> typing.Dict[str, typing.Any]:
+        """Return a `dict` of the current day's statistics collected during a
+        simulation. Its keys identify trading statistics using
+        display-language-independent English identifiers, like `'PROFIT_NET'`,
+        and the associated values can be converted to `str`.
+        """
+        #TODO
+        return {}
+
+    def get_statistics_overall(self
+    ) -> typing.Dict[str, typing.Any]:
+        """Return a `dict` of overall running statistics collected during a
+        simulation. Its keys identify trading statistics using
+        display-language-independent English identifiers, like `'PROFIT_NET'`,
+        and the associated values can be converted to `str`.
+        """
+        #TODO
+        return {
+            PROFIT_NET = self._balance - self._balance_initial}
