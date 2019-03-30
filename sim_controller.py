@@ -161,7 +161,7 @@ class SimController:
 
     def validate_trader_algorithm(self,
         algorithm_name: str
-    ) ->(bool, str):
+    ) -> (bool, str):
         """Validate algorithm names and return a `tuple` containing a
         flag indicating valid arguments, and a string explaining the
         reason if not. The passed `algorithm_name` must be one of the
@@ -176,7 +176,7 @@ class SimController:
 
     def validate_trader_initial_funds(self,
         initial_funds: float
-    ) ->(bool, str):
+    ) -> (bool, str):
         """Validate the passed `initial_funds` value, and return a
         `tuple` containing a flag indicating valid arguments, and a
         string explaining the reason if not. If the number is a
@@ -189,7 +189,7 @@ class SimController:
 
     def validate_trader_name(self,
         trader_name: str
-    ) ->(bool, str):
+    ) -> (bool, str):
         """Validate the string `trader_name`, and returns a `tuple`
         containing a flag indicating valid arguments, and a string
         explaining the reason if not. If the string is blank or matches
@@ -202,7 +202,7 @@ class SimController:
 
     def validate_trader_trading_fee(self,
         trading_fee: float
-    ) ->(bool, str):
+    ) -> (bool, str):
         """Validate the `numeric trading_fee`, and return a `tuple`
         containing a flag indicating valid arguments, and a string
         explaining the reason if not. If `trading_fee` is negative, the
