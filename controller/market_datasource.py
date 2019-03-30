@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Defines `MarketDatasource` and supporting classes."""
 
 

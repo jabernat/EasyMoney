@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Defines `SimController` and supporting classes."""
 
 

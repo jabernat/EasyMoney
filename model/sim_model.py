@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Defines `SimModel` and supporting classes."""
 
 
