@@ -54,7 +54,7 @@ class MarketDatasource:
     changes are broadcasted to the Window View module.
     """
 
-    def _init__(self) -> None:
+    def __init__(self) -> None:
         """Initialize with no starting stock symbols."""
         pass
 
