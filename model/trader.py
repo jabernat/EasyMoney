@@ -7,8 +7,8 @@ __license__ = 'MIT'
 
 import typing
 
-from stock_market import StockMarket
-from trader_account import TraderAccount
+from model.stock_market import StockMarket
+from model.trader_account import TraderAccount
 
 
 

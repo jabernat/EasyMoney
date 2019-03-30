@@ -1,5 +1,5 @@
-from market_datasource import MarketDatasource
-from stock_market import StockMarket
+from model.stock_market import StockMarket
+from controller.market_datasource import MarketDatasource
 
 #TODO: 
     #Events:
@@ -7,7 +7,7 @@ from stock_market import StockMarket
         #MARKET_UPDATER_PLAYING
         #MARKET_UPDATER_RESET
 
-class MarketUpdater:
+class MarketUpdater(object):
     """
     The Market Updater periodically gets data from the Datasource component and
     channels it to the StockMarket component in the SimModel module. It also

@@ -8,8 +8,8 @@ __license__ = 'MIT'
 import collections
 import typing
 
-from stock_market import StockMarket
-from trader import Trader
+from model.stock_market import StockMarket
+from model.trader import Trader
 
 
 

@@ -7,7 +7,7 @@ __license__ = 'MIT'
 
 import typing
 
-from sim_controller import SimController
+from controller.sim_controller import SimController
 
 
 
