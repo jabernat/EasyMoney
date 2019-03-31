@@ -102,7 +102,7 @@ class StockMarket(object):
 
 
     def iter_prices(self
-    ) -> typing.Iterable[datetime.datetime, typing.Dict[str, float]]:
+    ) -> typing.Iterable[typing.Tuple[datetime.datetime, typing.Dict[str, float]]]:
         """Returns an iterator that repeatedly yields pairs of times and
         dictionaries of stock symbols' prices at those times.
         This iterator should be iterated immediately, as market changes will
