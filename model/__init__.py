@@ -5,8 +5,8 @@ __copyright__ = 'Copyright © 2019, Erik Anderson, James Abernathy, and Tyler Ge
 __license__ = 'MIT'
 
 
-import model.sim_model
-
-import model.stock_market
-import model.trader
-import model.trader_account
+from model import (
+    sim_model,
+    stock_market,
+    trader,
+    trader_account)
