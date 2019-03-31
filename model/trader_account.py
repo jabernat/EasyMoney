@@ -8,8 +8,7 @@ __license__ = 'MIT'
 import collections
 import typing
 
-from model.stock_market import StockMarket
-from model.trader import Trader
+# Local package imports at end of file to resolve circular dependencies
 
 
 
@@ -116,10 +115,10 @@ class TraderAccount(object):
     """
 
 
-    _stock_market: StockMarket
+    _stock_market: 'StockMarket'
     """The market that this account consults to check prices."""
 
-    _trader: Trader
+    _trader: 'Trader'
     """The trader that created and controls this account."""
 
     _balance_initial: float
@@ -148,8 +147,8 @@ class TraderAccount(object):
 
 
     def __init__(self,
-        market: StockMarket,
-        trader: Trader
+        market: 'StockMarket',
+        trader: 'Trader'
     ) -> None:
         """Initialize this account with `trader`'s configured initial funds.
         All future `buy`ing and `sell`ing occurs on `market`.
@@ -164,12 +163,12 @@ class TraderAccount(object):
 
 
     def get_stock_market(self
-    ) -> StockMarket:
+    ) -> 'StockMarket':
         """Return the market that this account consults for prices."""
         return self._stock_market
 
     def get_trader(self
-    ) -> Trader:
+    ) -> 'Trader':
         """Return the trader that created this account and owns its contents.
         """
         return self._trader
@@ -313,3 +312,10 @@ class TraderAccount(object):
         #TODO
         return {
             'PROFIT_NET': self._balance - self._balance_initial}
+
+
+
+
+# Imported last to avoid circular dependencies
+from model.stock_market import StockMarket
+from model.trader import Trader

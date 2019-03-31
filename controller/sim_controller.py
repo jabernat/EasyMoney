@@ -7,10 +7,7 @@ __license__ = 'MIT'
 
 import typing
 
-from model.sim_model import SimModel
-from model.trader import Trader
-from controller.market_datasource import MarketDatasource
-from controller.market_updater import MarketUpdater
+# Local package imports at end of file to resolve circular dependencies
 
 
 
@@ -28,7 +25,7 @@ class SimController(object):
     """
 
     def __init__(self,
-        model: SimModel
+        model: 'SimModel'
     ) -> None:
         """Initialize without starting data sources, a paused
         updater, and an existing `SimModel` to control.
@@ -42,7 +39,7 @@ class SimController(object):
         trading_fee: float,
         algorithm: str,
         algorithm_settings: typing.Dict[str, typing.Any]
-    ) -> Trader:
+    ) -> 'Trader':
         """Add a `Trader` instance to the simulation with a uniquely
         identifiable name that will make trading decisions based on
         the specified `algorithm` name, and returns it. This new
@@ -88,14 +85,14 @@ class SimController(object):
         pass
 
 
-    def get_datasource(self) -> MarketDatasource:
+    def get_datasource(self) -> 'MarketDatasource':
         """Return this `SimController`'s current `MarketDatasource`,
         providing access to its provided interface methods.
         """
         pass
 
 
-    def get_model(self) -> SimModel:
+    def get_model(self) -> 'SimModel':
         """Return this `SimController's` current `SimModel`. Data within
         this model should not be modified, only read; To manipulate the
         model, instead use this `SimController`'s implemented methods.
@@ -103,7 +100,7 @@ class SimController(object):
         pass
 
 
-    def get_updater(self) -> MarketUpdater:
+    def get_updater(self) -> 'MarketUpdater':
         """Return this `SimController`'s current `MarketUpdater`,
         providing access to its provided interface methods.
         """
@@ -210,3 +207,12 @@ class SimController(object):
         failure. Otherwise the method returns `True` and `None`.
         """
         pass
+
+
+
+
+# Imported last to avoid circular dependencies
+from model.sim_model import SimModel
+from model.trader import Trader
+from controller.market_datasource import MarketDatasource
+from controller.market_updater import MarketUpdater

@@ -7,7 +7,7 @@ __license__ = 'MIT'
 
 import typing
 
-from controller.sim_controller import SimController
+# Local package imports at end of file to resolve circular dependencies
 
 
 
@@ -17,12 +17,12 @@ class WindowView(object):
     """
 
 
-    _sim_controller: SimController
+    _sim_controller: 'SimController'
     """"""
 
 
     def __init__(self,
-        sim_controller: SimController
+        sim_controller: 'SimController'
     ) -> None:
         """
         """
@@ -30,7 +30,7 @@ class WindowView(object):
 
 
     def get_controller(self
-    ) -> SimController:
+    ) -> 'SimController':
         """
         """
         return self._sim_controller
@@ -40,3 +40,9 @@ class WindowView(object):
         """
         """
         pass
+
+
+
+
+# Imported last to avoid circular dependencies
+from controller.sim_controller import SimController

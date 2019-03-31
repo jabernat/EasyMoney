@@ -1,5 +1,4 @@
-from model.stock_market import StockMarket
-from controller.market_datasource import MarketDatasource
+# Local package imports at end of file to resolve circular dependencies
 
 #TODO: 
     #Events:
@@ -19,7 +18,7 @@ class MarketUpdater(object):
     """
 
     def __init__ (self,
-                datasource: MarketDatasource
+                datasource: 'MarketDatasource'
                 ) -> None:
         """
         The constructor for MarketUpdater . All new MarketUpdater s start in a
@@ -56,3 +55,10 @@ class MarketUpdater(object):
         datasource, and pauses this MarketUpdater.
         """
         pass
+
+
+
+
+# Imported last to avoid circular dependencies
+from model.stock_market import StockMarket
+from controller.market_datasource import MarketDatasource

@@ -7,8 +7,7 @@ __license__ = 'MIT'
 
 import typing
 
-from model.stock_market import StockMarket
-from model.trader_account import TraderAccount
+# Local package imports at end of file to resolve circular dependencies
 
 
 
@@ -72,7 +71,7 @@ class Trader(object):
     _algorithm_settings: typing.Dict[str, typing.Any]
     """This trader's subclass-specific configuration values."""
 
-    _account: typing.Optional[TraderAccount]
+    _account: typing.Optional['TraderAccount']
     """This trader's active bank account and stock portfolio."""
 
     #TODO: Events:
@@ -121,7 +120,7 @@ class Trader(object):
 
 
     def get_account(self
-    ) -> typing.Optional[TraderAccount]:
+    ) -> typing.Optional['TraderAccount']:
         """Return this trader's active account, created using `create_account`,
         or `None` if not created yet.
 
@@ -130,8 +129,8 @@ class Trader(object):
         return self._account
 
     def create_account(self,
-        market: StockMarket
-    ) -> TraderAccount:
+        market: 'StockMarket'
+    ) -> 'TraderAccount':
         """Discard any previously created `TraderAccount`, and create a new one
         tied to `market`. The new account starts with this trader's configured
         initial funds (see `get_initial_funds`). Returns the newly created
@@ -258,3 +257,10 @@ class Trader(object):
         """
         raise NotImplementedError(
             'Trader subclass must implement set_algorithm_settings.')
+
+
+
+
+# Imported last to avoid circular dependencies
+from model.stock_market import StockMarket
+from model.trader_account import TraderAccount
