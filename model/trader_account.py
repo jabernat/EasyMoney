@@ -312,4 +312,4 @@ class TraderAccount(object):
         """
         #TODO
         return {
-            PROFIT_NET = self._balance - self._balance_initial}
+            'PROFIT_NET': self._balance - self._balance_initial}
