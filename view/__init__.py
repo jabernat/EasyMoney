@@ -5,4 +5,5 @@ __copyright__ = 'Copyright © 2019, Erik Anderson, James Abernathy, and Tyler Ge
 __license__ = 'MIT'
 
 
-import view.window_view
+from view import (
+    window_view)

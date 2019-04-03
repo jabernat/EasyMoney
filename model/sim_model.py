@@ -7,8 +7,7 @@ __license__ = 'MIT'
 
 import typing
 
-from model.stock_market import StockMarket
-from model.trader import Trader
+# Local package imports at end of file to resolve circular dependencies
 
 
 
@@ -54,13 +53,13 @@ class SimModel(object):
     """
 
 
-    _trader_algorithms: typing.Dict[str, typing.Type[Trader]]
+    _trader_algorithms: typing.Dict[str, typing.Type['Trader']]
     """Registered `Trader` subclasses indexed by their algorithm names."""
 
-    _stock_market: StockMarket
+    _stock_market: 'StockMarket'
     """This model's accumulated `StockMarket` price data."""
 
-    _traders: typing.Dict[str, Trader]
+    _traders: typing.Dict[str, 'Trader']
     """Participating `Trader` subclass instances indexed by their names."""
 
     #TODO: Events:
@@ -91,7 +90,7 @@ class SimModel(object):
 
 
     def get_stock_market(self
-    ) -> StockMarket:
+    ) -> 'StockMarket':
         """Return this simulation's `StockMarket` instance, which exposes its
         interfaces for reading, adding, and resetting stock market price data.
         """
@@ -108,7 +107,7 @@ class SimModel(object):
         return list(self._trader_algorithms.keys())
 
     def add_trader_algorithm(self,
-        trader_class: typing.Type[Trader]
+        trader_class: typing.Type['Trader']
     ) -> None:
         """Add a new trader algorithm, which is represented by `trader_class`,
         a specialized implementation of `Trader`. This added `trader_class`'s
@@ -126,7 +125,7 @@ class SimModel(object):
 
     def _get_trader_class_by_algorithm_name(self,
         algorithm_name: str
-    ) -> typing.Type[Trader]:
+    ) -> typing.Type['Trader']:
         """Return the registered `Trader` class with `algorithm_name`.
 
         If no registered `Trader` uses `algorithm_name`, raises
@@ -134,8 +133,8 @@ class SimModel(object):
         """
         try:
             return self._trader_algorithms[algorithm_name]
-        except KeyError:
-            raise UnrecognizedAlgorithmError(algorithm_name)
+        except KeyError as e:
+            raise UnrecognizedAlgorithmError(algorithm_name) from e
 
     def get_trader_algorithm_settings_defaults(
         algorithm: str
@@ -166,7 +165,7 @@ class SimModel(object):
 
 
     def get_traders(self
-    ) -> typing.List[Trader]:
+    ) -> typing.List['Trader']:
         """Return a `list` of the simulation's participating `Trader`s, which
         each expose their configuration and `TraderAccount` interfaces.
 
@@ -181,7 +180,7 @@ class SimModel(object):
         trading_fee: float,
         algorithm: str,
         algorithm_settings: typing.Dict[str, typing.Any]
-    ) -> Trader:
+    ) -> 'Trader':
         """Add and return a uniquely named `Trader` to the simulation that will
         buy and sell in response to `StockMarket` updates based on `algorithm`.
 
@@ -236,3 +235,10 @@ class SimModel(object):
 
         del self._traders[name]
         #TODO: Broadcast TRADER_REMOVED
+
+
+
+
+# Imported last to avoid circular dependencies
+from model.stock_market import StockMarket
+from model.trader import Trader

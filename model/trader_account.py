@@ -8,8 +8,7 @@ __license__ = 'MIT'
 import collections
 import typing
 
-from model.stock_market import StockMarket
-from model.trader import Trader
+# Local package imports at end of file to resolve circular dependencies
 
 
 
@@ -116,10 +115,10 @@ class TraderAccount(object):
     """
 
 
-    _stock_market: StockMarket
+    _stock_market: 'StockMarket'
     """The market that this account consults to check prices."""
 
-    _trader: Trader
+    _trader: 'Trader'
     """The trader that created and controls this account."""
 
     _balance_initial: float
@@ -148,8 +147,8 @@ class TraderAccount(object):
 
 
     def __init__(self,
-        market: StockMarket,
-        trader: Trader
+        market: 'StockMarket',
+        trader: 'Trader'
     ) -> None:
         """Initialize this account with `trader`'s configured initial funds.
         All future `buy`ing and `sell`ing occurs on `market`.
@@ -164,12 +163,12 @@ class TraderAccount(object):
 
 
     def get_stock_market(self
-    ) -> StockMarket:
+    ) -> 'StockMarket':
         """Return the market that this account consults for prices."""
         return self._stock_market
 
     def get_trader(self
-    ) -> Trader:
+    ) -> 'Trader':
         """Return the trader that created this account and owns its contents.
         """
         return self._trader
@@ -179,6 +178,8 @@ class TraderAccount(object):
     ) -> float:
         """Return this account's current bank balance, in the same unit of
         currency as `_stock_market`. This value is always non-negative.
+
+        This result changes upon `TRADER_ACCOUNT_UPDATED` events.
         """
         return self._balance
 
@@ -186,6 +187,8 @@ class TraderAccount(object):
     ) -> typing.Dict[str, float]:
         """Return the quantities of stock shares that this account holds as a
         `dict` mapping stock symbols to non-negative quantities.
+
+        This result changes upon `TRADER_ACCOUNT_UPDATED` events.
         """
         return self._stocks.copy()
 
@@ -195,6 +198,8 @@ class TraderAccount(object):
         """Return `True` if this account has been frozen and can no longer
         `buy` or `sell` stocks. See the class' documentation for a description
         of the frozen state and why accounts freeze.
+
+        This result changes upon `TRADER_ACCOUNT_FROZEN` events.
         """
         return self._frozen
 
@@ -208,6 +213,8 @@ class TraderAccount(object):
 
         A brief `reason` sentence can be provided to be displayed to the user,
         optionally with the offending `exception`.
+
+        Triggers `TRADER_ACCOUNT_FROZEN` if successful.
         """
         if self.is_frozen():
             return
@@ -232,6 +239,9 @@ class TraderAccount(object):
         less, this raises `StockShareQuantityError`. If the cost to buy
         `shares` from `_market` plus the owning trader's trading fee is greater
         than this account's balance, `InsufficientBalanceError` is raised.
+
+        Triggers `TRADER_ACCOUNT_BOUGHT` and `TRADER_ACCOUNT_UPDATED` if
+        successful.
         """
         if self.is_frozen():
             raise FrozenError()
@@ -269,6 +279,9 @@ class TraderAccount(object):
         but greater than the quantity of `stock_symbol` owned, this
         method raises `InsufficientStockSharesError`. If this account cannot
         afford to pay the trading fee, `InsufficientBalanceError` is raised.
+
+        Triggers `TRADER_ACCOUNT_SOLD` and `TRADER_ACCOUNT_UPDATED` if
+        successful.
         """
         if self.is_frozen():
             raise FrozenError()
@@ -299,6 +312,8 @@ class TraderAccount(object):
         simulation. Its keys identify trading statistics using
         display-language-independent English identifiers, like `'PROFIT_NET'`,
         and the associated values can be converted to `str`.
+
+        This result may change upon `TRADER_ACCOUNT_UPDATED` events.
         """
         #TODO
         return {}
@@ -309,7 +324,16 @@ class TraderAccount(object):
         simulation. Its keys identify trading statistics using
         display-language-independent English identifiers, like `'PROFIT_NET'`,
         and the associated values can be converted to `str`.
+
+        This result may change upon `TRADER_ACCOUNT_UPDATED` events.
         """
         #TODO
         return {
-            PROFIT_NET = self._balance - self._balance_initial}
+            'PROFIT_NET': self._balance - self._balance_initial}
+
+
+
+
+# Imported last to avoid circular dependencies
+from model.stock_market import StockMarket
+from model.trader import Trader
