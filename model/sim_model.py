@@ -136,7 +136,7 @@ class SimModel(object):
         except KeyError as e:
             raise UnrecognizedAlgorithmError(algorithm_name) from e
 
-    def get_trader_algorithm_settings_defaults(
+    def get_trader_algorithm_settings_defaults(self,
         algorithm: str
     ) -> typing.Dict[str, typing.Any]:
         """Return a `dict` of default settings to use for new traders using the
@@ -149,7 +149,7 @@ class SimModel(object):
         trader_class = self._get_trader_class_by_algorithm_name(algorithm)
         return trader_class.get_algorithm_settings_defaults()
 
-    def get_trader_algorithm_settings_ui_definition(
+    def get_trader_algorithm_settings_ui_definition(self,
         algorithm: str
     ) -> typing.Dict[str, typing.Any]:
         """Return a `dict` defining how the Kivy GUI toolkit can render the

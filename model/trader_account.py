@@ -227,18 +227,20 @@ class TraderAccount(object):
         stock_symbol: str,
         shares: float
     ) -> None:
-        """Buy a quantity `shares` of `stock_symbol` at the current `_market`
-        price, deducting from this account's balance and adding to its stock
-        portfolio. The account must not be frozen; Buying with a frozen account
-        raises `FrozenError`.
+        """Buy a quantity `shares` of `stock_symbol` at the current
+        `_stock_market` price, deducting from this account's balance and adding
+        to its stock portfolio. The account must not be frozen; Buying with a
+        frozen account raises `FrozenError`.
 
-        The given `stock_symbol` must exist within `_market`. If it doesn't,
-        this method raises `stock_market.StockSymbolUnrecognizedError`.
+        The given `stock_symbol` must exist within `_stock_market`. If it
+        doesn't, this method raises
+        `stock_market.StockSymbolUnrecognizedError`.
 
         The quantity `shares` to buy must be positive; If `shares` is zero or
         less, this raises `StockShareQuantityError`. If the cost to buy
-        `shares` from `_market` plus the owning trader's trading fee is greater
-        than this account's balance, `InsufficientBalanceError` is raised.
+        `shares` from `_stock_market` plus the owning trader's trading fee is
+        greater than this account's balance, `InsufficientBalanceError` is
+        raised.
 
         Triggers `TRADER_ACCOUNT_BOUGHT` and `TRADER_ACCOUNT_UPDATED` if
         successful.
@@ -249,7 +251,7 @@ class TraderAccount(object):
         if shares <= 0:
             raise StockShareQuantityError(stock_symbol, shares)
 
-        price_per_share = self._market.get_stock_symbol_price(stock_symbol)
+        price_per_share = self._stock_market.get_stock_symbol_price(stock_symbol)
         cost = shares * price_per_share + self._trader.get_trading_fee()
         if cost > self.get_balance():
             raise InsufficientBalanceError(
@@ -266,12 +268,13 @@ class TraderAccount(object):
         shares: float
     ) -> None:
         """Sell a quantity `shares` of `stock_symbol` from this account at the
-        `_market`'s current prices, exchanging those shares for a deposit into
-        this account's balance minus the trader's trading fee. The account must
-        not be frozen; Selling with a frozen account raises `FrozenError`.
+        `_stock_market`'s current prices, exchanging those shares for a deposit
+        into this account's balance minus the trader's trading fee. The account
+        must not be frozen; Selling with a frozen account raises `FrozenError`.
 
-        The given `stock_symbol` must exist within `_market`; Unrecognized
-        stock symbols raise `stock_market.StockSymbolUnrecognizedError`.
+        The given `stock_symbol` must exist within `_stock_market`;
+        Unrecognized stock symbols raise
+        `stock_market.StockSymbolUnrecognizedError`.
 
         The quantity `shares` to sell must be positive, yet less than or equal
         to this account's currently owned quantity. If `shares` is zero or
@@ -288,11 +291,11 @@ class TraderAccount(object):
 
         if shares <= 0:
             raise StockShareQuantityError(stock_symbol, shares)
-        elif shares > self._stocks[stock_sybol]:
+        elif shares > self._stocks[stock_symbol]:
             raise InsufficientStockSharesError(
-                stock_symbol, shares, self._stocks[stock_sybol])
+                stock_symbol, shares, self._stocks[stock_symbol])
 
-        price_per_share = self._market.get_stock_symbol_price(stock_symbol)
+        price_per_share = self._stock_market.get_stock_symbol_price(stock_symbol)
         profit = shares * price_per_share - self._trader.get_trading_fee()
         if self.get_balance() + profit < 0:
             # Trading fee made profit negative

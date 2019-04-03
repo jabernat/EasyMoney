@@ -164,7 +164,7 @@ class StockMarket(object):
         Triggers `STOCK_MARKET_ADDITION` if successful.
         """
         # Validate prices
-        for stock_symbol, price in stock_symbol_prices:
+        for stock_symbol, price in stock_symbol_prices.items():
             if not price > 0:
                 raise InvalidSharePriceError(stock_symbol, price)
 
@@ -191,7 +191,7 @@ class StockMarket(object):
 
         # Save valid datapoint
         self._price_times.append(time)
-        for stock_symbol, price in stock_symbol_prices:
+        for stock_symbol, price in stock_symbol_prices.items():
             self._symbol_prices[stock_symbol].append(price)
 
         # TODO: Broadcast STOCK_MARKET_ADDITION
@@ -203,8 +203,9 @@ class StockMarket(object):
         """Return a mapping of stock symbols to their prices per share at
         sample `index`.
         """
+        
         return {stock_symbol: prices[index]
-            for stock_symbol, prices in self._symbol_prices}
+            for stock_symbol, prices in self._symbol_prices.items()}
 
 
     def get_prices(self,
@@ -219,8 +220,8 @@ class StockMarket(object):
         else:
             index = bisect.bisect_right(self._price_times, time)
 
-        if index:  # Time follows recorded data at (index - 1)
-            return self._get_prices_at_index(index - 1)
+        return (None if index == 0
+            else self._get_prices_at_index(index - 1))
 
 
     def iter_prices(self
