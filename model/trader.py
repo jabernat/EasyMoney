@@ -143,7 +143,7 @@ class Trader(object):
 
 
     @classmethod
-    def get_algorithm_name(
+    def get_algorithm_name(cls
     ) -> str:
         """Return this `Trader` subclass' identifying algorithm name, unique
         to the `SimModel` that it is registered within.
@@ -152,7 +152,7 @@ class Trader(object):
             'Trader subclass must implement get_algorithm_name.')
 
     @classmethod
-    def get_algorithm_settings_defaults(
+    def get_algorithm_settings_defaults(cls
     ) -> typing.Dict[str, typing.Any]:
         """Return a default settings `dict` appropriate for this `Trader`
         subclass.
@@ -160,7 +160,7 @@ class Trader(object):
         return {}
 
     @classmethod
-    def get_algorithm_settings_ui_definition(
+    def get_algorithm_settings_ui_definition(cls
     ) -> typing.Dict[str, typing.Any]:
         """Return a `dict` which defines how the Kivy GUI toolkit can render
         this `Trader` subclass' configuration controls. Its contents mirror the
