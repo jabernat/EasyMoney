@@ -17,10 +17,10 @@ class InvalidSharePriceError(ValueError):
     """
 
     stock_symbol: str
-    """"""
+    """The stock symbol that failed to be added."""
 
     price: float
-    """"""
+    """The invalid non-positive share price that was rejected."""
 
     def __init__(self,
         stock_symbol: str,
@@ -39,10 +39,10 @@ class NonconsecutiveTimeError(ValueError):
     """
 
     time: datetime.datetime
-    """"""
+    """The invalid time of prices that could not be added."""
 
     time_previous: datetime.datetime
-    """"""
+    """The most recent time that new entries must precede."""
 
     def __init__(self,
         time: datetime.datetime,
@@ -56,15 +56,18 @@ class NonconsecutiveTimeError(ValueError):
 
 
 class StockSymbolMissingError(ValueError):
-    """An exception raised when attempting to add a sample of stock symbols, but
-    did not include a previously added symbol.
+    """An exception raised when an attempt to add new stock price readings left
+    out a previously-added symbol.
     """
 
     symbols_old: typing.Set[str]
-    """"""
+    """The set of all expected stock symbols that were included in past data.
+    """
 
     symbols_new: typing.Set[str]
-    """"""
+    """The set of stock symbols that could not be added because one or more
+    symbols from `symbols_old` was omitted.
+    """
 
     def __init__(self,
         symbols_old: typing.Set[str],
@@ -72,10 +75,14 @@ class StockSymbolMissingError(ValueError):
     ) -> None:
         self.symbols_old = symbols_old
         self.symbols_new = symbols_new
-        super().__init__(
-            'Cannot omit previously-added stocks when adding new prices: Missing {:s}.'.format(
+
+        if symbols_old:
+            error = 'Cannot omit existing stocks when adding new prices: Missing {:s}.'.format(
                 ', '.join(repr(symbol)
-                    for symbol in sorted(symbols_old - symbols_new))))
+                    for symbol in sorted(symbols_old - symbols_new)))
+        else:  # First addition
+            error = 'Must include at least one stock symbol price for the first stock market reading.'
+        super().__init__(error)
 
 
 class StockSymbolUnrecognizedError(ValueError):
@@ -83,7 +90,7 @@ class StockSymbolUnrecognizedError(ValueError):
     """
 
     stock_symbol: str
-    """"""
+    """The requested stock symbol that could not be found."""
 
     def __init__(self,
         stock_symbol: str
@@ -96,19 +103,19 @@ class StockSymbolUnrecognizedError(ValueError):
 
 
 class StockMarket(object):
-    """The SimModel 's StockMarket sub-component stores a time-series of stock
-    share prices that accumulates over the course of a simulation. Each sample
-    includes its time and the prices-per-share of multiple stock symbols at that
-    time. The stock market can be reset to begin a new simulation. Traders
-    create accounts associated with a single StockMarket to do their trading.
+    """A component of `SimModel` that stores a time series of stock share
+    prices accumulated over simulation runs. To begin a new simulation, the
+    stock market can be reset.
     """
 
 
     _price_times: typing.List[datetime.datetime]
-    """"""
+    """A `list` of times for the price readings stored in `_symbol_prices`."""
 
     _symbol_prices: typing.Dict[str, typing.List[float]]
-    """"""
+    """A `dict` of included stock symbols mapped to `list`s of recorded prices
+    corresponding to insertion times within `_price_times`.
+    """
 
     #TODO: Events:
     #   STOCK_MARKET_ADDITION
@@ -117,20 +124,22 @@ class StockMarket(object):
 
     def __init__(self
     ) -> None:
-        """The stock market's constructor, which initializes it with no price data
-        samples.
-        """
+        """Initialize this `StockMarket` with no stock price readings."""
         self._price_times = []
         self._symbol_prices = {}
 
 
     def clear(self
     ) -> None:
-        """Removes all previously added price data from this StockMarket.
+        """Remove all previously-added price data from this `StockMarket`.
+
+        Triggers `STOCK_MARKET_CLEARED` if any data was cleared.
         """
+        if not self._price_times:
+            return  # Nothing to clear
+
         self._price_times.clear()
         self._symbol_prices.clear()
-
         # TODO: Broadcast STOCK_MARKET_CLEARED
 
 
@@ -138,20 +147,21 @@ class StockMarket(object):
         time: datetime.datetime,
         stock_symbol_prices: typing.Dict[str, float]
     ) -> None:
-        """Adds a new data-point to this stock market's history, including the time
-        of the sample and the latest prices for each stock symbol.
+        """Add new price readings to this market's history.
 
-        The new prices originated at time , which must follow the previously
-        added sample chronologically. Invalid times raise
-        StockMarket.NonconsecutiveTimeError exceptions.
+        The new prices were sampled at `time`, which must follow the previously
+        added sample chronologically. Attempting to add prices at a `time` that
+        precedes or matches the previous reading raises
+        `NonconsecutiveTimeError`.
 
-        The stock_symbol_prices dictionary maps stock symbol keys to
-        price-per-share values. Prices for all previously-added stock symbols
-        must be given, except on the first addition when at least one symbol
-        is required; If these requirements are not met, this method raises a
-        StockMarket.StockSymbolMissingError exception. All price-per-share
-        values must be positive, or a StockMarket.InvalidSharePriceError
-        exception will be raised.
+        The `stock_symbol_prices` `dict` maps stock symbol keys to
+        price-per-share values. All previously-added stock symbol prices should
+        be provided, except on the first addition when at least one symbol is
+        required; If these requirements are not met, this method raises
+        `StockSymbolMissingError`. All price-per-share
+        values must be positive, or `InvalidSharePriceError` will be raised.
+
+        Triggers `STOCK_MARKET_ADDITION` if successful.
         """
         # Validate prices
         for stock_symbol, price in stock_symbol_prices:
@@ -159,6 +169,10 @@ class StockMarket(object):
                 raise InvalidSharePriceError(stock_symbol, price)
 
         if not self._symbol_prices:  # First datapoint
+            if not stock_symbol_prices:
+                # Need at least one initial stock
+                raise StockSymbolMissingError(set(), set())
+
             # Initialize storage
             for stock_symbol in stock_symbol_prices.keys():
                 self._symbol_prices[stock_symbol] = []
@@ -186,7 +200,8 @@ class StockMarket(object):
     def _get_prices_at_index(self,
         index: int
     ) -> typing.Dict[str, float]:
-        """
+        """Return a mapping of stock symbols to their prices per share at
+        sample `index`.
         """
         return {stock_symbol: prices[index]
             for stock_symbol, prices in self._symbol_prices}
@@ -195,9 +210,9 @@ class StockMarket(object):
     def get_prices(self,
         time: typing.Optional[datetime.datetime] = None
     ) -> typing.Optional[typing.Dict[str, float]]:
-        """Returns a dictionary that maps stock symbol keys to price-per-share
-        values following time , or None if no data has been added by that time
-        yet.
+        """Return a `dict` mapping stock symbol keys to their price-per-share
+        values that follow `time`, or `None` if no data had been added by that
+        time. If `time` is `None`, the most recent prices are returned.
         """
         if time is None:  # Get most recent prices
             index = len(self._price_times)
@@ -210,10 +225,9 @@ class StockMarket(object):
 
     def iter_prices(self
     ) -> typing.Iterator[typing.Tuple[datetime.datetime, typing.Dict[str, float]]]:
-        """Returns an iterator that repeatedly yields pairs of times and
-        dictionaries of stock symbols' prices at those times.
-        This iterator should be iterated immediately, as market changes will
-        invalidate it.
+        """Return an iterator that yields times with `dict`s that map stock
+        symbols to their prices in reverse chronological order. This iterator
+        should be iterated immediately, as market changes will invalidate it.
         """
         for index, time in enumerate(self._price_times):
             yield time, self._get_prices_at_index(index)
@@ -222,7 +236,13 @@ class StockMarket(object):
     def get_stock_symbol_price(self,
         stock_symbol: str
     ) -> float:
-        """
+        """Return the most recent cost for one share of `stock_symbol`.
+
+        If `stock_symbol` isn't included in this `StockMarket`, including when
+        no prices have been added yet, raises `StockSymbolUnrecognizedError`.
+
+        This result changes upon `STOCK_MARKET_ADDITION` and
+        `STOCK_MARKET_CLEARED` events.
         """
         try:
             return self._symbol_prices[stock_symbol][-1]
