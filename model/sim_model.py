@@ -133,8 +133,8 @@ class SimModel(object):
         """
         try:
             return self._trader_algorithms[algorithm_name]
-        except KeyError:
-            raise UnrecognizedAlgorithmError(algorithm_name)
+        except KeyError as e:
+            raise UnrecognizedAlgorithmError(algorithm_name) from e
 
     def get_trader_algorithm_settings_defaults(
         algorithm: str
