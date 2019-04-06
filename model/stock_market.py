@@ -9,6 +9,8 @@ import bisect
 import datetime
 import typing
 
+import pydispatch
+
 
 
 
@@ -102,7 +104,7 @@ class StockSymbolUnrecognizedError(ValueError):
 
 
 
-class StockMarket(object):
+class StockMarket(pydispatch.Dispatcher):
     """A component of `SimModel` that stores a time series of stock share
     prices accumulated over simulation runs. To begin a new simulation, the
     stock market can be reset.
@@ -117,9 +119,10 @@ class StockMarket(object):
     corresponding to insertion times within `_price_times`.
     """
 
-    #TODO: Events:
-    #   STOCK_MARKET_ADDITION
-    #   STOCK_MARKET_CLEARED
+    _events_: typing.ClassVar[typing.List[str]] = [
+        'STOCK_MARKET_ADDITION',
+        'STOCK_MARKET_CLEARED']
+    """Events broadcast by instances of the `StockMarket`."""
 
 
     def __init__(self
@@ -140,7 +143,8 @@ class StockMarket(object):
 
         self._price_times.clear()
         self._symbol_prices.clear()
-        # TODO: Broadcast STOCK_MARKET_CLEARED
+        self.emit('STOCK_MARKET_CLEARED',
+            instance=self)
 
 
     def add_next_prices(self,
@@ -193,8 +197,10 @@ class StockMarket(object):
         self._price_times.append(time)
         for stock_symbol, price in stock_symbol_prices.items():
             self._symbol_prices[stock_symbol].append(price)
-
-        # TODO: Broadcast STOCK_MARKET_ADDITION
+        self.emit('STOCK_MARKET_ADDED',
+            instance=self,
+            time=time,
+            stock_symbol_prices=stock_symbol_prices)
 
 
     def _get_prices_at_index(self,

@@ -8,6 +8,8 @@ __license__ = 'MIT'
 import collections
 import typing
 
+import pydispatch
+
 # Local package imports at end of file to resolve circular dependencies
 
 
@@ -101,7 +103,7 @@ class StockShareQuantityError(ValueError):
 
 
 
-class TraderAccount(object):
+class TraderAccount(pydispatch.Dispatcher):
     """The bank balance and stock portfolio of an owning `Trader`, tied to a
     particular `StockMarket`. The account provides methods for traders to buy
     and sell their stocks, and statistics collection for later analysis.
@@ -139,11 +141,11 @@ class TraderAccount(object):
     _frozen: bool
     """When `True`, this account can no longer be used to `buy` or `sell`."""
 
-    #TODO: Events:
-    #   TRADER_ACCOUNT_BOUGHT
-    #   TRADER_ACCOUNT_FROZEN
-    #   TRADER_ACCOUNT_SOLD
-    #   TRADER_ACCOUNT_UPDATED
+    _events_: typing.ClassVar[typing.List[str]] = [
+        'TRADER_ACCOUNT_BOUGHT',
+        'TRADER_ACCOUNT_FROZEN',
+        'TRADER_ACCOUNT_SOLD']
+    """Events broadcast by `TraderAccount` instances."""
 
 
     def __init__(self,
@@ -220,7 +222,10 @@ class TraderAccount(object):
             return
 
         self._frozen = True
-        #TODO: Broadcast TRADER_ACCOUNT_FROZEN
+        self.emit('TRADER_ACCOUNT_FROZEN',
+            instance=self,
+            reason=reason,
+            exception=exception)
 
 
     def buy(self,
@@ -260,8 +265,11 @@ class TraderAccount(object):
         # Make transaction
         self._balance -= cost
         self._stocks[stock_symbol] += shares
-        #TODO: Broadcast TRADER_ACCOUNT_BOUGHT
-        #TODO: Broadcast TRADER_ACCOUNT_UPDATED
+        self.emit('TRADER_ACCOUNT_BOUGHT',
+            instance=self,
+            stock_symbol=stock_symbol,
+            shares=shares,
+            balance_change=-cost)
 
     def sell(self,
         stock_symbol: str,
@@ -305,8 +313,11 @@ class TraderAccount(object):
         # Make transaction
         self._balance += profit
         self._stocks[stock_symbol] -= shares
-        #TODO: Broadcast TRADER_ACCOUNT_SOLD
-        #TODO: Broadcast TRADER_ACCOUNT_UPDATED
+        self.emit('TRADER_ACCOUNT_SOLD',
+            instance=self,
+            stock_symbol=stock_symbol,
+            shares=shares,
+            balance_change=profit)
 
 
     def get_statistics_daily(self
