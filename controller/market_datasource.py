@@ -9,17 +9,8 @@ import typing
 import datetime
 import json
 import urllib.request
+import pydispatch
 
-
-# TODO: Events:
-#           MARKET_DATASOURCE_CAN_CONFIRM_UPDATED,
-#           MARKET_DATASOURCE_CONFIRMATION_UPDATED,
-#           MARKET_DATASOURCE_LIVE_API_KEY_UPDATED,
-#           MARKET_DATASOURCE_MODE_CHANGED,
-#           MARKET_DATASOURCE_STOCK_SYMBOL_ADD_ARCHIVE_ERROR,
-#           MARKET_DATASOURCE_STOCK_SYMBOL_ADD_LIVE_ERROR,
-#           MARKET_DATASOURCE_STOCK_SYMBOL_ADDED
-#           MARKET_DATASOURCE_STOCK_SYMBOL_REMOVED
 
 class AlphaVantageApiKeyMissingError(RuntimeError):
     """An exception raised when attempting to access Alpha Vantage
@@ -92,7 +83,7 @@ class WrongModeError(RuntimeError):
             'mode.'.format(correct_mode, wrong_mode))
 
 
-class MarketDatasource(object):
+class MarketDatasource(pydispatch.Dispatcher):
     """Depending on the source, this component has the ability to
     collate data and pass it to the SimModel. If the source is live,
     an API key is used to connect to Alpha Vantage to retrieve the
@@ -148,26 +139,25 @@ class MarketDatasource(object):
         `MARKET_DATASOURCE_STOCK_SYMBOL_ADD_ARCHIVE_ERROR` if an
         error occurs.
         """
-
         if self._mode == 'ARCHIVE':
             if not self.is_confirmed():
                 with open(json_filename) as json_file:
                     data = json.load(json_file)
-                    stock_symbol: str = data['Meta Data']['2. Symbol']
-                    if 'NYSE:' + stock_symbol in self._symbols:
-                        self._symbol_data.clear()
-                    else:
-                        self._symbols.append('NYSE:' + stock_symbol)
-                    time: datetime.datetime
-                    for p in data['Time Series (5min)']:
-                        time = datetime.datetime.strptime(p, '%Y-%m-%d %H:%M:%S')
-                        close_price: float = data['Time Series (5min)'][p]['4. close']
-                        self._symbol_data.extend([(time, {stock_symbol:
-                                                        close_price})])
+                    self.add_stock_data(data, '5min')
             else:
+                # self.emit(
+                #     'MARKET_DATASOURCE_STOCK_SYMBOL_ADD_ARCHIVE_ERROR',
+                #     instance=self,
+                #     json_filename=json_filename,
+                #     exception=DatasourceConfirmedError)
                 raise DatasourceConfirmedError(
                     'MarketDatasource.add_stock_symbol_archive()')
         else:
+            # self.emit(
+            #     'MARKET_DATASOURCE_STOCK_SYMBOL_ADD_ARCHIVE_ERROR',
+            #     instance=self,
+            #     json_filename=json_filename,
+            #     exception=WrongModeError)
             raise WrongModeError(self._mode, 'ARCHIVE')
 
 
@@ -194,10 +184,6 @@ class MarketDatasource(object):
         if self._api_key is not None:
             if self._mode == 'LIVE':
                 if not self.is_confirmed():
-                    if 'NYSE:' + stock_symbol in self._symbols:
-                        self._symbol_data.clear()
-                    else:
-                        self._symbols.append('NYSE:' + stock_symbol)
                     query_url = \
                         "https://www.alphavantage.co/query?function" \
                         "=TIME_SERIES_INTRADAY&symbol={" \
@@ -205,23 +191,58 @@ class MarketDatasource(object):
                         "API_KEY}"
                     with urllib.request.urlopen(query_url.format(
                             SYMBOL=stock_symbol, API_KEY=self._api_key)) \
-                            as json_file:
-                        data = json.load(json_file)
-                        time: datetime.datetime
-                        for p in data['Time Series (1min)']:
-                            time = datetime.datetime.strptime(p, '%Y-%m-%d %H:%M:%S')
-                            close_price: float = \
-                            data['Time Series (1min)'][p]['4. close']
-                            self._symbol_data.extend([(time, {stock_symbol:
-                                                                  close_price})])
+                            as alpha_vantage_data:
+                        data = json.load(alpha_vantage_data)
+                        self.add_stock_data(data, '1min')
                 else:
+                    # self.emit(
+                    #     'MARKET_DATASOURCE_STOCK_SYMBOL_ADD_LIVE_ERROR',
+                    #     instance=self,
+                    #     stock_symbol=stock_symbol,
+                    #     exception=DatasourceConfirmedError)
                     raise DatasourceConfirmedError(
                         'MarketDatasource.add_stock_symbol_live()')
             else:
+                # self.emit(
+                #     'MARKET_DATASOURCE_STOCK_SYMBOL_ADD_LIVE_ERROR',
+                #     instance=self,
+                #     stock_symbol=stock_symbol,
+                #     exception=WrongModeError)
                 raise WrongModeError(self._mode, 'LIVE')
         else:
+            # self.emit(
+            #     'MARKET_DATASOURCE_STOCK_SYMBOL_ADD_LIVE_ERROR',
+            #     instance=self,
+            #     stock_symbol=stock_symbol,
+            #     exception=AlphaVantageApiKeyMissingError)
             raise AlphaVantageApiKeyMissingError(
                 'add_stock_symbol_live()')
+
+
+    def add_stock_data(self,
+       data: dict,
+       interval: str
+    ) -> None:
+        """Refresh or add stock data from LIVE or ARCHIVE mode,
+        given (1) the dictionary containing stock data from either a
+        JSON file or Alpha Vantage API access and (2) the data update
+        interval.
+        """
+        stock_symbol: str = data['Meta Data']['2. Symbol']
+        if stock_symbol in self._symbols:
+            self._symbol_data.clear()
+        else:
+            self._symbols.append(stock_symbol)
+            # self.emit('MARKET_DATASOURCE_STOCK_SYMBOL_ADDED',
+            #           instance=self,
+            #           stock_symbol=stock_symbol)
+        for p in data['Time Series (' + interval + ')']:
+            time = datetime.datetime.strptime(p,
+                                              '%Y-%m-%d %H:%M:%S')
+            close_price: float = \
+                data['Time Series (' + interval + ')'][p]['4. close']
+            self._symbol_data.extend([(time, {stock_symbol:
+                                                  close_price})])
 
 
     def can_confirm(self) -> bool:
@@ -236,17 +257,17 @@ class MarketDatasource(object):
 
         Otherwise return `False`.
         """
-
+        can_confirm: bool = False
         if len(self._symbols) > 0 and len(self._symbol_data) == 0:
             if self._mode == 'LIVE':
                 if self._api_key is not None:
-                    return True
-                else:
-                    return False
+                    can_confirm = True
             else:
-                return True
-        else:
-            return False
+                can_confirm = True
+        # if can_confirm:
+            # self.emit('MARKET_DATASOURCE_CAN_CONFIRM_UPDATED',
+            #           instance=self)
+        return can_confirm
 
 
     def confirm(self) -> None:
@@ -258,13 +279,14 @@ class MarketDatasource(object):
         exception. If no API key has been set in “`LIVE`" mode, raises a
         `MarketDatasource.AlphaVantageApiKeyMissingError` exception.
         """
-
         if not len(self._symbols) == 0:
             if self._mode == 'LIVE' and self._api_key is None:
                 raise AlphaVantageApiKeyMissingError(
                     'MarketDatasource.confirm()')
             else:
                 self._confirmed = True
+                # self.emit('MARKET_DATASOURCE_CONFIRMATION_UPDATED',
+                #           instance=self)
         else:
             raise DatasourcesMissingError()
 
@@ -324,6 +346,8 @@ class MarketDatasource(object):
         """
         if not self.is_confirmed():
             self._symbols.remove(stock_symbol)
+            # self.emit('MARKET_DATASOURCE_STOCK_SYMBOL_REMOVED',
+            #           stock_symbol=stock_symbol)
         else:
             raise DatasourceConfirmedError(
                 'MarketDatasource.remove_stock_symbol('
@@ -339,6 +363,8 @@ class MarketDatasource(object):
         """
         if not self.is_confirmed():
             self._api_key = api_key
+            # self.emit('MARKET_DATASOURCE_LIVE_API_KEY_UPDATED',
+            #           instance=self)
         else:
             raise DatasourceConfirmedError(
                 'MarketDatasource.set_live_api_key().')
@@ -358,9 +384,12 @@ class MarketDatasource(object):
             if not self.is_confirmed():
                 self._mode = mode
                 self._symbols.clear()
+                # self.emit('MARKET_DATASOURCE_MODE_CHANGED',
+                #           instance=self)
             else:
                 raise DatasourceConfirmedError(
                     'MarketDatasource.set_mode(' + mode + ')')
+
 
     def unconfirm(self) -> None:
         """Enable the ability to add or remove stock symbols and
