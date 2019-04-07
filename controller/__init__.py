@@ -5,7 +5,7 @@ __copyright__ = 'Copyright © 2019, Erik Anderson, James Abernathy, and Tyler Ge
 __license__ = 'MIT'
 
 
-import controller.sim_controller
-
-import controller.market_datasource
-import controller.market_updater
+from controller import (
+    sim_controller,
+    market_datasource,
+    market_updater)

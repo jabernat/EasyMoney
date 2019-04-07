@@ -1,6 +1,9 @@
-from model.stock_market import StockMarket
-from controller.market_datasource import MarketDatasource
+# Imported last to avoid circular dependencies
+from controller.sim_controller import SimController
 from kivy.clock import Clock
+from kivy.clock import ClockEvent
+
+# Local package imports at end of file to resolve circular dependencies
 
 #TODO: 
     #Events:
@@ -10,11 +13,14 @@ from kivy.clock import Clock
 
 class MarketUpdater(object):
     '''
-    The following data members are used to manage the module state
+    The following data members are used to manage the module. The valid states
+    are playing, paused, and reset. The controller member provided is initialized
+    by the constructor. The event member is used by Kivy to implement a timed
+    method call event every 12 seconds
     '''
     state : str
-    source : MarketDatasource
-    event : Clock.ClockEvent
+    controller : SimController
+    event : ClockEvent
 
     """
     The Market Updater periodically gets data from the Datasource component and
@@ -26,16 +32,17 @@ class MarketUpdater(object):
     event that is broadcast to the Window View module.
     """
 
-    def __init__ (self, datasource: MarketDatasource) -> None:
+    def __init__ (self, source: SimController) -> None:
         """
         The constructor for MarketUpdater . All new MarketUpdater s start in a
         paused state.
         """
-        self.source = datasource
+        self.controller = source
         self.state = "paused"
 
     
     def is_playing (self) -> bool:
+
         """
         This method returns true when MarketUpdater is in a play state.
         """
@@ -79,5 +86,9 @@ class MarketUpdater(object):
         Gets the current prices from the datasource, if an update is confirmed,
         and calls appropriate simulation module functions to update those prices.
         '''
-        if self.source.can_confirm():
-            self.source.get_next_prices()
+        if self.controller.can_confirm():
+            prices = self.controller.get_datasource().get_next_prices()
+            self.controller.get_model().get_stock_market().add_next_prices(prices[0], prices[1])
+
+
+

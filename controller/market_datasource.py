@@ -144,7 +144,7 @@ class MarketDatasource(object):
 
 
     def get_next_prices(self
-    ) -> typing.Optional[(datetime.datetime, typing.Dict[str, float])]:
+    ) -> typing.Optional[typing.Tuple[datetime.datetime, typing.Dict[str, float]]]:
 
         """A blocking call: Return `None` if this datasource hasn't
         begun yet or if no more prices are left in the datasource.
