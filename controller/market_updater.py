@@ -1,7 +1,6 @@
-# Imported last to avoid circular dependencies
-from controller.sim_controller import SimController
-from kivy.clock import Clock
-from kivy.clock import ClockEvent
+
+from kivy.clock import (
+    Clock, ClockEvent)
 
 # Local package imports at end of file to resolve circular dependencies
 
@@ -19,7 +18,7 @@ class MarketUpdater(object):
     method call event every 12 seconds
     '''
     state : str
-    controller : SimController
+    controller : 'SimController'
     event : ClockEvent
 
     """
@@ -32,7 +31,7 @@ class MarketUpdater(object):
     event that is broadcast to the Window View module.
     """
 
-    def __init__ (self, source: SimController) -> None:
+    def __init__ (self, source: 'SimController') -> None:
         """
         The constructor for MarketUpdater . All new MarketUpdater s start in a
         paused state.
@@ -92,3 +91,6 @@ class MarketUpdater(object):
 
 
 
+
+# Imported last to avoid circular dependencies
+from controller.sim_controller import SimController
