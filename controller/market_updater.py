@@ -21,18 +21,18 @@ class MarketUpdater(object):
     event that is broadcast to the Window View module.
     """
 
-    market_updater_state: str
+    _market_updater_state: str
     """
     state attribute represents the current running status of the updater; paused,
     playing, or reset
     """
-    parent_application_controller: 'SimController'
+    _parent_application_controller: 'SimController'
     """
     this controller attribute will be the simulation controller object that 
     contains this updater. Using this object will allow for simulation
     updates and information retrieval from the datasource
     """
-    sheduled_simulation_update_event: ClockEvent
+    _sheduled_simulation_update_event: ClockEvent
     """
     Kivy provides a ClockEvent ADT to work with. This datatype represents an 
     event that can be scheduled to occur at regular intervals. This application
@@ -101,8 +101,10 @@ class MarketUpdater(object):
         '''
         if self.parent_application_controller.is_confirmed():
             prices = self.parent_application_controller.get_datasource().get_next_prices()
-            self.parent_application_controller.get_model().get_stock_market().add_next_prices(prices[0], prices[1])
-
+            if prices != None:
+                self.parent_application_controller.get_model().get_stock_market().add_next_prices(prices[0], prices[1])
+            else:
+                self.pause()
 
 
 
