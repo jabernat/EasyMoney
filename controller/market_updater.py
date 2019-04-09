@@ -54,14 +54,10 @@ class MarketUpdater(object):
     
     def is_playing (self
                     ) -> bool:
-
         """
         This method returns true when MarketUpdater is in a play state.
         """
-        if self.market_updater_state == "playing":
-            return True
-        else:
-            return False
+        return self.market_updater_state == "playing"
     
     def pause(self
               ) -> None:
@@ -82,7 +78,7 @@ class MarketUpdater(object):
         datasource.
         """
         self.sheduled_simulation_update_event = Clock.schedule_interval(
-            self.update_model_prices_from_datasource(), 12)
+            self.update_model_prices_from_datasource, 12)
         self.market_updater_state = "playing"
         # TODO MARKET_UPDATER_PLAYING
 
