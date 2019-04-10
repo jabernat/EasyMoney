@@ -61,7 +61,7 @@ class MarketUpdater(object):
     _parent_controller: 'SimController'
     """This updater's owning simulation controller."""
 
-    _state: MarketUpdater.State
+    _state: State
     """Status of this updater controlling its activity."""
 
     _update_timer: typing.Optional[ClockEvent]
