@@ -87,9 +87,7 @@ class SimModel(pydispatch.Dispatcher):
         ones.
         """
         self._stock_market.clear()
-
-        for trader in self.get_traders():
-            trader.create_account(self._stock_market)
+        # Traders react by creating new accounts
 
 
     def get_stock_market(self
