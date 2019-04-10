@@ -7,6 +7,8 @@ __license__ = 'MIT'
 
 import typing
 
+import pydispatch
+
 # Local package imports at end of file to resolve circular dependencies
 
 
@@ -46,7 +48,7 @@ class UnrecognizedAlgorithmError(ValueError):
 
 
 
-class SimModel(object):
+class SimModel(pydispatch.Dispatcher):
     """The state of a simulated stock market along with the bank accounts and
     stock portfolios of participating traders. This high-level MVC model module
     broadcasts state update events to observers.
@@ -62,10 +64,11 @@ class SimModel(object):
     _traders: typing.Dict[str, 'Trader']
     """Participating `Trader` subclass instances indexed by their names."""
 
-    #TODO: Events:
-    #   TRADER_ADDED
-    #   TRADER_ALGORITHM_ADDED
-    #   TRADER_REMOVED
+    _events_: typing.ClassVar[typing.List[str]] = [
+        'TRADER_ADDED',
+        'TRADER_ALGORITHM_ADDED',
+        'TRADER_REMOVED']
+    """Events broadcast by instances of the `SimModel`."""
 
 
     def __init__(self
@@ -121,7 +124,9 @@ class SimModel(object):
             return
 
         self._trader_algorithms[name] = trader_class
-        #TODO: Broadcast TRADER_ALGORITHM_ADDED
+        self.emit('TRADER_ALGORITHM_ADDED',
+            instance=self,
+            algorithm=name)
 
     def _get_trader_class_by_algorithm_name(self,
         algorithm_name: str
@@ -215,9 +220,13 @@ class SimModel(object):
             raise TraderNameTakenError(name)
 
         trader_class = self._get_trader_class_by_algorithm_name(algorithm)
-        self._traders[name] = trader_class(
+        trader = trader_class(
             name, initial_funds, trading_fee, algorithm_settings)
-        #TODO: Broadcast TRADER_ADDED
+
+        self._traders[name] = trader
+        self.emit('TRADER_ADDED',
+            instance=self,
+            trader=trader)
 
     def remove_trader(self,
         name: str
@@ -234,7 +243,9 @@ class SimModel(object):
             return
 
         del self._traders[name]
-        #TODO: Broadcast TRADER_REMOVED
+        self.emit('TRADER_REMOVED',
+            instance=self,
+            trader=trader)
 
 
 
