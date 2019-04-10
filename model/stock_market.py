@@ -52,8 +52,8 @@ class NonconsecutiveTimeError(ValueError):
     ) -> None:
         self.time = time
         self.time_previous = time_previous
-        super().__init__(
-            'Cannot add non-consecutive prices at time {} following previous time {}.'.format(
+        super().__init__('Cannot add non-consecutive prices at time {} '
+            'following previous time {}.'.format(
                 time, time_previous))
 
 
@@ -79,11 +79,13 @@ class StockSymbolMissingError(ValueError):
         self.symbols_new = symbols_new
 
         if symbols_old:
-            error = 'Cannot omit existing stocks when adding new prices: Missing {:s}.'.format(
-                ', '.join(repr(symbol)
-                    for symbol in sorted(symbols_old - symbols_new)))
+            error = ('Cannot omit existing stocks when adding new prices: '
+                'Missing {:s}.'.format(
+                    ', '.join(repr(symbol)
+                        for symbol in sorted(symbols_old - symbols_new))))
         else:  # First addition
-            error = 'Must include at least one stock symbol price for the first stock market reading.'
+            error = ('Must include at least one stock symbol price for the '
+                'first stock market reading.')
         super().__init__(error)
 
 

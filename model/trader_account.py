@@ -47,8 +47,8 @@ class InsufficientBalanceError(ValueError):
         self.stock_symbol = stock_symbol
         self.cost = cost
         self.balance = balance
-        super().__init__(
-            "Trader with ${:.2f} can't afford ${:.2f} charge for {!r} stock.".format(
+        super().__init__("Trader with ${:.2f} can't afford ${:.2f} charge for "
+            '{!r} stock.'.format(
                 balance, cost, stock_symbol))
 
 
@@ -74,8 +74,8 @@ class InsufficientStockSharesError(ValueError):
         self.stock_symbol = stock_symbol
         self.shares = shares
         self.shares_owned = shares_owned
-        super().__init__(
-            'Trader attempted to sell {:.2f} shares of {!r} stock, but only owns {:.2f}.'.format(
+        super().__init__('Trader attempted to sell {:.2f} shares of {!r} '
+            'stock, but only owns {:.2f}.'.format(
                 shares, stock_symbol, shares_owned))
 
 
@@ -96,8 +96,8 @@ class StockShareQuantityError(ValueError):
     ) -> None:
         self.stock_symbol = stock_symbol
         self.shares = shares
-        super().__init__(
-            'Trader attempted to trade an invalid non-positive {!r} stock quantity {:.2f}.'.format(
+        super().__init__('Trader attempted to trade an invalid non-positive '
+            '{!r} stock quantity {:.2f}.'.format(
                 shares, stock_symbol))
 
 
