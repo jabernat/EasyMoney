@@ -68,7 +68,7 @@ class SimModel(pydispatch.Dispatcher):
         'TRADER_ADDED',
         'TRADER_ALGORITHM_ADDED',
         'TRADER_REMOVED']
-    """Events broadcast by instances of the `SimModel`."""
+    """Events broadcast by the `SimModel`."""
 
 
     def __init__(self
