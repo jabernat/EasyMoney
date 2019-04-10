@@ -3,3 +3,6 @@
 
 # mypy static analysis cache
 /.mypy_cache/
+
+# IntelliJ Idea
+/.idea/
