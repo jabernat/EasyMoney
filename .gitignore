@@ -1,2 +1,5 @@
 # Python compiled sources
 **/__pycache__
+
+# IntelliJ Idea
+/.idea
