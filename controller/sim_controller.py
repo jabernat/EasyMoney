@@ -155,6 +155,7 @@ class SimController(object):
         """
         pass
 
+
     def validate_trader_algorithm(self,
         algorithm_name: str
     ) -> typing.Tuple[bool, str]:
