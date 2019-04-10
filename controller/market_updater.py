@@ -151,7 +151,7 @@ class MarketUpdater(object):
         self._state = self.State.RESET
         #TODO MARKET_UPDATER_RESET
 
-        self._parent_controller.get_model().clear()
+        self._parent_controller.get_model().reset_market_and_trader_accounts()
         self._parent_controller.get_datasource().unconfirm()
 
 
