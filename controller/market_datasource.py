@@ -21,12 +21,9 @@ class AlphaVantageApiKeyMissingError(RuntimeError):
     """A string representing the function this error was raised from."""
 
     def __init__(self,
-         callingFunction: str
-     ) -> None:
-        self.callingFunction = callingFunction
+    ) -> None:
         super().__init__('Cannot access Alpha Vantage when no API key '
-                         'has been set. Calling function: ' +
-                         callingFunction)
+                         'has been set.')
 
 
 class DatasourceConfirmedError(RuntimeError):
@@ -41,7 +38,7 @@ class DatasourceConfirmedError(RuntimeError):
 
     def __init__(self,
          configuration_type: str
-     ) -> None:
+    ) -> None:
         self.configuration_type = configuration_type
         super().__init__('Cannot perform configuration when '
                          'datasource has been confirmed. '
@@ -76,10 +73,8 @@ class WrongModeError(RuntimeError):
     ) -> None:
         self.wrongMode = wrong_mode
         self.correctMode = correct_mode
-        if wrong_mode is None:
-            wrong_mode = 'None'
         super().__init__(
-            'Cannot perform add_stock_symbol_{} function in "{}" '
+            'Cannot add stock symbol ({}) using incorrect mode: {!r}'
             'mode.'.format(correct_mode, wrong_mode))
 
 
@@ -103,6 +98,7 @@ class MarketDatasource(pydispatch.Dispatcher):
     _symbol_data: typing.List[typing.Tuple[datetime.datetime,
                                            typing.Dict[str, float]]]
     """A list of data for symbols, added in either mode."""
+
     _api_key: typing.Optional[str]
     """A string that represents the Alpha Vantage API key."""
 
@@ -139,26 +135,33 @@ class MarketDatasource(pydispatch.Dispatcher):
         `MARKET_DATASOURCE_STOCK_SYMBOL_ADD_ARCHIVE_ERROR` if an
         error occurs.
         """
-        if self._mode == 'ARCHIVE':
-            if not self.is_confirmed():
-                with open(json_filename) as json_file:
-                    data = json.load(json_file)
-                    self.add_stock_data(data, '5min')
-            else:
+        if self._mode != 'ARCHIVE':
+            try:
+                raise WrongModeError(self._mode, 'ARCHIVE')
+            except WrongModeError as e:
                 # self.emit(
                 #     'MARKET_DATASOURCE_STOCK_SYMBOL_ADD_ARCHIVE_ERROR',
                 #     instance=self,
                 #     json_filename=json_filename,
-                #     exception=DatasourceConfirmedError)
+                #     exception=e)
+                raise WrongModeError(self._mode, 'ARCHIVE')
+
+        if self.is_confirmed():
+            try:
                 raise DatasourceConfirmedError(
                     'MarketDatasource.add_stock_symbol_archive()')
-        else:
-            # self.emit(
-            #     'MARKET_DATASOURCE_STOCK_SYMBOL_ADD_ARCHIVE_ERROR',
-            #     instance=self,
-            #     json_filename=json_filename,
-            #     exception=WrongModeError)
-            raise WrongModeError(self._mode, 'ARCHIVE')
+            except DatasourceConfirmedError as e:
+                # self.emit(
+                #     'MARKET_DATASOURCE_STOCK_SYMBOL_ADD_ARCHIVE_ERROR',
+                #     instance=self,
+                #     json_filename=json_filename,
+                #     exception=e)
+                raise DatasourceConfirmedError(
+                    'MarketDatasource.add_stock_symbol_archive()')
+
+        with open(json_filename) as json_file:
+            data = json.load(json_file)
+            self.add_stock_data(data, '5min')
 
 
     def add_stock_symbol_live(self,
@@ -184,11 +187,11 @@ class MarketDatasource(pydispatch.Dispatcher):
         if self._api_key is not None:
             if self._mode == 'LIVE':
                 if not self.is_confirmed():
-                    query_url = \
-                        "https://www.alphavantage.co/query?function" \
-                        "=TIME_SERIES_INTRADAY&symbol={" \
-                        "SYMBOL}&interval=1min&outputsize=full&apikey={" \
-                        "API_KEY}"
+                    query_url = (
+                        "https://www.alphavantage.co/query?function"
+                        "=TIME_SERIES_INTRADAY&symbol={" 
+                        "SYMBOL}&interval=1min&outputsize=full&apikey={" 
+                        "API_KEY}")
                     with urllib.request.urlopen(query_url.format(
                             SYMBOL=stock_symbol, API_KEY=self._api_key)) \
                             as alpha_vantage_data:
@@ -215,8 +218,7 @@ class MarketDatasource(pydispatch.Dispatcher):
             #     instance=self,
             #     stock_symbol=stock_symbol,
             #     exception=AlphaVantageApiKeyMissingError)
-            raise AlphaVantageApiKeyMissingError(
-                'add_stock_symbol_live()')
+            raise AlphaVantageApiKeyMissingError()
 
 
     def add_stock_data(self,
@@ -236,13 +238,43 @@ class MarketDatasource(pydispatch.Dispatcher):
             # self.emit('MARKET_DATASOURCE_STOCK_SYMBOL_ADDED',
             #           instance=self,
             #           stock_symbol=stock_symbol)
+
         for p in data['Time Series (' + interval + ')']:
             time = datetime.datetime.strptime(p,
                                               '%Y-%m-%d %H:%M:%S')
-            close_price: float = \
-                data['Time Series (' + interval + ')'][p]['4. close']
-            self._symbol_data.extend([(time, {stock_symbol:
-                                                  close_price})])
+            close_price: float = float(
+                data['Time Series (' + interval + ')'][p]['4. close'])
+            self.add_ascending(stock_symbol, time, close_price)
+
+
+    def add_ascending(self,
+        stock_symbol: str,
+        time: datetime.datetime,
+        close_price: float
+    ) -> None:
+        """Given a stock symbol, time, and close price, update the
+        symbol data list in ascending order. If there is already an
+        entry for the given time, update the dictionary at that time
+        appropriately.
+        """
+
+        for i, q in enumerate(self._symbol_data):
+            # print(q[0])
+            # print(time)
+            # self.printList()
+            if time < q[0]:
+                self._symbol_data.insert(i, (time,
+                                             {stock_symbol:
+                                                  close_price}))
+                # print('alpha')
+                return
+            elif time == q[0]:
+                q[1].update({stock_symbol: close_price})
+                # print('bravo')
+                return
+        # Otherwise element is not present, add to end of list
+        self._symbol_data.extend([(time, {stock_symbol:
+                                              close_price})])
 
 
     def can_confirm(self) -> bool:
@@ -257,17 +289,15 @@ class MarketDatasource(pydispatch.Dispatcher):
 
         Otherwise return `False`.
         """
-        can_confirm: bool = False
-        if len(self._symbols) > 0 and len(self._symbol_data) == 0:
-            if self._mode == 'LIVE':
-                if self._api_key is not None:
-                    can_confirm = True
-            else:
-                can_confirm = True
-        # if can_confirm:
-            # self.emit('MARKET_DATASOURCE_CAN_CONFIRM_UPDATED',
-            #           instance=self)
-        return can_confirm
+        if not self._symbols or self._symbol_data:
+            return False
+        if self._mode == 'LIVE':
+            if self._api_key is None:
+                return False
+
+        # self.emit('MARKET_DATASOURCE_CAN_CONFIRM_UPDATED',
+        #           instance=self)
+        return True
 
 
     def confirm(self) -> None:
@@ -279,16 +309,15 @@ class MarketDatasource(pydispatch.Dispatcher):
         exception. If no API key has been set in “`LIVE`" mode, raises a
         `MarketDatasource.AlphaVantageApiKeyMissingError` exception.
         """
-        if not len(self._symbols) == 0:
-            if self._mode == 'LIVE' and self._api_key is None:
-                raise AlphaVantageApiKeyMissingError(
-                    'MarketDatasource.confirm()')
-            else:
-                self._confirmed = True
-                # self.emit('MARKET_DATASOURCE_CONFIRMATION_UPDATED',
-                #           instance=self)
-        else:
+
+        if not self._symbols:
             raise DatasourcesMissingError()
+        if self._mode == 'LIVE' and self._api_key is None:
+            raise AlphaVantageApiKeyMissingError()
+
+        self._confirmed = True
+        # self.emit('MARKET_DATASOURCE_CONFIRMATION_UPDATED',
+        #           instance=self)
 
 
     def get_live_api_key(self) -> typing.Optional[str]:
@@ -306,7 +335,7 @@ class MarketDatasource(pydispatch.Dispatcher):
 
 
     def get_next_prices(self
-    ) -> typing.Optional[typing.Tuple[datetime.datetime,typing.Dict[str, float]]]:
+    ) -> typing.Optional[typing.Tuple[datetime.datetime, typing.Dict[str, float]]]:
         """A blocking call: Return `None` if this datasource hasn't
         begun yet or if no more prices are left in the datasource.
 
@@ -317,7 +346,7 @@ class MarketDatasource(pydispatch.Dispatcher):
         if len(self._symbol_data) == 0:
             return None
         else:
-            return self._symbol_data.pop()
+            return self._symbol_data.pop(0)
 
 
     def get_stock_symbols(self) -> typing.List[str]:
@@ -347,6 +376,7 @@ class MarketDatasource(pydispatch.Dispatcher):
         if not self.is_confirmed():
             self._symbols.remove(stock_symbol)
             # self.emit('MARKET_DATASOURCE_STOCK_SYMBOL_REMOVED',
+            #           instance=self
             #           stock_symbol=stock_symbol)
         else:
             raise DatasourceConfirmedError(
