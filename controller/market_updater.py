@@ -6,6 +6,7 @@ __license__ = 'MIT'
 
 
 import enum
+import typing
 
 from kivy.clock import (
     Clock, ClockEvent)
