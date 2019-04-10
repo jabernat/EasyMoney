@@ -2,3 +2,12 @@
 #     pip install -r requirements.txt
 
 python-dispatch >= 0.1.2
+
+# Kivy and its dependencies
+docutils >= 0.14
+Pygments >= 2.3.1
+pypiwin32 >= 223; sys_platform == 'win32'
+kivy.deps.sdl2 >= 0.1.18
+kivy.deps.glew >= 0.1.10
+kivy.deps.angle >= 0.1.7; python_version >= '3.5'
+Kivy >= 1.10.1
