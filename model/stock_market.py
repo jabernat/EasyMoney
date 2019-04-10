@@ -138,10 +138,11 @@ class StockMarket(pydispatch.Dispatcher):
     ) -> None:
         """Remove all previously-added price data from this `StockMarket`.
 
-        Triggers `STOCK_MARKET_CLEARED` if any data was cleared.
+        Always triggers `STOCK_MARKET_CLEARED`.
         """
-        if not self._price_times:
-            return  # Nothing to clear
+        # Always trigger, so that Traders can reliably react by also resetting
+        #if not self._price_times:
+        #   return  # Nothing to clear
 
         self._price_times.clear()
         self._symbol_prices.clear()
