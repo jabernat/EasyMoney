@@ -105,13 +105,17 @@ class Trader(pydispatch.Dispatcher):
         instantiated subclass of `Trader`, and invalid arguments raise
         subclasses of `TypeError` and `ValueError`.
         """
+        # TODO: Fail if instantiating an abstract Trader? Maybe in __new__?
         self._name = name
         self._account = None
 
         self.set_initial_funds(initial_funds)
         self.set_trading_fee(trading_fee)
+
         # Subclass initializes algorithm settings during construction
         #self.set_algorithm_settings(algorithm_settings)
+
+        # TODO: Register for STOCK_MARKET_CLEARED to create a new account?
 
 
     def get_name(self
@@ -142,6 +146,8 @@ class Trader(pydispatch.Dispatcher):
         Triggers `TRADER_ACCOUNT_CREATED` if successful.
         """
         self._account = TraderAccount(market, self)
+        # TODO: Register for TRADER_ACCOUNT_FROZEN to unregister from StockMarket updates?
+        # TODO: Register for STOCK_MARKET_ADDITION to make buy and sell decisions? On error, freeze account.
         self.emit('TRADER_ACCOUNT_CREATED',
             instance=self,
             account=self._account)
