@@ -7,6 +7,8 @@ __license__ = 'MIT'
 
 import typing
 
+import pydispatch
+
 # Local package imports at end of file to resolve circular dependencies
 
 
@@ -46,7 +48,7 @@ class TradingFeeError(ValueError):
 
 
 
-class Trader(object):
+class Trader(pydispatch.Dispatcher):
     """The abstract base class of simulated traders within a `SimModel`. Each
     sub-class implements a unique trading strategy, and is identified by a
     unique algorithm name. Traders maintain settings that persist through
@@ -74,11 +76,12 @@ class Trader(object):
     _account: typing.Optional['TraderAccount']
     """This trader's active bank account and stock portfolio."""
 
-    #TODO: Events:
-    #   TRADER_ACCOUNT_CREATED
-    #   TRADER_ALGORITHM_SETTINGS_CHANGED
-    #   TRADER_INITIAL_FUNDS_CHANGED
-    #   TRADER_TRADING_FEE_CHANGED
+    _events_: typing.ClassVar[typing.List[str]] = [
+        'TRADER_ACCOUNT_CREATED',
+        'TRADER_ALGORITHM_SETTINGS_CHANGED',
+        'TRADER_INITIAL_FUNDS_CHANGED',
+        'TRADER_TRADING_FEE_CHANGED']
+    """Events broadcast by `Trader`s."""
 
 
     def __init__(self,
@@ -139,7 +142,9 @@ class Trader(object):
         Triggers `TRADER_ACCOUNT_CREATED` if successful.
         """
         self._account = TraderAccount(market, self)
-        #TODO: Broadcast TRADER_ACCOUNT_CREATED
+        self.emit('TRADER_ACCOUNT_CREATED',
+            instance=self,
+            account=self._account)
 
 
     @classmethod
@@ -200,7 +205,9 @@ class Trader(object):
             raise InitialFundsError(initial_funds)
 
         self._initial_funds = initial_funds
-        #TODO: Broadcast TRADER_INITIAL_FUNDS_CHANGED
+        self.emit('TRADER_INITIAL_FUNDS_CHANGED',
+            instance=self,
+            initial_funds=initial_funds)
 
 
     def get_trading_fee(self
@@ -231,7 +238,9 @@ class Trader(object):
             raise TradingFeeError(trading_fee)
 
         self._trading_fee = trading_fee
-        #TODO: Broadcast TRADER_TRADING_FEE_CHANGED
+        self.emit('TRADER_TRADING_FEE_CHANGED',
+            instance=self,
+            trading_fee=trading_fee)
 
 
     def get_algorithm_settings(self
@@ -243,6 +252,17 @@ class Trader(object):
         This result changes upon `TRADER_ALGORITHM_SETTINGS_CHANGED` events.
         """
         return self._algorithm_settings
+
+    def _set_algorithm_settings(self,
+        algorithm_settings: typing.Dict[str, typing.Any]
+    ) -> None:
+        """Helper for `Trader` subclasses to assign and broadcast changed
+        settings.
+        """
+        self._algorithm_settings = algorithm_settings
+        self.emit('TRADER_ALGORITHM_SETTINGS_CHANGED',
+            instance=self,
+            algorithm_settings=algorithm_settings)
 
     def set_algorithm_settings(self,
         algorithm_settings: typing.Dict[str, typing.Any]
@@ -257,6 +277,8 @@ class Trader(object):
         """
         raise NotImplementedError(
             'Trader subclass must implement set_algorithm_settings.')
+        # Subclasses validate settings and then assign and broadcast them:
+        #self._set_algorithm_settings(algorithm_settings)
 
 
 
