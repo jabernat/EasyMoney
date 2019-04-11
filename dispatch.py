@@ -1,34 +1,69 @@
+"""Defines `Dispatcher` and supporting classes."""
+
+
+__copyright__ = 'Copyright © 2016 Matthew Reid'
+__license__ = 'MIT'
+
+
 import typing
 
 
+
+
 class Event(object):
-    """Holds references to event names and subscribed listeners
+    """Holds references to event names and subscribed listeners.
 
     This is used internally by :class:`Dispatcher`.
     """
     __slots__ = ('name', 'listeners')
-    def __init__(self, name):
+
+
+    def __init__(self,
+        name
+    ):
         self.name = name
         self.listeners = []
-    def add_listener(self, callback):
+
+
+    def add_listener(self,
+        callback
+    ):
         self.listeners.append(callback)
-    def remove_listener(self, callback):
+
+
+    def remove_listener(self,
+        callback
+    ):
         self.listeners.remove(callback)
-    def __call__(self, *args, **kwargs):
-        """Dispatches the event to listeners
+
+
+    def __call__(self,
+        *args,
+        **kwargs
+    ):
+        """Dispatch the event to listeners.
 
         Called by :meth:`~Dispatcher.emit`
         """
         for callback in self.listeners:
             if callback(*args, **kwargs) is False:
                 return False
-    def __repr__(self):
+
+
+    def __repr__(self
+    ):
         return '<{}: {}>'.format(self.__class__, self)
-    def __str__(self):
+
+
+    def __str__(self
+    ):
         return self.name
 
+
+
+
 class Dispatcher(object):
-    """Core class used to enable all functionality in the library
+    """Core class used to enable all functionality in the library.
 
     Interfaces with :class:`Event` objects upon instance creation.
 
@@ -42,13 +77,19 @@ class Dispatcher(object):
     """
     __initialized_subclasses = set()
     __skip_initialized = True
-    def __new__(cls, *args, **kwargs):
+
+
+    def __new__(cls,
+        *args,
+        **kwargs
+    ):
         def iter_bases(_cls):
             if _cls is not object:
                 yield _cls
                 for b in _cls.__bases__:
                     for _cls_ in iter_bases(b):
                         yield _cls_
+
         skip_initialized = Dispatcher._Dispatcher__skip_initialized
         if not skip_initialized or cls not in Dispatcher._Dispatcher__initialized_subclasses:
             events = set()
@@ -62,28 +103,43 @@ class Dispatcher(object):
         obj = super(Dispatcher, cls).__new__(cls)
         obj._Dispatcher__init_events()
         return obj
-    def __init__(self, *args, **kwargs):
+
+
+    def __init__(self,
+        *args,
+        **kwargs
+    ):
         # Everything is handled by __new__
         # This is only here to prevent exceptions being raised
         pass
-    def __init_events(self):
+
+
+    def __init_events(self
+    ):
         if hasattr(self, '_Dispatcher__events'):
             return
         self.__events = {}
         for name in self._EVENTS_:
             self.__events[name] = Event(name)
-    def register_event(self, *names):
-        """Registers new events after instance creation
+
+
+    def register_event(self,
+        *names
+    ):
+        """Register new events after instance creation.
 
         Args:
             *names (str): Name or names of the events to register
         """
         for name in names:
-            if name in self.__events:
-                continue
-            self.__events[name] = Event(name)
-    def bind(self, **kwargs):
-        """Subscribes to events.
+            if name not in self.__events:
+                self.__events[name] = Event(name)
+
+
+    def bind(self,
+        **kwargs
+    ):
+        """Subscribe to events.
 
         Keyword arguments are used with the Event names as keys
         and the callbacks as values::
@@ -101,8 +157,12 @@ class Dispatcher(object):
         """
         for name, cb in kwargs.items():
             self.__events[name].add_listener(cb)
-    def unbind(self, *args):
-        """Unsubscribes from events.
+
+
+    def unbind(self,
+        *args
+    ):
+        """Unsubscribe from events.
 
         Multiple arguments can be given. Each of which can be either the method
         that was used for the original call to :meth:`bind` or an instance
@@ -114,8 +174,14 @@ class Dispatcher(object):
         for e in self.__events.values():
             for arg in args:
                 e.remove_listener(arg)
-    def emit(self, name, *args, **kwargs):
-        """Dispatches an event to any subscribed listeners
+
+
+    def emit(self,
+        name,
+        *args,
+        **kwargs
+    ):
+        """Dispatche an event to any subscribed listeners.
 
         Note:
             If a listener returns :obj:`False`, the event will stop dispatching to
@@ -127,8 +193,12 @@ class Dispatcher(object):
             **kwargs (Optional): Keyword arguments to be sent to listeners
         """
         return self.__events[name](*args, **kwargs)
-    def get_dispatcher_event(self, name):
-        """Retrieves an Event object by name
+
+
+    def get_dispatcher_event(self,
+        name
+    ):
+        """Retrieve an Event object by name.
 
         Args:
             name (str): The name of the :class:`Event` object to retrieve
