@@ -15,30 +15,35 @@ class EventListeners(object):
 
     This is used internally by :class:`Dispatcher`.
     """
-    __slots__ = ('name', 'listeners')
+    __slots__ = ('name', '_callbacks')
 
     name: str
 
-    listeners: typing.List[typing.Callable]
+    _callbacks: typing.List[typing.Callable]
 
 
     def __init__(self,
         name: str
     ) -> None:
         self.name = name
-        self.listeners = []
+        self._callbacks = []
 
 
-    def add_listener(self,
+    def add(self,
         callback: typing.Callable
     ) -> None:
-        self.listeners.append(callback)
+        self._callbacks.append(callback)
 
 
-    def remove_listener(self,
+    def remove(self,
         callback: typing.Callable
     ) -> None:
-        self.listeners.remove(callback)
+        self._callbacks.remove(callback)
+
+
+    def remove_all(self,
+    ) -> None:
+        self._callbacks.clear()
 
 
     def __call__(self,
@@ -49,7 +54,7 @@ class EventListeners(object):
 
         Called by :meth:`~Dispatcher.emit`
         """
-        for callback in self.listeners:
+        for callback in self._callbacks:
             if callback(*args, **kwargs) is False:
                 return False
         return True  # All listeners notified
@@ -57,7 +62,7 @@ class EventListeners(object):
 
     def __repr__(self
     ) -> str:
-        return '<{}: {}>'.format(self.__class__, self)
+        return '<{}: {}>'.format(self.__class__.__name__, self)
 
 
     def __str__(self
@@ -154,7 +159,7 @@ class Dispatcher(object):
         maintained relative to the order of binding.
         """
         for name, callback in event_callbacks.items():
-            self.__event_listeners[name].add_listener(callback)
+            self.__event_listeners[name].add(callback)
 
 
     def unbind(self,
@@ -166,7 +171,7 @@ class Dispatcher(object):
         """
         for listeners in self.__event_listeners.values():
             for callback in callbacks:
-                listeners.remove_listener(callback)
+                listeners.remove(callback)
 
 
     def emit(self,
@@ -217,4 +222,4 @@ if __name__ == '__main__':
     test.bind(EVENT_A=print, EVENT_B=print)
     test.emit('EVENT_A', 'Event A fired.')
     test.emit('EVENT_B', 'Event B fired.')
-    print('test =', dir(test))
+    print(repr(test), '=', dir(test))
