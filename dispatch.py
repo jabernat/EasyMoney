@@ -1,7 +1,7 @@
 """Defines `Dispatcher` and supporting classes."""
 
 
-__copyright__ = 'Copyright © 2016 Matthew Reid'
+__copyright__ = 'Original python-dispatch 0.1.2 Copyright © 2016 Matthew Reid'
 __license__ = 'MIT'
 
 
