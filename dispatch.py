@@ -1,9 +1,4 @@
-import types
 import typing
-
-from pydispatch.utils import (
-    WeakMethodContainer
-)
 
 
 class Event(object):
@@ -14,23 +9,19 @@ class Event(object):
     __slots__ = ('name', 'listeners')
     def __init__(self, name):
         self.name = name
-        self.listeners = WeakMethodContainer()
+        self.listeners = []
     def add_listener(self, callback):
-        self.listeners.add_method(callback)
-    def remove_listener(self, obj):
-        if isinstance(obj, (types.MethodType, types.FunctionType)):
-            self.listeners.del_method(obj)
-        else:
-            self.listeners.del_instance(obj)
+        self.listeners.append(callback)
+    def remove_listener(self, callback):
+        self.listeners.remove(callback)
     def __call__(self, *args, **kwargs):
         """Dispatches the event to listeners
 
         Called by :meth:`~Dispatcher.emit`
         """
-        for m in self.listeners.iter_methods():
-            r = m(*args, **kwargs)
-            if r is False:
-                return r
+        for callback in self.listeners:
+            if callback(*args, **kwargs) is False:
+                return False
     def __repr__(self):
         return '<{}: {}>'.format(self.__class__, self)
     def __str__(self):
