@@ -1,8 +1,8 @@
 import types
+import typing
 
 from pydispatch.utils import (
     WeakMethodContainer,
-    EmissionHoldLock,
     AIO_AVAILABLE,
     iscoroutinefunction,
 )
@@ -24,7 +24,6 @@ class Event(object):
         if AIO_AVAILABLE:
             self.aio_listeners = AioWeakMethodContainer()
             self.aio_waiters = AioEventWaiters()
-        self.emission_lock = EmissionHoldLock(self)
     def add_listener(self, callback, **kwargs):
         if AIO_AVAILABLE:
             if iscoroutinefunction(callback):
@@ -48,9 +47,6 @@ class Event(object):
 
         Called by :meth:`~Dispatcher.emit`
         """
-        if self.emission_lock.held:
-            self.emission_lock.last_event = (args, kwargs)
-            return
         if AIO_AVAILABLE:
             self.aio_waiters(*args, **kwargs)
             self.aio_listeners(*args, **kwargs)
@@ -265,45 +261,3 @@ class Dispatcher(object):
         if e is None:
             e = self.__events[name]
         return e
-    def emission_lock(self, name):
-        """Holds emission of events and dispatches the last event on release
-
-        The context manager returned will store the last event data called by
-        :meth:`emit` and prevent callbacks until it exits. On exit, it will
-        dispatch the last event captured (if any)::
-
-            class Foo(Dispatcher):
-                _events_ = ['my_event']
-
-            def on_my_event(value):
-                print(value)
-
-            foo = Foo()
-            foo.bind(my_event=on_my_event)
-
-            with foo.emission_lock('my_event'):
-                foo.emit('my_event', 1)
-                foo.emit('my_event', 2)
-
-            >>> 2
-
-        Args:
-            name (str): The name of the :class:`Event` or
-                :class:`~pydispatch.properties.Property`
-
-        Returns:
-            A context manager to be used by the :keyword:`with` statement.
-
-            If available, this will also be an async context manager to be used
-            with the :keyword:`async with` statement (see `PEP 492`_).
-
-        Note:
-            The context manager is re-entrant, meaning that multiple calls to
-            this method within nested context scopes are possible.
-
-        .. _PEP 492: https://www.python.org/dev/peps/pep-0492/#asynchronous-context-managers-and-async-with
-        """
-        e = self.__property_events.get(name)
-        if e is None:
-            e = self.__events[name]
-        return e.emission_lock
