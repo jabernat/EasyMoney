@@ -7,7 +7,7 @@ __license__ = 'MIT'
 
 import typing
 
-import pydispatch
+import dispatch
 
 # Local package imports at end of file to resolve circular dependencies
 
@@ -48,7 +48,7 @@ class UnrecognizedAlgorithmError(ValueError):
 
 
 
-class SimModel(pydispatch.Dispatcher):
+class SimModel(dispatch.Dispatcher):
     """The state of a simulated stock market along with the bank accounts and
     stock portfolios of participating traders. This high-level MVC model module
     broadcasts state update events to observers.
@@ -64,7 +64,7 @@ class SimModel(pydispatch.Dispatcher):
     _traders: typing.Dict[str, 'Trader']
     """Participating `Trader` subclass instances indexed by their names."""
 
-    _events_: typing.ClassVar[typing.List[str]] = [
+    EVENTS: typing.ClassVar[typing.List[str]] = [
         'TRADER_ADDED',
         'TRADER_ALGORITHM_ADDED',
         'TRADER_REMOVED']

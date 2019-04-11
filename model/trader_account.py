@@ -8,7 +8,7 @@ __license__ = 'MIT'
 import collections
 import typing
 
-import pydispatch
+import dispatch
 
 # Local package imports at end of file to resolve circular dependencies
 
@@ -103,7 +103,7 @@ class StockShareQuantityError(ValueError):
 
 
 
-class TraderAccount(pydispatch.Dispatcher):
+class TraderAccount(dispatch.Dispatcher):
     """The bank balance and stock portfolio of an owning `Trader`, tied to a
     particular `StockMarket`. The account provides methods for traders to buy
     and sell their stocks, and statistics collection for later analysis.
@@ -141,7 +141,7 @@ class TraderAccount(pydispatch.Dispatcher):
     _frozen: bool
     """When `True`, this account can no longer be used to `buy` or `sell`."""
 
-    _events_: typing.ClassVar[typing.List[str]] = [
+    EVENTS: typing.ClassVar[typing.List[str]] = [
         'TRADER_ACCOUNT_BOUGHT',
         'TRADER_ACCOUNT_FROZEN',
         'TRADER_ACCOUNT_SOLD']

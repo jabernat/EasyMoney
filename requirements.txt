@@ -1,8 +1,6 @@
 # Install required libraries with the following command:
 #     pip install -r requirements.txt
 
-python-dispatch >= 0.1.2
-
 # Kivy and its dependencies
 docutils >= 0.14
 Pygments >= 2.3.1

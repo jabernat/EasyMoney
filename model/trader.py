@@ -7,7 +7,7 @@ __license__ = 'MIT'
 
 import typing
 
-import pydispatch
+import dispatch
 
 # Local package imports at end of file to resolve circular dependencies
 
@@ -48,7 +48,7 @@ class TradingFeeError(ValueError):
 
 
 
-class Trader(pydispatch.Dispatcher):
+class Trader(dispatch.Dispatcher):
     """The abstract base class of simulated traders within a `SimModel`. Each
     sub-class implements a unique trading strategy, and is identified by a
     unique algorithm name. Traders maintain settings that persist through
@@ -76,7 +76,7 @@ class Trader(pydispatch.Dispatcher):
     _account: typing.Optional['TraderAccount']
     """This trader's active bank account and stock portfolio."""
 
-    _events_: typing.ClassVar[typing.List[str]] = [
+    EVENTS: typing.ClassVar[typing.List[str]] = [
         'TRADER_ACCOUNT_CREATED',
         'TRADER_ALGORITHM_SETTINGS_CHANGED',
         'TRADER_INITIAL_FUNDS_CHANGED',

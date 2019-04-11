@@ -9,7 +9,7 @@ import bisect
 import datetime
 import typing
 
-import pydispatch
+import dispatch
 
 
 
@@ -106,7 +106,7 @@ class StockSymbolUnrecognizedError(ValueError):
 
 
 
-class StockMarket(pydispatch.Dispatcher):
+class StockMarket(dispatch.Dispatcher):
     """A component of `SimModel` that stores a time series of stock share
     prices accumulated over simulation runs. To begin a new simulation, the
     stock market can be reset.
@@ -121,7 +121,7 @@ class StockMarket(pydispatch.Dispatcher):
     corresponding to insertion times within `_price_times`.
     """
 
-    _events_: typing.ClassVar[typing.List[str]] = [
+    EVENTS: typing.ClassVar[typing.List[str]] = [
         'STOCK_MARKET_ADDITION',
         'STOCK_MARKET_CLEARED']
     """Events broadcast by instances of the `StockMarket`."""
