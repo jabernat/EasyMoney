@@ -2,10 +2,8 @@ import types
 import typing
 
 from pydispatch.utils import (
-    WeakMethodContainer,
-    AIO_AVAILABLE
+    WeakMethodContainer
 )
-from pydispatch.properties import Property
 
 
 class Event(object):
@@ -41,8 +39,7 @@ class Event(object):
 class Dispatcher(object):
     """Core class used to enable all functionality in the library
 
-    Interfaces with :class:`Event` and :class:`~pydispatch.properties.Property`
-    objects upon instance creation.
+    Interfaces with :class:`Event` objects upon instance creation.
 
     Events can be created by calling :meth:`register_event` or by the subclass
     definition::
@@ -63,17 +60,11 @@ class Dispatcher(object):
                         yield _cls_
         skip_initialized = Dispatcher._Dispatcher__skip_initialized
         if not skip_initialized or cls not in Dispatcher._Dispatcher__initialized_subclasses:
-            props = {}
             events = set()
             for _cls in iter_bases(cls):
                 for attr in dir(_cls):
-                    prop = getattr(_cls, attr)
-                    if attr not in props and isinstance(prop, Property):
-                        props[attr] = prop
-                        prop.name = attr
                     _events = getattr(_cls, '_events_', [])
                     events |= set(_events)
-            cls._PROPERTIES_ = props
             cls._EVENTS_ = events
             if skip_initialized:
                 Dispatcher._Dispatcher__initialized_subclasses.add(cls)
@@ -90,10 +81,6 @@ class Dispatcher(object):
         self.__events = {}
         for name in self._EVENTS_:
             self.__events[name] = Event(name)
-        self.__property_events = {}
-        for name, prop in self._PROPERTIES_.items():
-            self.__property_events[name] = Event(name)
-            prop._add_instance(self)
     def register_event(self, *names):
         """Registers new events after instance creation
 
@@ -105,47 +92,36 @@ class Dispatcher(object):
                 continue
             self.__events[name] = Event(name)
     def bind(self, **kwargs):
-        """Subscribes to events or to :class:`~pydispatch.properties.Property` updates
+        """Subscribes to events.
 
-        Keyword arguments are used with the Event or Property names as keys
+        Keyword arguments are used with the Event names as keys
         and the callbacks as values::
 
             class Foo(Dispatcher):
-                name = Property()
+                _events_ = ['awesome_event']
 
             foo = Foo()
 
-            foo.bind(name=my_listener.on_foo_name_changed)
-            foo.bind(name=other_listener.on_name,
-                     value=other_listener.on_value)
+            foo.bind(awesome_event=my_listener.on_foo_awesome_event)
+            foo.bind(awesome_event=other_listener.on_other_awesome_event)
 
         The callbacks are stored as weak references and their order is not
         maintained relative to the order of binding.
         """
-        props = self.__property_events
-        events = self.__events
         for name, cb in kwargs.items():
-            if name in props:
-                e = props[name]
-            else:
-                e = events[name]
-            e.add_listener(cb)
+            self.__events[name].add_listener(cb)
     def unbind(self, *args):
-        """Unsubscribes from events or :class:`~pydispatch.properties.Property` updates
+        """Unsubscribes from events.
 
         Multiple arguments can be given. Each of which can be either the method
         that was used for the original call to :meth:`bind` or an instance
         object.
 
-        If an instance of an object is supplied, any previously bound Events and
-        Properties will be 'unbound'.
+        If an instance of an object is supplied, any previously bound Events
+        will be 'unbound'.
         """
-        props = self.__property_events.values()
-        events = self.__events.values()
-        for arg in args:
-            for prop in props:
-                prop.remove_listener(arg)
-            for e in events:
+        for e in self.__events.values():
+            for arg in args:
                 e.remove_listener(arg)
     def emit(self, name, *args, **kwargs):
         """Dispatches an event to any subscribed listeners
@@ -159,23 +135,16 @@ class Dispatcher(object):
             *args (Optional): Positional arguments to be sent to listeners
             **kwargs (Optional): Keyword arguments to be sent to listeners
         """
-        e = self.__property_events.get(name)
-        if e is None:
-            e = self.__events[name]
-        return e(*args, **kwargs)
+        return self.__events[name](*args, **kwargs)
     def get_dispatcher_event(self, name):
         """Retrieves an Event object by name
 
         Args:
-            name (str): The name of the :class:`Event` or
-                :class:`~pydispatch.properties.Property` object to retrieve
+            name (str): The name of the :class:`Event` object to retrieve
 
         Returns:
-            The :class:`Event` instance for the event or property definition
+            The :class:`Event` instance for the event definition
 
         .. versionadded:: 0.1.0
         """
-        e = self.__property_events.get(name)
-        if e is None:
-            e = self.__events[name]
-        return e
+        return self.__events[name]
