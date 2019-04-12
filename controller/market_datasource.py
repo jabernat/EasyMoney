@@ -149,7 +149,6 @@ class MarketDatasource(pydispatch.Dispatcher):
         for index, time_and_data_dict in enumerate(self._combined_prices):
             if len(time_and_data_dict[1]) == len(self._symbols_prices):
                 self._current_time_index = index
-                print(index)
                 return
 
                     
@@ -200,13 +199,12 @@ class MarketDatasource(pydispatch.Dispatcher):
             return
         if not self._symbols_prices:
             raise DatasourcesMissingError()
-        self._confirmed = True
         self._combine_data()
         self._set_start_index()
+        self._confirmed = True
 
         self.emit('MARKET_DATASOURCE_CONFIRMED',
                   instance=self)
-        print(self._combined_prices)
 
     def get_next_prices(self
     ) -> typing.Optional[typing.Tuple[datetime.datetime, typing.Dict[str, float]]]:
@@ -218,7 +216,7 @@ class MarketDatasource(pydispatch.Dispatcher):
         """
         if not self._combined_prices:
             return None
-        if self._current_time_index == len(self._combined_prices):
+        if self._current_time_index >= len(self._combined_prices):
             return None
         else:
             next_prices = self._combined_prices[self._current_time_index]
