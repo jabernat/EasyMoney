@@ -65,9 +65,9 @@ class SimModel(dispatch.Dispatcher):
     """Participating `Trader` subclass instances indexed by their names."""
 
     EVENTS: typing.ClassVar[typing.List[str]] = [
-        'TRADER_ADDED',
-        'TRADER_ALGORITHM_ADDED',
-        'TRADER_REMOVED']
+        'SIMMODEL_TRADER_ADDED',
+        'SIMMODEL_TRADER_ALGORITHM_ADDED',
+        'SIMMODEL_TRADER_REMOVED']
     """Events broadcast by the `SimModel`."""
 
 
@@ -103,7 +103,8 @@ class SimModel(dispatch.Dispatcher):
         """Return a `list` of registered trader algorithm names usable by
         participating traders.
 
-        This result changes following the `TRADER_ALGORITHM_ADDED` event.
+        This result changes following the `SIMMODEL_TRADER_ALGORITHM_ADDED`
+        event.
         """
         return list(self._trader_algorithms.keys())
 
@@ -115,15 +116,15 @@ class SimModel(dispatch.Dispatcher):
         name (see `Trader.get_algorithm_name`) becomes an available option for
         the `add_trader` factory method.
 
-        Triggers `TRADER_ALGORITHM_ADDED` if successful.
+        Triggers `SIMMODEL_TRADER_ALGORITHM_ADDED` if successful.
         """
         name = trader_class.get_algorithm_name()
         if name in self._trader_algorithms:
             return
 
         self._trader_algorithms[name] = trader_class
-        self.emit('TRADER_ALGORITHM_ADDED',
-            instance=self,
+        self.emit('SIMMODEL_TRADER_ALGORITHM_ADDED',
+            model=self,
             algorithm=name)
 
     def _get_trader_class_by_algorithm_name(self,
@@ -172,8 +173,8 @@ class SimModel(dispatch.Dispatcher):
         """Return a `list` of the simulation's participating `Trader`s, which
         each expose their configuration and `TraderAccount` interfaces.
 
-        This result changes following `TRADER_ADDED` and `TRADER_REMOVED`
-        events.
+        This result changes following `SIMMODEL_TRADER_ADDED` and
+        `SIMMODEL_TRADER_REMOVED` events.
         """
         return list(self._traders.values())
 
@@ -212,7 +213,7 @@ class SimModel(dispatch.Dispatcher):
         `algorithm`, and invalid arguments raise subclasses of `TypeError` and
         `ValueError`.
 
-        Triggers `TRADER_ADDED` if successful.
+        Triggers `SIMMODEL_TRADER_ADDED` if successful.
         """
         if name in self._traders:
             raise TraderNameTakenError(name)
@@ -222,8 +223,8 @@ class SimModel(dispatch.Dispatcher):
             name, initial_funds, trading_fee, algorithm_settings)
 
         self._traders[name] = trader
-        self.emit('TRADER_ADDED',
-            instance=self,
+        self.emit('SIMMODEL_TRADER_ADDED',
+            model=self,
             trader=trader)
 
     def remove_trader(self,
@@ -233,7 +234,7 @@ class SimModel(dispatch.Dispatcher):
 
         No error occurs if `name` does not exist.
 
-        Triggers `TRADER_REMOVED` if successful.
+        Triggers `SIMMODEL_TRADER_REMOVED` if successful.
         """
         try:
             trader = self._traders[name]
@@ -241,8 +242,8 @@ class SimModel(dispatch.Dispatcher):
             return
 
         del self._traders[name]
-        self.emit('TRADER_REMOVED',
-            instance=self,
+        self.emit('SIMMODEL_TRADER_REMOVED',
+            model=self,
             trader=trader)
 
 

@@ -115,7 +115,7 @@ class Trader(dispatch.Dispatcher):
         # Subclass initializes algorithm settings during construction
         #self.set_algorithm_settings(algorithm_settings)
 
-        # TODO: Register for STOCK_MARKET_CLEARED to create a new account?
+        # TODO: Register for STOCKMARKET_CLEARED to create a new account?
 
 
     def get_name(self
@@ -146,10 +146,10 @@ class Trader(dispatch.Dispatcher):
         Triggers `TRADER_ACCOUNT_CREATED` if successful.
         """
         self._account = TraderAccount(market, self)
-        # TODO: Register for TRADER_ACCOUNT_FROZEN to unregister from StockMarket updates?
-        # TODO: Register for STOCK_MARKET_ADDITION to make buy and sell decisions? On error, freeze account.
+        # TODO: Register for TRADERACCOUNT_FROZEN to unregister from StockMarket updates?
+        # TODO: Register for STOCKMARKET_ADDITION to make buy and sell decisions? On error, freeze account.
         self.emit('TRADER_ACCOUNT_CREATED',
-            instance=self,
+            trader=self,
             account=self._account)
 
 
@@ -212,7 +212,7 @@ class Trader(dispatch.Dispatcher):
 
         self._initial_funds = initial_funds
         self.emit('TRADER_INITIAL_FUNDS_CHANGED',
-            instance=self,
+            trader=self,
             initial_funds=initial_funds)
 
 
@@ -245,7 +245,7 @@ class Trader(dispatch.Dispatcher):
 
         self._trading_fee = trading_fee
         self.emit('TRADER_TRADING_FEE_CHANGED',
-            instance=self,
+            trader=self,
             trading_fee=trading_fee)
 
 
@@ -267,7 +267,7 @@ class Trader(dispatch.Dispatcher):
         """
         self._algorithm_settings = algorithm_settings
         self.emit('TRADER_ALGORITHM_SETTINGS_CHANGED',
-            instance=self,
+            trader=self,
             algorithm_settings=algorithm_settings)
 
     def set_algorithm_settings(self,
