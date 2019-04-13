@@ -40,7 +40,10 @@ class EventListeners(object):
     def remove(self,
         callback: typing.Callable
     ) -> None:
-        self._callbacks.remove(callback)
+        try:
+            self._callbacks.remove(callback)
+        except ValueError:
+            pass  # Ignore if callback wasn't found
 
 
     def remove_all(self,
