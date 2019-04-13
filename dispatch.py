@@ -20,6 +20,7 @@ class EventListeners(object):
     name: str
 
     _callbacks: typing.List[typing.Callable]
+    """All registered callbacks, preserving registration order."""
 
 
     def __init__(self,
@@ -32,7 +33,8 @@ class EventListeners(object):
     def add(self,
         callback: typing.Callable
     ) -> None:
-        self._callbacks.append(callback)
+        if callback not in self._callbacks:
+            self._callbacks.append(callback)
 
 
     def remove(self,
