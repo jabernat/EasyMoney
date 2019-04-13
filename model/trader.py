@@ -158,8 +158,6 @@ class Trader(dispatch.Dispatcher, metaclass=TraderMeta):
         instantiated subclass of `Trader`, and invalid arguments raise
         subclasses of `TypeError` and `ValueError`.
         """
-        # TODO: Fail if instantiating an abstract Trader? Use ABCMeta?
-        # TODO: Auto-register with static SimModel.add_algorithm using metaclass?
         self._stock_market = market
 
         self._name = name
