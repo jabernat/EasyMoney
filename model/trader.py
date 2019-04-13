@@ -85,6 +85,7 @@ class Trader(dispatch.Dispatcher):
 
 
     def __init__(self,
+        market: 'StockMarket',
         name: str,
         initial_funds: float,
         trading_fee: float,
@@ -105,7 +106,8 @@ class Trader(dispatch.Dispatcher):
         instantiated subclass of `Trader`, and invalid arguments raise
         subclasses of `TypeError` and `ValueError`.
         """
-        # TODO: Fail if instantiating an abstract Trader? Maybe in __new__?
+        # TODO: Fail if instantiating an abstract Trader? Use ABCMeta?
+        # TODO: Auto-register with static SimModel.add_algorithm using metaclass?
         self._name = name
         self._account = None
 
@@ -115,7 +117,14 @@ class Trader(dispatch.Dispatcher):
         # Subclass initializes algorithm settings during construction
         #self.set_algorithm_settings(algorithm_settings)
 
-        # TODO: Register for STOCKMARKET_CLEARED to create a new account?
+        market.bind(
+            STOCKMARKET_CLEARED=self._on_stockmarket_cleared)
+
+    def _on_stockmarket_cleared(self,
+        market: 'StockMarket'
+    ) -> None:
+        """Responds to market resets by creating a new account."""
+        self.create_account(market)
 
 
     def get_name(self
@@ -147,7 +156,7 @@ class Trader(dispatch.Dispatcher):
         """
         self._account = TraderAccount(market, self)
         # TODO: Register for TRADERACCOUNT_FROZEN to unregister from StockMarket updates?
-        # TODO: Register for STOCKMARKET_ADDITION to make buy and sell decisions? On error, freeze account.
+        # TODO: Register for STOCKMARKET_ADDITION to make buy and sell decisions? On error, freeze account. Call an abstract .trade() method.
         self.emit('TRADER_ACCOUNT_CREATED',
             trader=self,
             account=self._account)

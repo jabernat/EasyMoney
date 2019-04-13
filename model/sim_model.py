@@ -220,6 +220,7 @@ class SimModel(dispatch.Dispatcher):
 
         trader_class = self._get_trader_class_by_algorithm_name(algorithm)
         trader = trader_class(
+            self._stock_market,
             name, initial_funds, trading_fee, algorithm_settings)
 
         self._traders[name] = trader
