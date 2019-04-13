@@ -5,6 +5,8 @@ __copyright__ = 'Copyright © 2019, Erik Anderson, James Abernathy, and Tyler Ge
 __license__ = 'MIT'
 
 
+import abc
+import inspect
 import typing
 
 import dispatch
@@ -48,7 +50,23 @@ class TradingFeeError(ValueError):
 
 
 
-class Trader(dispatch.Dispatcher):
+class TraderMeta(abc.ABCMeta):
+    """Metaclass for `Trader` subclasses to automatically track all concrete
+    implementations.
+    """
+    def __init__(cls,
+        name: str,
+        bases: typing.Sequence[typing.Type],
+        namespace: typing.Mapping[str, typing.Any],
+        **kwargs
+    ) -> None:
+        if not inspect.isabstract(cls):
+            print('New Trader:', cls.get_algorithm_name())  # type: ignore
+
+
+
+
+class Trader(dispatch.Dispatcher, metaclass=TraderMeta):
     """The abstract base class of simulated traders within a `SimModel`. Each
     sub-class implements a unique trading strategy, and is identified by a
     unique algorithm name. Traders maintain settings that persist through
@@ -197,6 +215,7 @@ class Trader(dispatch.Dispatcher):
 
 
     @classmethod
+    @abc.abstractmethod
     def get_algorithm_name(cls
     ) -> str:
         """Return this `Trader` subclass' identifying algorithm name, unique
@@ -313,6 +332,7 @@ class Trader(dispatch.Dispatcher):
             trader=self,
             algorithm_settings=algorithm_settings)
 
+    @abc.abstractmethod
     def set_algorithm_settings(self,
         algorithm_settings: typing.Dict[str, typing.Any]
     ) -> None:
@@ -330,6 +350,7 @@ class Trader(dispatch.Dispatcher):
         #self._set_algorithm_settings(algorithm_settings)
 
 
+    @abc.abstractmethod
     def trade(self
     ) -> None:
         """Choose to buy or sell based on updated stock market conditions."""
