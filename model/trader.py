@@ -51,17 +51,17 @@ class TradingFeeError(ValueError):
 
 
 class TraderMeta(abc.ABCMeta):
-    """Metaclass for `Trader` subclasses to automatically track all concrete
+    """Metaclass for `Trader` subclasses to automatically register all concrete
     implementations.
     """
-    def __init__(cls,
+    def __init__(trader_subclass,
         name: str,
         bases: typing.Sequence[typing.Type],
         namespace: typing.Mapping[str, typing.Any],
-        **kwargs
+        **kwargs: typing.Any
     ) -> None:
-        if not inspect.isabstract(cls):
-            print('New Trader:', cls.get_algorithm_name())  # type: ignore
+        if not inspect.isabstract(trader_subclass):
+            Trader.register_subclass(trader_subclass)  # type: ignore
 
 
 
@@ -78,6 +78,10 @@ class Trader(dispatch.Dispatcher, metaclass=TraderMeta):
     their associated accounts.
     """
 
+
+    _subclasses: typing.ClassVar[typing.Set[typing.Type['Trader']]] = set()
+    """All registered concrete subclasses of the `Trader` abstract base class.
+    """
 
     _stock_market: 'StockMarket'
     """The market that this trader reacts to."""
@@ -103,6 +107,33 @@ class Trader(dispatch.Dispatcher, metaclass=TraderMeta):
         'TRADER_INITIAL_FUNDS_CHANGED',
         'TRADER_TRADING_FEE_CHANGED'])
     """Events broadcast by `Trader`s."""
+
+
+    @classmethod
+    def register_subclass(cls,
+        subclass: typing.Type['Trader']
+    ) -> bool:
+        """Add concrete `subclass` of `Trader` to the set of available
+        implementations, returning `True` if successfully added.
+        """
+        if not issubclass(subclass, cls):
+            raise ValueError('Subclass {!r} does not actually inherit from '
+                '{!r} parent class.'.format(
+                    subclass, cls))
+        if inspect.isabstract(subclass) or subclass in cls._subclasses:
+            return False
+
+        cls._subclasses.add(subclass)
+        return True
+
+    @classmethod
+    def iter_subclasses(cls
+    ) -> typing.Iterator[typing.Type['Trader']]:
+        """Return an iterator that yields all concrete `Trader` subclasses that
+        were registered with `register_subclass`.
+        """
+        for subclass in cls._subclasses:
+            yield subclass
 
 
     def __init__(self,

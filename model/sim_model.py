@@ -79,6 +79,10 @@ class SimModel(dispatch.Dispatcher):
         self._stock_market = StockMarket()
         self._traders = {}
 
+        # Add all known Trader implementations
+        for trader_subclass in Trader.iter_subclasses():
+            self.add_trader_algorithm(trader_subclass)
+
 
     def reset_market_and_trader_accounts(self
     ) -> None:
