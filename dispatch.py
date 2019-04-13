@@ -86,7 +86,7 @@ class Dispatcher(object):
     definition::
 
         class Foo(Dispatcher):
-            EVENTS = ['awesome_event', 'on_less_awesome_event']
+            EVENTS = frozenset(['awesome_event', 'on_less_awesome_event'])
 
     Once defined, an event can be dispatched to listeners by calling :meth:`emit`.
     """
@@ -112,7 +112,7 @@ class Dispatcher(object):
             events_combined: typing.Set[str] = set()
             for base_cls in iter_bases(cls):
                 try:
-                    events_combined |= set(base_cls.EVENTS)
+                    events_combined |= base_cls.EVENTS
                 except AttributeError:
                     pass
             cls.__events_combined = events_combined
@@ -153,7 +153,7 @@ class Dispatcher(object):
         and the callbacks as values::
 
             class Foo(Dispatcher):
-                EVENTS = ['awesome_event']
+                EVENTS = frozenset(['awesome_event'])
 
             foo = Foo()
 
@@ -219,7 +219,9 @@ class Dispatcher(object):
 if __name__ == '__main__':
     # Simple test of event dispatch
     class Test(Dispatcher):
-        EVENTS = ['EVENT_A', 'EVENT_B']
+        EVENTS = frozenset([
+            'EVENT_A',
+            'EVENT_B'])
         def __init__(self):
             pass
 

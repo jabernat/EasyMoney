@@ -64,10 +64,10 @@ class SimModel(dispatch.Dispatcher):
     _traders: typing.Dict[str, 'Trader']
     """Participating `Trader` subclass instances indexed by their names."""
 
-    EVENTS: typing.ClassVar[typing.List[str]] = [
+    EVENTS: typing.ClassVar[typing.FrozenSet[str]] = frozenset([
         'SIMMODEL_TRADER_ADDED',
         'SIMMODEL_TRADER_ALGORITHM_ADDED',
-        'SIMMODEL_TRADER_REMOVED']
+        'SIMMODEL_TRADER_REMOVED'])
     """Events broadcast by the `SimModel`."""
 
 

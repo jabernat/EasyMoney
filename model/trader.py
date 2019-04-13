@@ -79,11 +79,11 @@ class Trader(dispatch.Dispatcher):
     _account: typing.Optional['TraderAccount']
     """This trader's active bank account and stock portfolio."""
 
-    EVENTS: typing.ClassVar[typing.List[str]] = [
+    EVENTS: typing.ClassVar[typing.FrozenSet[str]] = frozenset([
         'TRADER_ACCOUNT_CREATED',
         'TRADER_ALGORITHM_SETTINGS_CHANGED',
         'TRADER_INITIAL_FUNDS_CHANGED',
-        'TRADER_TRADING_FEE_CHANGED']
+        'TRADER_TRADING_FEE_CHANGED'])
     """Events broadcast by `Trader`s."""
 
 

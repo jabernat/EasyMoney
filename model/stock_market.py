@@ -121,9 +121,9 @@ class StockMarket(dispatch.Dispatcher):
     corresponding to insertion times within `_price_times`.
     """
 
-    EVENTS: typing.ClassVar[typing.List[str]] = [
+    EVENTS: typing.ClassVar[typing.FrozenSet[str]] = frozenset([
         'STOCKMARKET_ADDITION',
-        'STOCKMARKET_CLEARED']
+        'STOCKMARKET_CLEARED'])
     """Events broadcast by instances of the `StockMarket`."""
 
 

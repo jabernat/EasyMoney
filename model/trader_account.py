@@ -141,10 +141,10 @@ class TraderAccount(dispatch.Dispatcher):
     _frozen: bool
     """When `True`, this account can no longer be used to `buy` or `sell`."""
 
-    EVENTS: typing.ClassVar[typing.List[str]] = [
+    EVENTS: typing.ClassVar[typing.FrozenSet[str]] = frozenset([
         'TRADERACCOUNT_BOUGHT',
         'TRADERACCOUNT_FROZEN',
-        'TRADERACCOUNT_SOLD']
+        'TRADERACCOUNT_SOLD'])
     """Events broadcast by `TraderAccount` instances."""
 
 
