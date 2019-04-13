@@ -25,7 +25,8 @@ class TraderExample(Trader):
         trading_fee: float,
         algorithm_settings: typing.Dict[str, typing.Any]
     ) -> None:
-        """
+        """Initialize the new `Trader`, along with its algorithm-specific
+        settings.
         """
         super().__init__(
             market, name, initial_funds, trading_fee, algorithm_settings)
