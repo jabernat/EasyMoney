@@ -200,7 +200,7 @@ class StockMarket(dispatch.Dispatcher):
         self._price_times.append(time)
         for stock_symbol, price in stock_symbol_prices.items():
             self._symbol_prices[stock_symbol].append(price)
-        self.emit('STOCKMARKET_ADDED',
+        self.emit('STOCKMARKET_ADDITION',
             market=self,
             time=time,
             stock_symbol_prices=stock_symbol_prices)
