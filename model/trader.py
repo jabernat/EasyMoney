@@ -165,9 +165,7 @@ class Trader(dispatch.Dispatcher, metaclass=TraderMeta):
 
         self.set_initial_funds(initial_funds)
         self.set_trading_fee(trading_fee)
-
-        # Subclass initializes algorithm settings during construction
-        #self.set_algorithm_settings(algorithm_settings)
+        self.set_algorithm_settings(algorithm_settings)
 
         market.bind(
             STOCKMARKET_CLEARED=self._on_stockmarket_cleared)

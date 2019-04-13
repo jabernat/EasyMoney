@@ -18,21 +18,6 @@ class TraderExample(Trader):
     """
 
 
-    def __init__(self,
-        market: StockMarket,
-        name: str,
-        initial_funds: float,
-        trading_fee: float,
-        algorithm_settings: typing.Dict[str, typing.Any]
-    ) -> None:
-        """Initialize the new `Trader`, along with its algorithm-specific
-        settings.
-        """
-        super().__init__(
-            market, name, initial_funds, trading_fee, algorithm_settings)
-        self.set_algorithm_settings(algorithm_settings)
-
-
     @classmethod
     def get_algorithm_name(cls
     ) -> str:
