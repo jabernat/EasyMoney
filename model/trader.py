@@ -61,6 +61,9 @@ class Trader(dispatch.Dispatcher):
     """
 
 
+    _stock_market: 'StockMarket'
+    """The market that this trader reacts to."""
+
     _name: str
     """The name that uniquely identifies this trader within its `SimModel`."""
 
@@ -108,6 +111,8 @@ class Trader(dispatch.Dispatcher):
         """
         # TODO: Fail if instantiating an abstract Trader? Use ABCMeta?
         # TODO: Auto-register with static SimModel.add_algorithm using metaclass?
+        self._stock_market = market
+
         self._name = name
         self._account = None
 
@@ -121,11 +126,15 @@ class Trader(dispatch.Dispatcher):
             STOCKMARKET_CLEARED=self._on_stockmarket_cleared)
 
     def _on_stockmarket_cleared(self,
-        market: 'StockMarket'
     ) -> None:
         """Responds to market resets by creating a new account."""
-        self.create_account(market)
+        self.create_account()
 
+
+    def get_stock_market(self
+    ) -> 'StockMarket':
+        """Return the market that this trader participates in."""
+        return self._stock_market
 
     def get_name(self
     ) -> str:
@@ -144,22 +153,47 @@ class Trader(dispatch.Dispatcher):
         """
         return self._account
 
-    def create_account(self,
-        market: 'StockMarket'
+    def create_account(self
     ) -> 'TraderAccount':
         """Discard any previously created `TraderAccount`, and create a new one
-        tied to `market`. The new account starts with this trader's configured
-        initial funds (see `get_initial_funds`). Returns the newly created
-        account.
+        tied to `_stock_market`. The new account starts with this trader's
+        configured initial funds (see `get_initial_funds`). Returns the newly
+        created account.
 
         Triggers `TRADER_ACCOUNT_CREATED` if successful.
         """
-        self._account = TraderAccount(market, self)
-        # TODO: Register for TRADERACCOUNT_FROZEN to unregister from StockMarket updates?
-        # TODO: Register for STOCKMARKET_ADDITION to make buy and sell decisions? On error, freeze account. Call an abstract .trade() method.
+        if self._account is not None:
+            # Disconnect from old account
+            self._account.unbind(
+                self._on_traderaccount_frozen)
+
+        self._account = TraderAccount(self._stock_market, self)
+        self._account.bind(
+            TRADERACCOUNT_FROZEN=self._on_traderaccount_frozen)
+        self._stock_market.bind(
+            STOCKMARKET_ADDITION=self._on_stockmarket_addition)
+
         self.emit('TRADER_ACCOUNT_CREATED',
             trader=self,
             account=self._account)
+
+    def _on_traderaccount_frozen(self,
+    ) -> None:
+        """Stop reacting to the `StockMarket` once frozen."""
+        self._stock_market.unbind(
+            self._on_stockmarket_addition)
+
+    def _on_stockmarket_addition(self,
+    ) -> None:
+        """Make trading decisions as `StockMarket` prices update."""
+        try:
+            self.trade()
+        except Exception as e:
+            assert self._account is not None, ('Received stock market update '
+                'without an open trader account.')
+            self._account.freeze(
+                'Trader encountered an error when making a trading decision.',
+                exception=e)
 
 
     @classmethod
@@ -291,9 +325,16 @@ class Trader(dispatch.Dispatcher):
         Triggers `TRADER_ALGORITHM_SETTINGS_CHANGED` if successful.
         """
         raise NotImplementedError(
-            'Trader subclass must implement set_algorithm_settings.')
+            'Trader subclass must implement set_algorithm_settings method.')
         # Subclasses validate settings and then assign and broadcast them:
         #self._set_algorithm_settings(algorithm_settings)
+
+
+    def trade(self
+    ) -> None:
+        """Choose to buy or sell based on updated stock market conditions."""
+        raise NotImplementedError(
+            'Trader subclass must implement trade method.')
 
 
 
