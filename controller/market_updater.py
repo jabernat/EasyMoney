@@ -8,8 +8,11 @@ __license__ = 'MIT'
 import enum
 import typing
 
+from dispatch import Dispatcher
+
 from kivy.clock import (
     Clock, ClockEvent)
+
 
 # Local package imports at end of file to resolve circular dependencies
 
@@ -57,11 +60,24 @@ class MarketUpdater(object):
         fed some data into the `model.StockMarket`.
         """
 
+    class StateChangeEvents(Dispatcher):
+        """A class of events to be broadcast when a state change occurs in the
+        updater
+        """
+        EVENTS = ['MARKETUPDATER_PAUSED',
+                  'MARKETUPDATER_PLAYING',
+                  'MARKETUPDATER_RESET']
+        EVENTS = frozenset(['MARKETUPDATER_PAUSED',
+                  'MARKETUPDATER_PLAYING',
+                  'MARKETUPDATER_RESET'])
+        def __init__(self):
+            pass
+
 
     _parent_controller: 'SimController'
     """This updater's owning simulation controller."""
 
-    _state: MarketUpdater.State
+    _state: State
     """Status of this updater controlling its activity."""
 
     _update_timer: typing.Optional[ClockEvent]
@@ -69,19 +85,21 @@ class MarketUpdater(object):
     states.
     """
 
-    #TODO: Events:
-    #   MARKET_UPDATER_PAUSED
-    #   MARKET_UPDATER_PLAYING
-    #   MARKET_UPDATER_RESET
-
+    _updater_event_dispatcher: StateChangeEvents
+    """A dispatcher object which will broadcast events for simulation
+    state changes"""
 
     def __init__(self,
         controller: 'SimController'
     ) -> None:
-        """Start this new `MarketUpdater` in a paused state."""
+        """Start this new `MarketUpdater` in a paused state. Bind events."""
         self._parent_controller = controller
         self._state = self.State.RESET
         self._update_timer = None
+        self._updater_event_dispatcher.bind(
+            MARKETUPDATER_PAUSED=self.pause(),
+            MARKETUPDATER_PLAYING=self.play(),
+            MARKETUPDATER_RESET=self.reset())
 
 
     def is_playing(self
@@ -106,7 +124,8 @@ class MarketUpdater(object):
             datasource.confirm()
 
         self._state = self.State.PLAYING
-        # TODO MARKET_UPDATER_PLAYING
+        # Emit play event
+        self._updater_event_dispatcher.emit('MARKETUPDATER_PLAY')
 
         # Resume periodic updates
         self._update_timer = Clock.schedule_interval(
@@ -135,7 +154,8 @@ class MarketUpdater(object):
             self._update_timer = None
 
         self._state = self.State.PAUSED
-        # TODO MARKET_UPDATER_PAUSED
+        # Emit pause event
+        self._updater_event_dispatcher.emit('MARKETUPDATER_PAUSE')
 
 
     def reset(self
@@ -149,7 +169,8 @@ class MarketUpdater(object):
         self.pause()  # Stop updates if playing
 
         self._state = self.State.RESET
-        #TODO MARKET_UPDATER_RESET
+        # Emit reset event
+        self._updater_event_dispatcher.emit('MARKETUPDATER_RESET')
 
         self._parent_controller.get_model().clear()
         self._parent_controller.get_datasource().unconfirm()
