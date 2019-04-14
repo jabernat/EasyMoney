@@ -155,7 +155,7 @@ class MarketUpdater(dispatch.Dispatcher):
         # Emit reset event
         self.emit('MARKETUPDATER_RESET', updater=self)
 
-        self._parent_controller.get_model().clear()
+        self._parent_controller.get_model().reset_market_and_trader_accounts()
         self._parent_controller.get_datasource().unconfirm()
 
 

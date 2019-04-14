@@ -9,6 +9,8 @@ import bisect
 import datetime
 import typing
 
+import dispatch
+
 
 
 
@@ -50,8 +52,8 @@ class NonconsecutiveTimeError(ValueError):
     ) -> None:
         self.time = time
         self.time_previous = time_previous
-        super().__init__(
-            'Cannot add non-consecutive prices at time {} following previous time {}.'.format(
+        super().__init__('Cannot add non-consecutive prices at time {} '
+            'following previous time {}.'.format(
                 time, time_previous))
 
 
@@ -77,11 +79,13 @@ class StockSymbolMissingError(ValueError):
         self.symbols_new = symbols_new
 
         if symbols_old:
-            error = 'Cannot omit existing stocks when adding new prices: Missing {:s}.'.format(
-                ', '.join(repr(symbol)
-                    for symbol in sorted(symbols_old - symbols_new)))
+            error = ('Cannot omit existing stocks when adding new prices: '
+                'Missing {:s}.'.format(
+                    ', '.join(repr(symbol)
+                        for symbol in sorted(symbols_old - symbols_new))))
         else:  # First addition
-            error = 'Must include at least one stock symbol price for the first stock market reading.'
+            error = ('Must include at least one stock symbol price for the '
+                'first stock market reading.')
         super().__init__(error)
 
 
@@ -102,7 +106,7 @@ class StockSymbolUnrecognizedError(ValueError):
 
 
 
-class StockMarket(object):
+class StockMarket(dispatch.Dispatcher):
     """A component of `SimModel` that stores a time series of stock share
     prices accumulated over simulation runs. To begin a new simulation, the
     stock market can be reset.
@@ -117,9 +121,10 @@ class StockMarket(object):
     corresponding to insertion times within `_price_times`.
     """
 
-    #TODO: Events:
-    #   STOCK_MARKET_ADDITION
-    #   STOCK_MARKET_CLEARED
+    EVENTS: typing.ClassVar[typing.FrozenSet[str]] = frozenset([
+        'STOCKMARKET_ADDITION',
+        'STOCKMARKET_CLEARED'])
+    """Events broadcast by instances of the `StockMarket`."""
 
 
     def __init__(self
@@ -133,14 +138,16 @@ class StockMarket(object):
     ) -> None:
         """Remove all previously-added price data from this `StockMarket`.
 
-        Triggers `STOCK_MARKET_CLEARED` if any data was cleared.
+        Always triggers `STOCKMARKET_CLEARED`.
         """
-        if not self._price_times:
-            return  # Nothing to clear
+        # Always trigger, so that Traders can reliably react by also resetting
+        #if not self._price_times:
+        #   return  # Nothing to clear
 
         self._price_times.clear()
         self._symbol_prices.clear()
-        # TODO: Broadcast STOCK_MARKET_CLEARED
+        self.emit('STOCKMARKET_CLEARED',
+            market=self)
 
 
     def add_next_prices(self,
@@ -161,7 +168,7 @@ class StockMarket(object):
         `StockSymbolMissingError`. All price-per-share
         values must be positive, or `InvalidSharePriceError` will be raised.
 
-        Triggers `STOCK_MARKET_ADDITION` if successful.
+        Triggers `STOCKMARKET_ADDITION` if successful.
         """
         # Validate prices
         for stock_symbol, price in stock_symbol_prices.items():
@@ -193,8 +200,10 @@ class StockMarket(object):
         self._price_times.append(time)
         for stock_symbol, price in stock_symbol_prices.items():
             self._symbol_prices[stock_symbol].append(price)
-
-        # TODO: Broadcast STOCK_MARKET_ADDITION
+        self.emit('STOCKMARKET_ADDITION',
+            market=self,
+            time=time,
+            stock_symbol_prices=stock_symbol_prices)
 
 
     def _get_prices_at_index(self,
@@ -242,8 +251,8 @@ class StockMarket(object):
         If `stock_symbol` isn't included in this `StockMarket`, including when
         no prices have been added yet, raises `StockSymbolUnrecognizedError`.
 
-        This result changes upon `STOCK_MARKET_ADDITION` and
-        `STOCK_MARKET_CLEARED` events.
+        This result changes upon `STOCKMARKET_ADDITION` and
+        `STOCKMARKET_CLEARED` events.
         """
         try:
             return self._symbol_prices[stock_symbol][-1]
