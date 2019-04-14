@@ -8,6 +8,8 @@ __license__ = 'MIT'
 import collections
 import typing
 
+import dispatch
+
 # Local package imports at end of file to resolve circular dependencies
 
 
@@ -45,8 +47,8 @@ class InsufficientBalanceError(ValueError):
         self.stock_symbol = stock_symbol
         self.cost = cost
         self.balance = balance
-        super().__init__(
-            "Trader with ${:.2f} can't afford ${:.2f} charge for {!r} stock.".format(
+        super().__init__("Trader with ${:.2f} can't afford ${:.2f} charge for "
+            '{!r} stock.'.format(
                 balance, cost, stock_symbol))
 
 
@@ -72,8 +74,8 @@ class InsufficientStockSharesError(ValueError):
         self.stock_symbol = stock_symbol
         self.shares = shares
         self.shares_owned = shares_owned
-        super().__init__(
-            'Trader attempted to sell {:.2f} shares of {!r} stock, but only owns {:.2f}.'.format(
+        super().__init__('Trader attempted to sell {:.2f} shares of {!r} '
+            'stock, but only owns {:.2f}.'.format(
                 shares, stock_symbol, shares_owned))
 
 
@@ -94,14 +96,14 @@ class StockShareQuantityError(ValueError):
     ) -> None:
         self.stock_symbol = stock_symbol
         self.shares = shares
-        super().__init__(
-            'Trader attempted to trade an invalid non-positive {!r} stock quantity {:.2f}.'.format(
+        super().__init__('Trader attempted to trade an invalid non-positive '
+            '{!r} stock quantity {:.2f}.'.format(
                 shares, stock_symbol))
 
 
 
 
-class TraderAccount(object):
+class TraderAccount(dispatch.Dispatcher):
     """The bank balance and stock portfolio of an owning `Trader`, tied to a
     particular `StockMarket`. The account provides methods for traders to buy
     and sell their stocks, and statistics collection for later analysis.
@@ -139,11 +141,11 @@ class TraderAccount(object):
     _frozen: bool
     """When `True`, this account can no longer be used to `buy` or `sell`."""
 
-    #TODO: Events:
-    #   TRADER_ACCOUNT_BOUGHT
-    #   TRADER_ACCOUNT_FROZEN
-    #   TRADER_ACCOUNT_SOLD
-    #   TRADER_ACCOUNT_UPDATED
+    EVENTS: typing.ClassVar[typing.FrozenSet[str]] = frozenset([
+        'TRADERACCOUNT_BOUGHT',
+        'TRADERACCOUNT_FROZEN',
+        'TRADERACCOUNT_SOLD'])
+    """Events broadcast by `TraderAccount` instances."""
 
 
     def __init__(self,
@@ -179,7 +181,8 @@ class TraderAccount(object):
         """Return this account's current bank balance, in the same unit of
         currency as `_stock_market`. This value is always non-negative.
 
-        This result changes upon `TRADER_ACCOUNT_UPDATED` events.
+        This result changes upon `TRADERACCOUNT_BOUGHT` and
+        `TRADERACCOUNT_SOLD` events.
         """
         return self._balance
 
@@ -188,7 +191,8 @@ class TraderAccount(object):
         """Return the quantities of stock shares that this account holds as a
         `dict` mapping stock symbols to non-negative quantities.
 
-        This result changes upon `TRADER_ACCOUNT_UPDATED` events.
+        This result changes upon `TRADERACCOUNT_BOUGHT` and
+        `TRADERACCOUNT_SOLD` events.
         """
         return self._stocks.copy()
 
@@ -199,7 +203,7 @@ class TraderAccount(object):
         `buy` or `sell` stocks. See the class' documentation for a description
         of the frozen state and why accounts freeze.
 
-        This result changes upon `TRADER_ACCOUNT_FROZEN` events.
+        This result changes upon `TRADERACCOUNT_FROZEN` events.
         """
         return self._frozen
 
@@ -214,13 +218,16 @@ class TraderAccount(object):
         A brief `reason` sentence can be provided to be displayed to the user,
         optionally with the offending `exception`.
 
-        Triggers `TRADER_ACCOUNT_FROZEN` if successful.
+        Triggers `TRADERACCOUNT_FROZEN` if successful.
         """
         if self.is_frozen():
             return
 
         self._frozen = True
-        #TODO: Broadcast TRADER_ACCOUNT_FROZEN
+        self.emit('TRADERACCOUNT_FROZEN',
+            account=self,
+            reason=reason,
+            exception=exception)
 
 
     def buy(self,
@@ -242,8 +249,7 @@ class TraderAccount(object):
         greater than this account's balance, `InsufficientBalanceError` is
         raised.
 
-        Triggers `TRADER_ACCOUNT_BOUGHT` and `TRADER_ACCOUNT_UPDATED` if
-        successful.
+        Triggers `TRADERACCOUNT_BOUGHT` if successful.
         """
         if self.is_frozen():
             raise FrozenError()
@@ -260,8 +266,11 @@ class TraderAccount(object):
         # Make transaction
         self._balance -= cost
         self._stocks[stock_symbol] += shares
-        #TODO: Broadcast TRADER_ACCOUNT_BOUGHT
-        #TODO: Broadcast TRADER_ACCOUNT_UPDATED
+        self.emit('TRADERACCOUNT_BOUGHT',
+            account=self,
+            stock_symbol=stock_symbol,
+            shares=shares,
+            balance_change=-cost)
 
     def sell(self,
         stock_symbol: str,
@@ -283,8 +292,7 @@ class TraderAccount(object):
         method raises `InsufficientStockSharesError`. If this account cannot
         afford to pay the trading fee, `InsufficientBalanceError` is raised.
 
-        Triggers `TRADER_ACCOUNT_SOLD` and `TRADER_ACCOUNT_UPDATED` if
-        successful.
+        Triggers `TRADERACCOUNT_SOLD` if successful.
         """
         if self.is_frozen():
             raise FrozenError()
@@ -305,8 +313,11 @@ class TraderAccount(object):
         # Make transaction
         self._balance += profit
         self._stocks[stock_symbol] -= shares
-        #TODO: Broadcast TRADER_ACCOUNT_SOLD
-        #TODO: Broadcast TRADER_ACCOUNT_UPDATED
+        self.emit('TRADERACCOUNT_SOLD',
+            account=self,
+            stock_symbol=stock_symbol,
+            shares=shares,
+            balance_change=profit)
 
 
     def get_statistics_daily(self
@@ -315,8 +326,6 @@ class TraderAccount(object):
         simulation. Its keys identify trading statistics using
         display-language-independent English identifiers, like `'PROFIT_NET'`,
         and the associated values can be converted to `str`.
-
-        This result may change upon `TRADER_ACCOUNT_UPDATED` events.
         """
         #TODO
         return {}
@@ -327,8 +336,6 @@ class TraderAccount(object):
         simulation. Its keys identify trading statistics using
         display-language-independent English identifiers, like `'PROFIT_NET'`,
         and the associated values can be converted to `str`.
-
-        This result may change upon `TRADER_ACCOUNT_UPDATED` events.
         """
         #TODO
         return {

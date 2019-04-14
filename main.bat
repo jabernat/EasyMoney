@@ -1,8 +1,14 @@
+@SETLOCAL
 @ECHO OFF
 :: Starts the EasyMoney application on Windows.
 
+ECHO Type Checking:
+mypy "main.py"
+ECHO.
+
+ECHO Executing:
 python "main.py"
 
-IF ERRORLEVEL 1 (
-	PAUSE
-)
+:: Pause before closing the console window
+ECHO.
+PAUSE

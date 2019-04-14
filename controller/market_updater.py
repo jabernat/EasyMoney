@@ -61,7 +61,7 @@ class MarketUpdater(object):
     _parent_controller: 'SimController'
     """This updater's owning simulation controller."""
 
-    _state: MarketUpdater.State
+    _state: State
     """Status of this updater controlling its activity."""
 
     _update_timer: typing.Optional[ClockEvent]
@@ -151,7 +151,7 @@ class MarketUpdater(object):
         self._state = self.State.RESET
         #TODO MARKET_UPDATER_RESET
 
-        self._parent_controller.get_model().clear()
+        self._parent_controller.get_model().reset_market_and_trader_accounts()
         self._parent_controller.get_datasource().unconfirm()
 
 
