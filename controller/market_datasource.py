@@ -8,7 +8,17 @@ __license__ = 'MIT'
 import typing
 import datetime
 import json
-import pydispatch
+import dispatch
+
+
+class SymbolPrice(typing.NamedTuple):
+    time: datetime.datetime
+    price: float
+
+
+class CombinedPrices(typing.NamedTuple):
+    time: datetime.datetime
+    prices: typing.Dict[str, float]
 
 
 class DatasourceConfirmedError(RuntimeError):
@@ -31,7 +41,7 @@ class DatasourcesMissingError(RuntimeError):
         super().__init__('Cannot confirm with empty symbol list.')
 
 
-class MarketDatasource(pydispatch.Dispatcher):
+class MarketDatasource(dispatch.Dispatcher):
     """This component has the ability to collate data and pass it to
     the SimModel. Data is gathered from historical JSON files. Before
     being confirmed, the data is separated. After confirmation,
@@ -102,18 +112,17 @@ class MarketDatasource(pydispatch.Dispatcher):
         separate data list.
         """
         stock_symbol = data['Meta Data']['2. Symbol']
-        if stock_symbol in self._symbols_prices:
-            self._remove_stock_combined_prices(stock_symbol)
-            return
         # Initialize dict for symbol
-        self._symbols_prices.update({stock_symbol: []})
+        self._symbols_prices[stock_symbol] = []
 
         for time_key in data['Time Series (' + interval + ')']:
             time: datetime.datetime = datetime.datetime.strptime(time_key,
                                               '%Y-%m-%d %H:%M:%S')
             close_price = float(
                 data['Time Series (' + interval + ')'][time_key]['4. close'])
-            self._symbols_prices[stock_symbol].insert(0, (time, close_price))
+
+            symbol_price = SymbolPrice(time=time, price=close_price)
+            self._symbols_prices[stock_symbol].insert(0, symbol_price)
 
         self.emit('MARKET_DATASOURCE_STOCK_SYMBOL_ADDED',
                   instance=self,
@@ -127,20 +136,20 @@ class MarketDatasource(pydispatch.Dispatcher):
         """
         # First add all available data
         for stock_symbol, data_list in self._symbols_prices.items():
-            for time_and_price in data_list:
-                time: datetime.datetime = time_and_price[0]
-                close_price = time_and_price[1]
+            for symbol_price in data_list:
+                time: datetime.datetime = symbol_price.time  # Raises error with mypy
+                close_price: float = symbol_price.price  # Raises error with mypy
                 self._add_stock_price_ascending(stock_symbol, time, close_price)
         # Next fill in any data holes
-        for index, time_and_data_dict in enumerate(self._combined_prices):
+        for index, combined_prices in enumerate(self._combined_prices):
             # Loop through each (time, symbol dict) tuple
             for symbol in self._symbols_prices:
                 # Loop through each symbol currently in simulation
                 if index > 0:
-                    if symbol not in time_and_data_dict[1] and symbol in self._combined_prices[index - 1][1]:
+                    if symbol not in combined_prices.prices and symbol in self._combined_prices[index - 1].prices: # Raises error with mypy
                         # symbol is not in current time but is in previous time
-                        previous_price = self._combined_prices[index - 1][1].get(symbol)
-                        time_and_data_dict[1].update({symbol: previous_price})
+                        previous_price = self._combined_prices[index - 1][1][symbol]
+                        combined_prices.prices[symbol] = previous_price # Raises error with mypy
 
     def _set_start_index(self) -> None:
         """Set the index at which all monitored symbols in _combined_prices
@@ -163,15 +172,17 @@ class MarketDatasource(pydispatch.Dispatcher):
         appropriately.
         """
 
+        combined_prices = CombinedPrices(time, {stock_symbol: close_price})
+
         for index, q in enumerate(self._combined_prices):
-            if time < q[0]:
-                self._combined_prices.insert(index, (time, {stock_symbol: close_price}))
+            if time < q.time:  # Raises error with mypy
+                self._combined_prices.insert(index, combined_prices)
                 return
-            elif time == q[0]:
-                q[1].update({stock_symbol: close_price})
+            elif time == q.time:  # Raises error with mypy
+                q.prices.update({stock_symbol: close_price})  # Raises error with mypy
                 return
         # Otherwise element is not present, add to end of list
-        self._combined_prices.extend([(time, {stock_symbol: close_price})])
+        self._combined_prices.extend([combined_prices])
 
 
     def can_confirm(self) -> bool:
@@ -252,7 +263,6 @@ class MarketDatasource(pydispatch.Dispatcher):
         if self.is_confirmed():
             raise DatasourceConfirmedError()
         del self._symbols_prices[stock_symbol]
-        self._remove_stock_combined_prices(stock_symbol)
         self.emit('MARKET_DATASOURCE_STOCK_SYMBOL_REMOVED',
                   instance=self,
                   stock_symbol=stock_symbol)
@@ -274,7 +284,7 @@ class MarketDatasource(pydispatch.Dispatcher):
         if not self.is_confirmed():
             return
         self._confirmed = False
-        self._combined_prices.clear()
+        self._combined_prices = None  # Raises error with mypy
         self._current_time_index = -1
 
         self.emit('MARKET_DATASOURCE_UNCONFIRMED',

@@ -40,7 +40,7 @@ class SimController(object):
         self._model = model
         self._datasource = MarketDatasource()
         self._updater = MarketUpdater(self)
-        self._updater.pause()
+
 
     def add_trader(self,
         name: str,
@@ -95,7 +95,7 @@ class SimController(object):
         trader_list = self._model.get_traders()
         for trader in trader_list:
             if trader.get_name() == name:
-                trader.freeze(reason, None) # Not sure what to do for exception
+                trader.freeze(reason)
                 return
 
 
