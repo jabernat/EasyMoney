@@ -12,26 +12,35 @@ import typing
 
 
 
+
 class SimController(object):
     """This module unifies various controls of the simulation. It
     passes `Trader` modifications to the Simulation Model, as needed
-    by the Window View model. The module also facilitates any changes to
-    the datasource—live or offline—as directed from the Window View
-    model, and returns broadcasted messages of these changes. The
-    module may also receive access calls to play, pause, and reset
-    the simulation when applicable, likewise broadcasting when these
+    by the Window View module. The module may receive access calls to play,
+    pause, and reset the simulation when applicable, broadcasting when these
     state changes have occurred. The Simulation Controller also feeds
-    data to the Simulation Model as needed, from the chosen datasource.
+    data to the Simulation Model as needed.
     """
+
+    _model: 'SimModel'
+    """An instance of SimModel"""
+
+    _datasource: 'MarketDatasource'
+    """An instance of MarketDatasource"""
+
+    _updater: 'MarketUpdater'
+    """An instance of MarketUpdater"""
 
     def __init__(self,
         model: 'SimModel'
     ) -> None:
-        """Initialize without starting data sources, a paused
+        """Initialize without a datasource, a paused
         updater, and an existing `SimModel` to control.
         """
-        pass
-
+        self._model = model
+        self._datasource = MarketDatasource()
+        self._updater = MarketUpdater(self)
+        self._updater.pause()
 
     def add_trader(self,
         name: str,
@@ -71,7 +80,8 @@ class SimController(object):
         to algorithm, and invalid arguments raise subclasses of
         `TypeError` and `ValueError`.
         """
-        pass
+        self._model.add_trader(name, initial_funds, trading_fee, algorithm,
+                               algorithm_settings)
 
 
     def freeze_trader(self,
@@ -82,14 +92,18 @@ class SimController(object):
         selling stocks. The only way the trader may resume activity is
         when this `SimController`'s `MarketUpdater` gets `.reset()`.
         """
-        pass
+        trader_list = self._model.get_traders()
+        for trader in trader_list:
+            if trader.get_name() == name:
+                trader.freeze(reason, None) # Not sure what to do for exception
+                return
 
 
     def get_datasource(self) -> 'MarketDatasource':
         """Return this `SimController`'s current `MarketDatasource`,
         providing access to its provided interface methods.
         """
-        pass
+        return self._datasource
 
 
     def get_model(self) -> 'SimModel':
@@ -97,14 +111,24 @@ class SimController(object):
         this model should not be modified, only read; To manipulate the
         model, instead use this `SimController`'s implemented methods.
         """
-        pass
+        return self._model
+
+
+    def _get_trader(self,
+        name: str
+    ) -> 'Trader':
+        """Given a name, return the corresponding trader from this SimModel."""
+        trader_list = self._model.get_traders()
+        for trader in trader_list:
+            if trader.get_name() == name:
+                return trader
 
 
     def get_updater(self) -> 'MarketUpdater':
         """Return this `SimController`'s current `MarketUpdater`,
         providing access to its provided interface methods.
         """
-        pass
+        return self._updater
 
 
     def remove_trader(self,
@@ -113,7 +137,7 @@ class SimController(object):
         """Remove a `Trader` instance from this `SimModel` by name. If
         `name` does not exist within the simulation, no error occurs.
         """
-        pass
+        self._model.remove_trader(name)
 
 
     def set_trader_algorithm_settings(self,
@@ -125,7 +149,7 @@ class SimController(object):
         These new settings are validated by the `Trader`'s sub-class,
         and raised exceptions extend `TypeError` and `ValueError`.
         """
-        pass
+        self._get_trader(trader_name).set_algorithm_settings(algorithm_settings)
 
 
     def set_trader_initial_funds(self,
@@ -141,7 +165,7 @@ class SimController(object):
         be a positive quantity, or else this method raises a
         `Trader.InitialFundsError` exception.
         """
-        pass
+        self._get_trader(trader_name).set_initial_funds(initial_funds)
 
 
     def set_trader_trading_fee(self,
@@ -153,12 +177,12 @@ class SimController(object):
         new `trading_fee must` be non-negative, otherwise this method
         throws a `Trader.TradingFeeError` exception.
         """
-        pass
+        self._get_trader(trader_name).set_trading_fee(trading_fee)
 
 
     def validate_trader_algorithm(self,
         algorithm_name: str
-    ) -> typing.Tuple[bool, str]:
+    ) -> typing.Tuple[bool, typing.Optional[str]]:
         """Validate algorithm names and return a `tuple` containing a
         flag indicating valid arguments, and a string explaining the
         reason if not. The passed `algorithm_name` must be one of the
@@ -168,12 +192,16 @@ class SimController(object):
         not in the list, the method returns `False` and a string
         holding the reason.
         """
-        pass
+        algorithm_list = self._model.get_trader_algorithms()
+        for algorithm in algorithm_list:
+            if algorithm == algorithm_name:
+                return True, None
+        return False, 'Algorithm not present.'
 
 
     def validate_trader_initial_funds(self,
         initial_funds: float
-    ) -> typing.Tuple[bool, str]:
+    ) -> typing.Tuple[bool, typing.Optional[str]]:
         """Validate the passed `initial_funds` value, and return a
         `tuple` containing a flag indicating valid arguments, and a
         string explaining the reason if not. If the number is a
@@ -181,12 +209,15 @@ class SimController(object):
         Otherwise the method returns `False` and a string that provides
         a reason for failure.
         """
-        pass
+        if initial_funds > 0:
+            return True, None
+        else:
+            return False, 'Initial funds must be a positive number.'
 
 
     def validate_trader_name(self,
         trader_name: str
-    ) -> typing.Tuple[bool, str]:
+    ) -> typing.Tuple[bool, typing.Optional[str]]:
         """Validate the string `trader_name`, and returns a `tuple`
         containing a flag indicating valid arguments, and a string
         explaining the reason if not. If the string is blank or matches
@@ -194,21 +225,26 @@ class SimController(object):
         string holding the reason for failure. Otherwise the string
         is valid and the method returns `True` and `None`.
         """
-        pass
+        if trader_name == '':
+            return False, 'Trader must have name.'
+        if trader_name in self._model.get_traders():
+            return False, 'Trader name already in use.'
+
+        return True, None
 
 
     def validate_trader_trading_fee(self,
         trading_fee: float
-    ) -> typing.Tuple[bool, str]:
+    ) -> typing.Tuple[bool, typing.Optional[str]]:
         """Validate the `numeric trading_fee`, and return a `tuple`
         containing a flag indicating valid arguments, and a string
         explaining the reason if not. If `trading_fee` is negative, the
         method returns `False` and a string holding the reason for
         failure. Otherwise the method returns `True` and `None`.
         """
-        pass
-
-
+        if trading_fee < 0:
+            return False, 'Trading fee cannot be negative.'
+        return True, None
 
 
 # Imported last to avoid circular dependencies
@@ -216,3 +252,4 @@ from model.sim_model import SimModel
 from model.trader import Trader
 from controller.market_datasource import MarketDatasource
 from controller.market_updater import MarketUpdater
+
