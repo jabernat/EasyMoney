@@ -85,6 +85,10 @@ class MarketUpdater(dispatch.Dispatcher):
         self._state = self.State.RESET
         self._update_timer = None
 
+        # Reset if the datasource gets externally unconfirmed
+        controller.get_datasource().bind(
+            MARKETDATASOURCE_UNCONFIRMED=self.reset)
+
 
     def is_playing(self
     ) -> bool:
