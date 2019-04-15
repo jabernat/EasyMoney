@@ -80,7 +80,7 @@ class MarketUpdater(dispatch.Dispatcher):
     def __init__(self,
         controller: 'SimController'
     ) -> None:
-        """Start this new `MarketUpdater` in a paused state."""
+        """Start this new `MarketUpdater` in a reset state."""
         self._parent_controller = controller
         self._state = self.State.RESET
         self._update_timer = None
