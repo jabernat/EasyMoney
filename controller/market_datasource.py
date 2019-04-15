@@ -48,12 +48,10 @@ class MarketDatasource(dispatch.Dispatcher):
     the data is combined.
     """
 
-    _symbols_prices: typing.Dict[str, typing.List[typing.Tuple[
-        datetime.datetime, float]]]
+    _symbols_prices: typing.Dict[str, typing.List[SymbolPrice]]
     """A list of all symbols and their data, separated."""
 
-    _combined_prices: typing.Optional[typing.List[typing.Tuple[datetime.datetime,
-                                           typing.Dict[str, float]]]]
+    _combined_prices: typing.Optional[typing.List[CombinedPrices]]
     """A list that contains the combined data for all symbols in 
     this simulation.
     """
@@ -241,7 +239,7 @@ class MarketDatasource(dispatch.Dispatcher):
 
 
     def get_stock_symbols_prices(self
-    ) -> typing.Dict[str, typing.List[typing.Tuple[datetime.datetime, float]]]:
+    ) -> typing.Dict[str, typing.List[SymbolPrice]]:
         """Return a list of strings for each stock symbol that has
         been added. The list should change after the following two
         events: `MARKET_DATASOURCE_STOCK_SYMBOL_ADDED` and
