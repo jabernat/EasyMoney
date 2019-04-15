@@ -52,8 +52,8 @@ class MarketDatasource(dispatch.Dispatcher):
         datetime.datetime, float]]]
     """A list of all symbols and their data, separated."""
 
-    _combined_prices: typing.List[typing.Tuple[datetime.datetime,
-                                           typing.Dict[str, float]]]
+    _combined_prices: typing.Optional[typing.List[typing.Tuple[datetime.datetime,
+                                           typing.Dict[str, float]]]]
     """A list that contains the combined data for all symbols in 
     this simulation.
     """
@@ -134,27 +134,29 @@ class MarketDatasource(dispatch.Dispatcher):
         times that are missing price data for a certain symbol, maintain the
         most recent data for that symbol.
         """
+        assert self._combined_prices is not None, 'Error message if None'
         # First add all available data
         for stock_symbol, data_list in self._symbols_prices.items():
             for symbol_price in data_list:
-                time: datetime.datetime = symbol_price.time  # Raises error with mypy
-                close_price: float = symbol_price.price  # Raises error with mypy
+                time: datetime.datetime = symbol_price.time
+                close_price: float = symbol_price.price
                 self._add_stock_price_ascending(stock_symbol, time, close_price)
         # Next fill in any data holes
-        for index, combined_prices in enumerate(self._combined_prices):
-            # Loop through each (time, symbol dict) tuple
+        for index, combined_prices in enumerate(self._combined_prices, 1):
+            # Loop through each (time, symbol dict) tuple, starting at index 1
             for symbol in self._symbols_prices:
                 # Loop through each symbol currently in simulation
-                if index > 0:
-                    if symbol not in combined_prices.prices and symbol in self._combined_prices[index - 1].prices: # Raises error with mypy
-                        # symbol is not in current time but is in previous time
-                        previous_price = self._combined_prices[index - 1][1][symbol]
-                        combined_prices.prices[symbol] = previous_price # Raises error with mypy
+                if symbol not in combined_prices.prices and symbol in self._combined_prices[index - 1].prices:
+                    # symbol is not in current time but is in previous time
+                    previous_price = self._combined_prices[index - 1][1][symbol]
+                    combined_prices.prices[symbol] = previous_price
+
 
     def _set_start_index(self) -> None:
         """Set the index at which all monitored symbols in _combined_prices
         start to show data
         """
+        assert self._combined_prices is not None, 'Error message if None'
         for index, time_and_data_dict in enumerate(self._combined_prices):
             if len(time_and_data_dict[1]) == len(self._symbols_prices):
                 self._current_time_index = index
@@ -171,16 +173,16 @@ class MarketDatasource(dispatch.Dispatcher):
         entry for the given time, update the dictionary at that time
         appropriately.
         """
-
+        assert self._combined_prices is not None, 'Error message if None'
         combined_prices = CombinedPrices(time, {stock_symbol: close_price})
-
         for index, q in enumerate(self._combined_prices):
-            if time < q.time:  # Raises error with mypy
+            if time < q.time:
                 self._combined_prices.insert(index, combined_prices)
                 return
-            elif time == q.time:  # Raises error with mypy
-                q.prices.update({stock_symbol: close_price})  # Raises error with mypy
+            elif time == q.time:
+                q.prices.update({stock_symbol: close_price})
                 return
+
         # Otherwise element is not present, add to end of list
         self._combined_prices.extend([combined_prices])
 
@@ -191,6 +193,7 @@ class MarketDatasource(dispatch.Dispatcher):
 
         Otherwise return `False`.
         """
+        assert self._combined_prices is not None, 'Error message if None'
         if not self._symbols_prices or self._current_time_index + 1 < len(self._combined_prices):
             return False
         self.emit('MARKET_DATASOURCE_CAN_CONFIRM_UPDATED',
@@ -216,6 +219,7 @@ class MarketDatasource(dispatch.Dispatcher):
 
         self.emit('MARKET_DATASOURCE_CONFIRMED',
                   instance=self)
+
 
     def get_next_prices(self
     ) -> typing.Optional[typing.Tuple[datetime.datetime, typing.Dict[str, float]]]:
@@ -272,8 +276,9 @@ class MarketDatasource(dispatch.Dispatcher):
         stock_symbol: str
     ) -> None:
         """Remove all data from _combined_prices for a given symbol."""
-        for i in self._combined_prices:
-            del i[1][stock_symbol]
+        if self._combined_prices is not None:
+            for i in self._combined_prices:
+                del i[1][stock_symbol]
 
 
     def unconfirm(self) -> None:
@@ -284,7 +289,7 @@ class MarketDatasource(dispatch.Dispatcher):
         if not self.is_confirmed():
             return
         self._confirmed = False
-        self._combined_prices = None  # Raises error with mypy
+        self._combined_prices = None
         self._current_time_index = -1
 
         self.emit('MARKET_DATASOURCE_UNCONFIRMED',
