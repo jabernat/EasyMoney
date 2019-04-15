@@ -182,6 +182,12 @@ class SimModel(dispatch.Dispatcher):
         """
         return list(self._traders.values())
 
+    def get_trader(self,
+        name: str
+    ) -> typing.Optional['Trader']:
+        """Return the `Trader` known by `name`, or `None` if not found."""
+        return self._traders.get(name)
+
     def add_trader(self,
         name: str,
         initial_funds: float,
@@ -231,6 +237,7 @@ class SimModel(dispatch.Dispatcher):
         self.emit('SIMMODEL_TRADER_ADDED',
             model=self,
             trader=trader)
+        return trader
 
     def remove_trader(self,
         name: str
