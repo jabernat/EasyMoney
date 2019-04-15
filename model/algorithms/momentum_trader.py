@@ -1,6 +1,7 @@
 import typing
 import datetime
 
+#TODO: figure out if this is a circular import or not
 from model.trader import Trader
 
 class MomentumTrader(Trader):
@@ -25,6 +26,8 @@ class MomentumTrader(Trader):
         The algorithm here will be a simple strategy known as momentum.
         The bot simply assumes that current trends will continue for each
         symbol, and makes decisions accordingly"""
+        #TODO: code cleanup. rename variables, enhance elegance
+
         # prioritize the information
         prioritized_stocks_to_purchase = self.prioritize_symbols_to_buy()
 
@@ -48,6 +51,7 @@ class MomentumTrader(Trader):
         """Return this `Trader` subclass' identifying algorithm name, unique
         to the `SimModel` that it is registered within.
         """
+        #TODO: declare name class member instead of hardcoding it
         return "Momentum"
 
     def set_algorithm_settings(self,
@@ -66,6 +70,7 @@ class MomentumTrader(Trader):
         Therefore, there isn't really anything to validate about the
         argument in this case.
         """
+        # TODO: consider possible settings to validate.
         self._algorithm_settings = algorithm_settings
         self.emit('TRADER_ALGORITHM_SETTINGS_CHANGED', trader=self, new_settings=algorithm_settings)
         # Subclasses validate settings and then assign and broadcast them:
@@ -79,6 +84,7 @@ class MomentumTrader(Trader):
         tuples for the result. For the implemented algorithm, The best
         investment is decided based on price differences between the
         last set of prices and the current known prices"""
+        # TODO: error checking
 
         # get the previous and current price dictionaries, itemized into
         # a list of tuples
@@ -111,6 +117,7 @@ class MomentumTrader(Trader):
         known prices. If any owned stocks experienced a significant enough
         price decrease, they are returned in a list of quote tuples to be
         sold off."""
+        #TODO: clean up the code. improve names, make it more elegant
 
         # declare a list of the owned stocks, and a list of owned stocks
         # to sell
