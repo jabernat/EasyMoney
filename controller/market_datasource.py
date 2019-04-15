@@ -134,29 +134,30 @@ class MarketDatasource(dispatch.Dispatcher):
         times that are missing price data for a certain symbol, maintain the
         most recent data for that symbol.
         """
-        assert self._combined_prices is not None, 'Error message if None'
         # First add all available data
         for stock_symbol, data_list in self._symbols_prices.items():
             for symbol_price in data_list:
                 time: datetime.datetime = symbol_price.time
                 close_price: float = symbol_price.price
                 self._add_stock_price_ascending(stock_symbol, time, close_price)
+        assert self._combined_prices is not None, 'Combined prices missing'
         # Next fill in any data holes
-        for index, combined_prices in enumerate(self._combined_prices, 1):
-            # Loop through each (time, symbol dict) tuple, starting at index 1
+        for index, combined_prices in enumerate(self._combined_prices):
+            # Loop through each (time, symbol dict) tuple
             for symbol in self._symbols_prices:
-                # Loop through each symbol currently in simulation
-                if symbol not in combined_prices.prices and symbol in self._combined_prices[index - 1].prices:
-                    # symbol is not in current time but is in previous time
-                    previous_price = self._combined_prices[index - 1][1][symbol]
-                    combined_prices.prices[symbol] = previous_price
+                if index > 0:
+                    # Loop through each symbol currently in simulation
+                    if symbol not in combined_prices.prices and symbol in self._combined_prices[index - 1].prices:
+                        # symbol is not in current time but is in previous time
+                        previous_price = self._combined_prices[index - 1][1][symbol]
+                        combined_prices.prices[symbol] = previous_price
 
 
     def _set_start_index(self) -> None:
         """Set the index at which all monitored symbols in _combined_prices
         start to show data
         """
-        assert self._combined_prices is not None, 'Error message if None'
+        assert self._combined_prices is not None, 'Combined prices missing'
         for index, time_and_data_dict in enumerate(self._combined_prices):
             if len(time_and_data_dict[1]) == len(self._symbols_prices):
                 self._current_time_index = index
@@ -173,7 +174,7 @@ class MarketDatasource(dispatch.Dispatcher):
         entry for the given time, update the dictionary at that time
         appropriately.
         """
-        assert self._combined_prices is not None, 'Error message if None'
+        assert self._combined_prices is not None, 'Combined prices missing'
         combined_prices = CombinedPrices(time, {stock_symbol: close_price})
         for index, q in enumerate(self._combined_prices):
             if time < q.time:
@@ -193,7 +194,7 @@ class MarketDatasource(dispatch.Dispatcher):
 
         Otherwise return `False`.
         """
-        assert self._combined_prices is not None, 'Error message if None'
+        assert self._combined_prices is not None, 'Combined prices missing'
         if not self._symbols_prices or self._current_time_index + 1 < len(self._combined_prices):
             return False
         self.emit('MARKET_DATASOURCE_CAN_CONFIRM_UPDATED',
