@@ -5,7 +5,11 @@ __copyright__ = 'Copyright © 2019, Erik Anderson, James Abernathy, and Tyler Ge
 __license__ = 'MIT'
 
 
+import abc
+import inspect
 import typing
+
+import dispatch
 
 # Local package imports at end of file to resolve circular dependencies
 
@@ -46,7 +50,23 @@ class TradingFeeError(ValueError):
 
 
 
-class Trader(object):
+class TraderMeta(abc.ABCMeta):
+    """Metaclass for `Trader` subclasses to automatically register all concrete
+    implementations.
+    """
+    def __init__(trader_subclass,
+        name: str,
+        bases: typing.Sequence[typing.Type],
+        namespace: typing.Mapping[str, typing.Any],
+        **kwargs: typing.Any
+    ) -> None:
+        if not inspect.isabstract(trader_subclass):
+            Trader.register_subclass(trader_subclass)  # type: ignore
+
+
+
+
+class Trader(dispatch.Dispatcher, metaclass=TraderMeta):
     """The abstract base class of simulated traders within a `SimModel`. Each
     sub-class implements a unique trading strategy, and is identified by a
     unique algorithm name. Traders maintain settings that persist through
@@ -58,6 +78,13 @@ class Trader(object):
     their associated accounts.
     """
 
+
+    _subclasses: typing.ClassVar[typing.Set[typing.Type['Trader']]] = set()
+    """All registered concrete subclasses of the `Trader` abstract base class.
+    """
+
+    _stock_market: 'StockMarket'
+    """The market that this trader reacts to."""
 
     _name: str
     """The name that uniquely identifies this trader within its `SimModel`."""
@@ -74,14 +101,43 @@ class Trader(object):
     _account: typing.Optional['TraderAccount']
     """This trader's active bank account and stock portfolio."""
 
-    #TODO: Events:
-    #   TRADER_ACCOUNT_CREATED
-    #   TRADER_ALGORITHM_SETTINGS_CHANGED
-    #   TRADER_INITIAL_FUNDS_CHANGED
-    #   TRADER_TRADING_FEE_CHANGED
+    EVENTS: typing.ClassVar[typing.FrozenSet[str]] = frozenset([
+        'TRADER_ACCOUNT_CREATED',
+        'TRADER_ALGORITHM_SETTINGS_CHANGED',
+        'TRADER_INITIAL_FUNDS_CHANGED',
+        'TRADER_TRADING_FEE_CHANGED'])
+    """Events broadcast by `Trader`s."""
+
+
+    @classmethod
+    def register_subclass(cls,
+        subclass: typing.Type['Trader']
+    ) -> bool:
+        """Add concrete `subclass` of `Trader` to the set of available
+        implementations, returning `True` if successfully added.
+        """
+        if not issubclass(subclass, cls):
+            raise ValueError('Subclass {!r} does not actually inherit from '
+                '{!r} parent class.'.format(
+                    subclass, cls))
+        if inspect.isabstract(subclass) or subclass in cls._subclasses:
+            return False
+
+        cls._subclasses.add(subclass)
+        return True
+
+    @classmethod
+    def iter_subclasses(cls
+    ) -> typing.Iterator[typing.Type['Trader']]:
+        """Return an iterator that yields all concrete `Trader` subclasses that
+        were registered with `register_subclass`.
+        """
+        for subclass in cls._subclasses:
+            yield subclass
 
 
     def __init__(self,
+        market: 'StockMarket',
         name: str,
         initial_funds: float,
         trading_fee: float,
@@ -102,14 +158,28 @@ class Trader(object):
         instantiated subclass of `Trader`, and invalid arguments raise
         subclasses of `TypeError` and `ValueError`.
         """
+        self._stock_market = market
+
         self._name = name
         self._account = None
 
         self.set_initial_funds(initial_funds)
         self.set_trading_fee(trading_fee)
-        # Subclass initializes algorithm settings during construction
-        #self.set_algorithm_settings(algorithm_settings)
+        self.set_algorithm_settings(algorithm_settings)
 
+        market.bind(
+            STOCKMARKET_CLEARED=self._on_stockmarket_cleared)
+
+    def _on_stockmarket_cleared(self,
+    ) -> None:
+        """Responds to market resets by creating a new account."""
+        self.create_account()
+
+
+    def get_stock_market(self
+    ) -> 'StockMarket':
+        """Return the market that this trader participates in."""
+        return self._stock_market
 
     def get_name(self
     ) -> str:
@@ -128,21 +198,51 @@ class Trader(object):
         """
         return self._account
 
-    def create_account(self,
-        market: 'StockMarket'
+    def create_account(self
     ) -> 'TraderAccount':
         """Discard any previously created `TraderAccount`, and create a new one
-        tied to `market`. The new account starts with this trader's configured
-        initial funds (see `get_initial_funds`). Returns the newly created
-        account.
+        tied to `_stock_market`. The new account starts with this trader's
+        configured initial funds (see `get_initial_funds`). Returns the newly
+        created account.
 
         Triggers `TRADER_ACCOUNT_CREATED` if successful.
         """
-        self._account = TraderAccount(market, self)
-        #TODO: Broadcast TRADER_ACCOUNT_CREATED
+        if self._account is not None:
+            # Disconnect from old account
+            self._account.unbind(
+                self._on_traderaccount_frozen)
+
+        self._account = TraderAccount(self._stock_market, self)
+        self._account.bind(
+            TRADERACCOUNT_FROZEN=self._on_traderaccount_frozen)
+        self._stock_market.bind(
+            STOCKMARKET_ADDITION=self._on_stockmarket_addition)
+
+        self.emit('TRADER_ACCOUNT_CREATED',
+            trader=self,
+            account=self._account)
+
+    def _on_traderaccount_frozen(self,
+    ) -> None:
+        """Stop reacting to the `StockMarket` once frozen."""
+        self._stock_market.unbind(
+            self._on_stockmarket_addition)
+
+    def _on_stockmarket_addition(self,
+    ) -> None:
+        """Make trading decisions as `StockMarket` prices update."""
+        try:
+            self.trade()
+        except Exception as e:
+            assert self._account is not None, ('Received stock market update '
+                'without an open trader account.')
+            self._account.freeze(
+                'Trader encountered an error when making a trading decision.',
+                exception=e)
 
 
     @classmethod
+    @abc.abstractmethod
     def get_algorithm_name(cls
     ) -> str:
         """Return this `Trader` subclass' identifying algorithm name, unique
@@ -200,7 +300,9 @@ class Trader(object):
             raise InitialFundsError(initial_funds)
 
         self._initial_funds = initial_funds
-        #TODO: Broadcast TRADER_INITIAL_FUNDS_CHANGED
+        self.emit('TRADER_INITIAL_FUNDS_CHANGED',
+            trader=self,
+            initial_funds=initial_funds)
 
 
     def get_trading_fee(self
@@ -231,7 +333,9 @@ class Trader(object):
             raise TradingFeeError(trading_fee)
 
         self._trading_fee = trading_fee
-        #TODO: Broadcast TRADER_TRADING_FEE_CHANGED
+        self.emit('TRADER_TRADING_FEE_CHANGED',
+            trader=self,
+            trading_fee=trading_fee)
 
 
     def get_algorithm_settings(self
@@ -244,6 +348,18 @@ class Trader(object):
         """
         return self._algorithm_settings
 
+    def _set_algorithm_settings(self,
+        algorithm_settings: typing.Dict[str, typing.Any]
+    ) -> None:
+        """Helper for `Trader` subclasses to assign and broadcast changed
+        settings.
+        """
+        self._algorithm_settings = algorithm_settings
+        self.emit('TRADER_ALGORITHM_SETTINGS_CHANGED',
+            trader=self,
+            algorithm_settings=algorithm_settings)
+
+    @abc.abstractmethod
     def set_algorithm_settings(self,
         algorithm_settings: typing.Dict[str, typing.Any]
     ) -> None:
@@ -256,7 +372,17 @@ class Trader(object):
         Triggers `TRADER_ALGORITHM_SETTINGS_CHANGED` if successful.
         """
         raise NotImplementedError(
-            'Trader subclass must implement set_algorithm_settings.')
+            'Trader subclass must implement set_algorithm_settings method.')
+        # Subclasses validate settings and then assign and broadcast them:
+        #self._set_algorithm_settings(algorithm_settings)
+
+
+    @abc.abstractmethod
+    def trade(self
+    ) -> None:
+        """Choose to buy or sell based on updated stock market conditions."""
+        raise NotImplementedError(
+            'Trader subclass must implement trade method.')
 
 
 

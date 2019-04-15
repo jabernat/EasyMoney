@@ -9,4 +9,6 @@ from model import (
     sim_model,
     stock_market,
     trader,
-    trader_account)
+    trader_account,
+
+    algorithms)

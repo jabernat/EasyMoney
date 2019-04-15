@@ -15,11 +15,7 @@ from view.window_view import WindowView
 
 def main() -> None:
     """Program entry point that opens the application window."""
-    sim_model = SimModel()
-    sim_controller = SimController(sim_model)
-    window_view = WindowView(sim_controller)
-
-    window_view.run()
+    WindowView(SimController(SimModel())).run()
 
 
 

@@ -7,6 +7,8 @@ __license__ = 'MIT'
 
 import typing
 
+import dispatch
+
 # Local package imports at end of file to resolve circular dependencies
 
 
@@ -46,7 +48,7 @@ class UnrecognizedAlgorithmError(ValueError):
 
 
 
-class SimModel(object):
+class SimModel(dispatch.Dispatcher):
     """The state of a simulated stock market along with the bank accounts and
     stock portfolios of participating traders. This high-level MVC model module
     broadcasts state update events to observers.
@@ -62,10 +64,11 @@ class SimModel(object):
     _traders: typing.Dict[str, 'Trader']
     """Participating `Trader` subclass instances indexed by their names."""
 
-    #TODO: Events:
-    #   TRADER_ADDED
-    #   TRADER_ALGORITHM_ADDED
-    #   TRADER_REMOVED
+    EVENTS: typing.ClassVar[typing.FrozenSet[str]] = frozenset([
+        'SIMMODEL_TRADER_ADDED',
+        'SIMMODEL_TRADER_ALGORITHM_ADDED',
+        'SIMMODEL_TRADER_REMOVED'])
+    """Events broadcast by the `SimModel`."""
 
 
     def __init__(self
@@ -76,6 +79,10 @@ class SimModel(object):
         self._stock_market = StockMarket()
         self._traders = {}
 
+        # Add all known Trader implementations
+        for trader_subclass in Trader.iter_subclasses():
+            self.add_trader_algorithm(trader_subclass)
+
 
     def reset_market_and_trader_accounts(self
     ) -> None:
@@ -84,9 +91,7 @@ class SimModel(object):
         ones.
         """
         self._stock_market.clear()
-
-        for trader in self.get_traders():
-            trader.create_account(self._stock_market)
+        # Traders react by creating new accounts
 
 
     def get_stock_market(self
@@ -102,7 +107,8 @@ class SimModel(object):
         """Return a `list` of registered trader algorithm names usable by
         participating traders.
 
-        This result changes following the `TRADER_ALGORITHM_ADDED` event.
+        This result changes following the `SIMMODEL_TRADER_ALGORITHM_ADDED`
+        event.
         """
         return list(self._trader_algorithms.keys())
 
@@ -114,14 +120,16 @@ class SimModel(object):
         name (see `Trader.get_algorithm_name`) becomes an available option for
         the `add_trader` factory method.
 
-        Triggers `TRADER_ALGORITHM_ADDED` if successful.
+        Triggers `SIMMODEL_TRADER_ALGORITHM_ADDED` if successful.
         """
         name = trader_class.get_algorithm_name()
         if name in self._trader_algorithms:
             return
 
         self._trader_algorithms[name] = trader_class
-        #TODO: Broadcast TRADER_ALGORITHM_ADDED
+        self.emit('SIMMODEL_TRADER_ALGORITHM_ADDED',
+            model=self,
+            algorithm=name)
 
     def _get_trader_class_by_algorithm_name(self,
         algorithm_name: str
@@ -169,10 +177,16 @@ class SimModel(object):
         """Return a `list` of the simulation's participating `Trader`s, which
         each expose their configuration and `TraderAccount` interfaces.
 
-        This result changes following `TRADER_ADDED` and `TRADER_REMOVED`
-        events.
+        This result changes following `SIMMODEL_TRADER_ADDED` and
+        `SIMMODEL_TRADER_REMOVED` events.
         """
         return list(self._traders.values())
+
+    def get_trader(self,
+        name: str
+    ) -> typing.Optional['Trader']:
+        """Return the `Trader` known by `name`, or `None` if not found."""
+        return self._traders.get(name)
 
     def add_trader(self,
         name: str,
@@ -209,15 +223,21 @@ class SimModel(object):
         `algorithm`, and invalid arguments raise subclasses of `TypeError` and
         `ValueError`.
 
-        Triggers `TRADER_ADDED` if successful.
+        Triggers `SIMMODEL_TRADER_ADDED` if successful.
         """
         if name in self._traders:
             raise TraderNameTakenError(name)
 
         trader_class = self._get_trader_class_by_algorithm_name(algorithm)
-        self._traders[name] = trader_class(
+        trader = trader_class(
+            self._stock_market,
             name, initial_funds, trading_fee, algorithm_settings)
-        #TODO: Broadcast TRADER_ADDED
+
+        self._traders[name] = trader
+        self.emit('SIMMODEL_TRADER_ADDED',
+            model=self,
+            trader=trader)
+        return trader
 
     def remove_trader(self,
         name: str
@@ -226,7 +246,7 @@ class SimModel(object):
 
         No error occurs if `name` does not exist.
 
-        Triggers `TRADER_REMOVED` if successful.
+        Triggers `SIMMODEL_TRADER_REMOVED` if successful.
         """
         try:
             trader = self._traders[name]
@@ -234,7 +254,9 @@ class SimModel(object):
             return
 
         del self._traders[name]
-        #TODO: Broadcast TRADER_REMOVED
+        self.emit('SIMMODEL_TRADER_REMOVED',
+            model=self,
+            trader=trader)
 
 
 
