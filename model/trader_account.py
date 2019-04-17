@@ -161,7 +161,7 @@ class TraderAccount(dispatch.Dispatcher):
         self._stock_market = market
         self._trader = trader
 
-        self._balance_initial = trader.get_initial_balance()
+        self._balance_initial = trader.get_initial_funds()
         self._balance = self._balance_initial
         self._stocks = collections.defaultdict(float)  # Default to 0.0
         self._frozen = False
