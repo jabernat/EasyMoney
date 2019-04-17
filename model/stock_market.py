@@ -239,7 +239,7 @@ class StockMarket(dispatch.Dispatcher):
         symbols to their prices in reverse chronological order. This iterator
         should be iterated immediately, as market changes will invalidate it.
         """
-        for index, time in enumerate(self._price_times):
+        for index, time in enumerate(reversed(self._price_times)):
             yield time, self._get_prices_at_index(index)
 
 
