@@ -2,6 +2,7 @@ import typing
 import datetime
 
 from model.trader import Trader
+from model.trader_account import TraderAccount
 
 
 
@@ -29,7 +30,8 @@ class MomentumTrader(Trader):
     """Previously seen stock prices used to calculate price changes."""
 
 
-    def get_algorithm_name(self
+    @classmethod
+    def get_algorithm_name(cls
     ) -> str:
         """Return this `Trader` subclass' identifying algorithm name, unique
         to the `SimModel` that it is registered within.
@@ -38,7 +40,7 @@ class MomentumTrader(Trader):
 
 
     def create_account(self
-    ) -> 'TraderAccount':
+    ) -> TraderAccount:
         """Reinitializes the bot upon creation of a new `TraderAccount`."""
         account = super().create_account()
 
