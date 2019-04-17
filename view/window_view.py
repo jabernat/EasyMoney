@@ -6,11 +6,14 @@ __license__ = 'MIT'
 
 
 import typing
-
-# Local package imports at end of file to resolve circular dependencies
 from kivy.app import App
 from kivy.uix.tabbedpanel import TabbedPanel
 from kivy.lang import Builder
+
+# Local package imports duplicated at end of file to resolve circular dependencies
+if typing.TYPE_CHECKING:
+    from controller.sim_controller import SimController
+    from model.algorithms.momentum_trader import MomentumTrader
 
 Builder.load_string("""
 

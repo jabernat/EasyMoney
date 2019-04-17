@@ -10,7 +10,10 @@ import typing
 
 import dispatch
 
-# Local package imports at end of file to resolve circular dependencies
+# Local package imports duplicated at end of file to resolve circular dependencies
+if typing.TYPE_CHECKING:
+    from model.stock_market import StockMarket
+    from model.trader import Trader
 
 
 
@@ -158,7 +161,7 @@ class TraderAccount(dispatch.Dispatcher):
         self._stock_market = market
         self._trader = trader
 
-        self._balance_initial = trader.get_initial_balance()
+        self._balance_initial = trader.get_initial_funds()
         self._balance = self._balance_initial
         self._stocks = collections.defaultdict(float)  # Default to 0.0
         self._frozen = False
