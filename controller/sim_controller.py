@@ -150,7 +150,9 @@ class SimController(object):
         if trader is None:
             raise TraderNotFoundError(name)
 
-        trader.freeze(reason)
+        account = trader.get_account()
+        if account is not None:
+            account.freeze(reason)
 
     def set_trader_initial_funds(self,
         trader_name: str,
