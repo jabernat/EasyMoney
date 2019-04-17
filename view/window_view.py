@@ -73,64 +73,53 @@ class WindowView(App):
         super().run()
 
 
-    def run_console_test(self, *args, **kwargs):
+    def run_console_test(self,
+        *args: typing.Any,
+        **kwargs: typing.Any
+    ) -> None:
+        # Only allow running once
+        if hasattr(self, '_ran_console_test'):
+            return  # You'll crash because traders were already added
+        self._ran_console_test = True
+
+        import pprint
+        pprinter = pprint.PrettyPrinter(indent=4)
+
         print('Welcome to EasyMoney')
+        controller = self.get_controller()
+        model = controller.get_model()
 
-        # TRADER
-        names = ['Madoff', 'Belfort', 'Stewart']
-        initial_funds: float = 10000.0
-        trading_fee: float = .05
-        momentum_trader = MomentumTrader()
-        algorithm: str = momentum_trader.get_algorithm_name()
-        algorithm_settings: dict = momentum_trader.get_algorithm_settings_defaults()
+        # TODO: Register for all events
+
         print('Adding traders')
-        try:
-            for name in names:
-                self._sim_controller.add_trader(name,
-                                                initial_funds,
-                                                trading_fee,
-                                                algorithm,
-                                                algorithm_settings)
-        except Exception as e:
-            print(e)
-        print('Traders Madoff, Belfort, Stewart successfully added.\n')
+        ALGORITHM = 'Momentum'
+        INITIAL_FUNDS = 10_000.0
+        TRADING_FEE = 0.50
+        algorithm_settings = model.get_trader_algorithm_settings_defaults(ALGORITHM)
+        for name in ['Madoff', 'Belfort', 'Stewart']:
+            self._sim_controller.add_trader(name,
+                initial_funds=INITIAL_FUNDS, trading_fee=TRADING_FEE,
+                algorithm=ALGORITHM, algorithm_settings=algorithm_settings)
 
-        # DATASOURCE
-        file_names = ['AAPL.json', 'MSFT.json', 'AMD.json', 'JCOM.json']
-        print('Adding datasources.')
-        for filename in file_names:
-            try:
-                self._sim_controller.get_datasource().add_stock_symbol(
-                    filename)
-            except Exception as e:
-                print(e)
-        try:
-            if self._sim_controller.get_datasource().can_confirm():
-                self._sim_controller.get_datasource().confirm()
-        except Exception as e:
-            print(e)
-        print('Datasources successfully added.\n')
+        print('Adding datasources')
+        for filename in [
+            'data/AAPL.json',
+            'data/MSFT.json',
+            'data/AMD.json',
+            'data/JCOM.json'
+        ]:
+            controller.get_datasource().add_stock_symbol(filename)
+        controller.get_datasource().confirm()
 
-        # SIMULATION
-        print('Starting simulation.')
-        try:
-            self._sim_controller.get_updater().play()
-        except Exception as e:
-            print(e)
-        print('Simulation complete.\n')
+        print('Starting simulation')
+        controller.get_updater().play()
 
-        # STATISTICS
-        print('Statistics display:')
-        trader_list = self._sim_controller.get_model().get_traders()
-        for trader in trader_list:
-            try:
-                print('Trader: ' + trader.get_name())
-                print(trader.get_account().get_statistics_overall())
-                print()
-            except Exception as e:
-                print(e)
-
-        print('\nThank you for using EasyMoney.')
+        ''' TODO: Print statistics after updater switches to PAUSED state.
+        print('Statistics')
+        for trader in model.get_traders():
+            print('Trader {!r}:'.format(trader.get_name()))
+            pprinter.pprint(trader.get_account().get_statistics_overall())
+        '''
 
 
 # Imported last to avoid circular dependencies
