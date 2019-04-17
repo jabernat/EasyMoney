@@ -8,7 +8,6 @@ __license__ = 'MIT'
 import abc
 import inspect
 import typing
-import datetime
 
 import dispatch
 
@@ -377,12 +376,16 @@ class Trader(dispatch.Dispatcher, metaclass=TraderMeta):
         # Subclasses validate settings and then assign and broadcast them:
         #self._set_algorithm_settings(algorithm_settings)
 
+
     @abc.abstractmethod
     def trade(self
     ) -> None:
         """Choose to buy or sell based on updated stock market conditions."""
         raise NotImplementedError(
             'Trader subclass must implement trade method.')
+
+
+
 
 # Imported last to avoid circular dependencies
 from model.stock_market import StockMarket
