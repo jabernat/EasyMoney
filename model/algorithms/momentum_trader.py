@@ -63,23 +63,25 @@ class MomentumTrader(Trader):
         The bot simply assumes that current trends will continue for each
         symbol, and makes decisions accordingly
         """
+        account = self.get_account()
+        assert account is not None, 'Missing TraderAccount'
         price_deltas = self._calculate_price_deltas()
 
         # buy as many shares of the highest priority stock as possible
         # given the current balance
-        free_balance = self.get_account().get_balance() - self.get_trading_fee()
+        free_balance = account.get_balance() - self.get_trading_fee()
         if free_balance > 0:
             for stock_symbol in self._choose_symbols_to_buy(price_deltas):
                 price = self.get_stock_market().get_stock_symbol_price(stock_symbol)
                 quantity = price / free_balance
 
-                self.get_account().buy(stock_symbol, quantity)
+                account.buy(stock_symbol, quantity)
                 break
 
         # sell everything that is depreciating
-        owned_stocks = self.get_account().get_stocks()
+        owned_stocks = account.get_stocks()
         for stock_symbol in self._choose_symbols_to_sell(price_deltas):
-            self.get_account().sell(stock_symbol, owned_stocks[stock_symbol])
+            account.sell(stock_symbol, owned_stocks[stock_symbol])
 
 
     def set_algorithm_settings(self,
@@ -107,9 +109,10 @@ class MomentumTrader(Trader):
         seen during the last call.
         """
         prices_current = self.get_stock_market().get_prices()
+        assert prices_current is not None, 'Stock market prices missing'
 
         price_deltas = {}
-        for stock_symbol, price_current in prices_current:
+        for stock_symbol, price_current in prices_current.items():
             if self._prices_last is None:  # First data point
                 price_delta = 0.0
             else:
@@ -128,15 +131,15 @@ class MomentumTrader(Trader):
         return [stock_symbol
             for stock_symbol, price_delta
                 in sorted(price_deltas.items(), reverse=True,
-                    key=lambda symbol, delta: delta)
+                    key=lambda symbol_and_delta: symbol_and_delta[1])
                 if price_delta > 0]
 
     def _choose_symbols_to_sell(self,
         price_deltas: typing.Dict[str, float]
     ) -> typing.List[str]:
         """Return a list of stock symbols that should be sold."""
-        LOSS_THRESHOLD = -0.1  # Sell if delta goes below this
+        LOSS_THRESHOLD = -0.1  # Sell if delta goes at least this low
 
         return [stock_symbol
-            for stock_symbol, price_delta in price_deltas
+            for stock_symbol, price_delta in price_deltas.items()
                 if price_delta <= LOSS_THRESHOLD]
