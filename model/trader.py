@@ -224,6 +224,7 @@ class Trader(dispatch.Dispatcher, metaclass=TraderMeta):
         self.emit('TRADER_ACCOUNT_CREATED',
             trader=self,
             account=self._account)
+        return self._account
 
     def _on_traderaccount_frozen(self,
     ) -> None:
