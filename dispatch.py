@@ -211,7 +211,12 @@ class Dispatcher(object):
             cls.__events_combined = events_combined
             Dispatcher.__initialized_subclasses.add(cls)
 
-        instance = super(Dispatcher, cls).__new__(cls, *args, **kwargs)  # type: ignore
+        new = super(Dispatcher, cls).__new__
+        if new is object.__new__:
+            instance = new(cls)  # No other arguments allowed for object
+        else:
+            instance = new(cls, *args, **kwargs)  # type: ignore
+
         instance.__event_listeners = {}
         instance.register_events(*cls.__events_combined)
         return instance
