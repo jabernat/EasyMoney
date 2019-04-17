@@ -7,7 +7,9 @@ __license__ = 'MIT'
 
 import typing
 
-# Local package imports at end of file to resolve circular dependencies
+# Local package imports duplicated at end of file to resolve circular dependencies
+if typing.TYPE_CHECKING:
+    from controller.sim_controller import SimController
 
 
 

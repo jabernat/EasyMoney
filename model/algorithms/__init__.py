@@ -6,4 +6,5 @@ __license__ = 'MIT'
 
 
 from model.algorithms import (
-    trader_example)
+    trader_example,
+    momentum_trader)
