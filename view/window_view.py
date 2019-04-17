@@ -154,10 +154,10 @@ Builder.load_string("""
                 BoxLayout:
                     Label:
                     Image:
-                        source: 'pause.png'
+                        source: 'view/pause.png'
                     Label:
                     Image:
-                        source: 'reset.png'
+                        source: 'view/reset.png'
                 Label:
                 Label:
                 Label:
@@ -165,11 +165,11 @@ Builder.load_string("""
                 Label:
 
             Image:
-                source: 'stock1.gif'
+                source: 'view/stock1.gif'
             Image:
-                source: 'stock2.gif'
+                source: 'view/stock2.gif'
             Image:
-                source: 'stock3.gif'
+                source: 'view/stock3.gif'
             BoxLayout:
 
 
