@@ -170,7 +170,7 @@ class MarketUpdater(dispatch.Dispatcher):
         confirmed, and call appropriate simulation module functions to update
         those prices.
         """
-        if not self._parent_controller.is_confirmed():
+        if not self._parent_controller.get_datasource().is_confirmed():
             self.reset()
             raise UnexpectedDatasourceUnconfirmError(self.State.PLAYING)
 
