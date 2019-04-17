@@ -25,13 +25,13 @@ class ImageButton(ButtonBehavior, Image):
     pass
 
 
-class AppStart(TabbedPanel):
+class RootWidget(TabbedPanel):
     pass
 
 
 class PrototypeGUI(App):
     def build(self):
-        return AppStart()
+        return RootWidget()
 
     def run_console_test(self, *args, **kwargs):
         print('Welcome to EasyMoney')
