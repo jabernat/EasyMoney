@@ -19,6 +19,8 @@ import dispatch
 if typing.TYPE_CHECKING:
     from controller.sim_controller import SimController
     from model.algorithms.momentum_trader import MomentumTrader
+    from model.trader import Trader
+    from model.trader_account import TraderAccount
 
 
 
@@ -102,6 +104,14 @@ class WindowView(App):
             dispatcher.bind(**{event_name: create_event_printer(event_name)
                 for event_name in dispatcher.EVENTS})
 
+        def on_trader_account_created(
+            trader: 'Trader',
+            account: 'TraderAccount'
+        )-> None:
+            print_all_events(account)
+            print('ALPHA')
+            print(account)
+
         print('Welcome to EasyMoney')
         controller = self.get_controller()
         print_all_events(controller.get_datasource())
@@ -121,7 +131,8 @@ class WindowView(App):
                 initial_funds=INITIAL_FUNDS, trading_fee=TRADING_FEE,
                 algorithm=ALGORITHM, algorithm_settings=algorithm_settings)
             print_all_events(trader)
-            # TODO: Register for TRADER_ACCOUNT_CREATED to register for account's events
+            trader.bind(
+                TRADER_ACCOUNT_CREATED=on_trader_account_created)
 
         print('Adding datasources')
         for filename in [
@@ -136,6 +147,7 @@ class WindowView(App):
         print('Starting simulation')
         controller.get_updater().play()
 
+
         ''' TODO: Print statistics after updater switches to PAUSED state.
         print('Statistics')
         for trader in model.get_traders():
@@ -147,4 +159,6 @@ class WindowView(App):
 # Imported last to avoid circular dependencies
 from controller.sim_controller import SimController
 from model.algorithms.momentum_trader import MomentumTrader
+from model.trader import Trader
+from model.trader_account import TraderAccount
 

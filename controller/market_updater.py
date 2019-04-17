@@ -97,7 +97,7 @@ class MarketUpdater(dispatch.Dispatcher):
 
         # Reset if the datasource gets externally unconfirmed
         datasource.bind(
-            MARKETDATASOURCE_UNCONFIRMED=self.reset)
+            MARKETDATASOURCE_UNCONFIRMED=lambda **kwargs: self.reset())
 
 
     def is_playing(self
@@ -118,6 +118,7 @@ class MarketUpdater(dispatch.Dispatcher):
                 self.reset()
                 raise UnexpectedDatasourceUnconfirmError(self.State.PAUSED)
         else:  # Currently reset
+            self.reset()
             self._datasource.confirm()
 
         self._state = self.State.PLAYING
@@ -162,7 +163,8 @@ class MarketUpdater(dispatch.Dispatcher):
         trader accounts, and unlocks the datasource.
         """
         if not (self.is_playing() or self.is_paused()):
-            return  # Already reset
+            # return  # Already reset
+            pass
 
         self.pause()  # Stop updates if playing
 
