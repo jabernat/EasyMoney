@@ -9,7 +9,10 @@ import typing
 
 import dispatch
 
-# Local package imports at end of file to resolve circular dependencies
+# Local package imports duplicated at end of file to resolve circular dependencies
+if typing.TYPE_CHECKING:
+    from model.stock_market import StockMarket
+    from model.trader import Trader
 
 
 

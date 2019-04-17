@@ -7,7 +7,12 @@ __license__ = 'MIT'
 
 import typing
 
-# Local package imports at end of file to resolve circular dependencies
+# Local package imports duplicated at end of file to resolve circular dependencies
+if typing.TYPE_CHECKING:
+    from model.sim_model import SimModel
+    from model.trader import Trader
+    from controller.market_datasource import MarketDatasource
+    from controller.market_updater import MarketUpdater
 
 
 

@@ -13,7 +13,10 @@ from kivy.clock import (
 
 import dispatch
 
-# Local package imports at end of file to resolve circular dependencies
+# Local package imports duplicated at end of file to resolve circular dependencies
+if typing.TYPE_CHECKING:
+    from controller.market_datasource import MarketDatasource
+    from model.sim_model import SimModel
 
 
 
