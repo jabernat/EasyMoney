@@ -1,3 +1,10 @@
+"""Defines `MomentumTrader` trading algorithm."""
+
+
+__copyright__ = 'Copyright © 2019, Erik Anderson, James Abernathy, and Tyler Gerritsen'
+__license__ = 'MIT'
+
+
 import typing
 import datetime
 
