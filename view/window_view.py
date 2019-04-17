@@ -29,9 +29,49 @@ class RootWidget(TabbedPanel):
     pass
 
 
-class PrototypeGUI(App):
-    def build(self):
+
+
+class WindowView(App):
+    """
+    """
+
+
+    _sim_controller: 'SimController'
+    """"""
+
+
+    def __init__(self,
+        sim_controller: 'SimController'
+    ) -> None:
+        """
+        """
+        super().__init__()
+
+        self._sim_controller = sim_controller
+
+        Builder.load_file('view/window.kv')
+
+
+    def get_controller(self
+    ) -> 'SimController':
+        """
+        """
+        return self._sim_controller
+
+
+    def build(self
+    ) -> RootWidget:
+        """
+        """
         return RootWidget()
+
+
+    def run(self
+    ) -> None:
+        """
+        """
+        super().run()
+
 
     def run_console_test(self, *args, **kwargs):
         print('Welcome to EasyMoney')
@@ -91,41 +131,6 @@ class PrototypeGUI(App):
                 print(e)
 
         print('\nThank you for using EasyMoney.')
-
-
-
-
-class WindowView(object):
-    """
-    """
-
-
-    _sim_controller: 'SimController'
-    """"""
-
-
-    def __init__(self,
-        sim_controller: 'SimController'
-    ) -> None:
-        """
-        """
-        self._sim_controller = sim_controller
-
-        Builder.load_file('view/window.kv')
-
-
-    def get_controller(self
-    ) -> 'SimController':
-        """
-        """
-        return self._sim_controller
-
-
-    def run(self
-    ) -> None:
-        """
-        """
-        PrototypeGUI().run()
 
 
 # Imported last to avoid circular dependencies
