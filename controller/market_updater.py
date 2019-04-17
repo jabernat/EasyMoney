@@ -7,10 +7,11 @@ __license__ = 'MIT'
 
 import enum
 import typing
-import dispatch
 
 from kivy.clock import (
     Clock, ClockEvent)
+
+import dispatch
 
 # Local package imports at end of file to resolve circular dependencies
 
@@ -59,8 +60,11 @@ class MarketUpdater(dispatch.Dispatcher):
         """
 
 
-    _parent_controller: 'SimController'
-    """This updater's owning simulation controller."""
+    _datasource: 'MarketDatasource'
+    """The datasource that this updater draws prices from."""
+
+    _model: 'SimModel'
+    """The model that this updater inserts prices into."""
 
     _state: State
     """Status of this updater controlling its activity."""
@@ -78,15 +82,18 @@ class MarketUpdater(dispatch.Dispatcher):
 
 
     def __init__(self,
-        controller: 'SimController'
+        datasource: 'MarketDatasource',
+        model: 'SimModel'
     ) -> None:
         """Start this new `MarketUpdater` in a reset state."""
-        self._parent_controller = controller
+        self._datasource = datasource
+        self._model = model
+
         self._state = self.State.RESET
         self._update_timer = None
 
         # Reset if the datasource gets externally unconfirmed
-        controller.get_datasource().bind(
+        datasource.bind(
             MARKETDATASOURCE_UNCONFIRMED=self.reset)
 
 
@@ -103,13 +110,12 @@ class MarketUpdater(dispatch.Dispatcher):
         if self.is_playing():
             return  # Already playing
 
-        datasource = self._parent_controller.get_datasource()
         if self.is_paused():
-            if not datasource.is_confirmed():
+            if not self._datasource.is_confirmed():
                 self.reset()
                 raise UnexpectedDatasourceUnconfirmError(self.State.PAUSED)
         else:  # Currently reset
-            datasource.confirm()
+            self._datasource.confirm()
 
         self._state = self.State.PLAYING
         self.emit('MARKETUPDATER_PLAYING',
@@ -160,8 +166,8 @@ class MarketUpdater(dispatch.Dispatcher):
         self.emit('MARKETUPDATER_RESET',
             updater=self)
 
-        self._parent_controller.get_model().reset_market_and_trader_accounts()
-        self._parent_controller.get_datasource().unconfirm()
+        self._model.reset_market_and_trader_accounts()
+        self._datasource.unconfirm()
 
 
     def _add_market_prices_from_datasource(self
@@ -170,20 +176,20 @@ class MarketUpdater(dispatch.Dispatcher):
         confirmed, and call appropriate simulation module functions to update
         those prices.
         """
-        if not self._parent_controller.get_datasource().is_confirmed():
+        if not self._datasource.is_confirmed():
             self.reset()
             raise UnexpectedDatasourceUnconfirmError(self.State.PLAYING)
 
-        time_and_prices = self._parent_controller.get_datasource().get_next_prices()
+        time_and_prices = self._datasource.get_next_prices()
         if not time_and_prices:  # Ran out of data
             self.pause()
             return
 
-        market = self._parent_controller.get_model().get_stock_market()
-        market.add_next_prices(*time_and_prices)
+        self._model.get_stock_market().add_next_prices(*time_and_prices)
 
 
 
 
 # Imported last to avoid circular dependencies
-from controller.sim_controller import SimController
+from controller.market_datasource import MarketDatasource
+from model.sim_model import SimModel
