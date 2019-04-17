@@ -166,8 +166,13 @@ class Trader(dispatch.Dispatcher, metaclass=TraderMeta):
         self._name = name
         self._account = None
 
+        self._initial_funds = 0.0
         self.set_initial_funds(initial_funds)
+
+        self._trading_fee = 0.0
         self.set_trading_fee(trading_fee)
+
+        self._algorithm_settings = {}
         self.set_algorithm_settings(algorithm_settings)
 
         market.bind(

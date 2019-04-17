@@ -125,10 +125,11 @@ class MarketUpdater(dispatch.Dispatcher):
             updater=self)
 
         # Resume periodic updates
+        INTERVAL_s = 0.0  # Once per frame
         self._update_timer = Clock.schedule_interval(
-            self._add_market_prices_from_datasource, 1.0)
+            self._add_market_prices_from_datasource, INTERVAL_s)
         # Make first update immediately
-        self._add_market_prices_from_datasource()
+        self._add_market_prices_from_datasource(elapsed=0.0)
 
 
     def is_paused(self
@@ -173,11 +174,11 @@ class MarketUpdater(dispatch.Dispatcher):
         self._datasource.unconfirm()
 
 
-    def _add_market_prices_from_datasource(self
+    def _add_market_prices_from_datasource(self,
+        elapsed: float
     ) -> None:
-        """Get the current prices from the datasource if an update is
-        confirmed, and call appropriate simulation module functions to update
-        those prices.
+        """Pass current prices from the datasource to the model's
+        `StockMarket`. Called periodically by `kivy.clock`.
         """
         if not self._datasource.is_confirmed():
             self.reset()

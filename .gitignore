@@ -6,3 +6,6 @@
 
 # IntelliJ Idea
 /.idea/
+
+# Alpha Vantage query result JSON files
+*.json
