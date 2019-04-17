@@ -9,6 +9,8 @@ import typing
 from kivy.app import App
 from kivy.uix.tabbedpanel import TabbedPanel
 from kivy.lang import Builder
+from kivy.uix.behaviors import ButtonBehavior
+from kivy.uix.image import Image
 
 # Local package imports duplicated at end of file to resolve circular dependencies
 if typing.TYPE_CHECKING:
@@ -153,8 +155,9 @@ Builder.load_string("""
             BoxLayout: # Sim control panel
                 BoxLayout:
                     Label:
-                    Image:
+                    ImageButton:
                         source: 'view/pause.png'
+                        on_press: app.run_console_test()
                     Label:
                     Image:
                         source: 'view/reset.png'
@@ -206,6 +209,10 @@ Builder.load_string("""
 """)
 
 
+class ImageButton(ButtonBehavior, Image):
+    pass
+
+
 class AppStart(TabbedPanel):
     pass
 
@@ -214,38 +221,7 @@ class PrototypeGUI(App):
     def build(self):
         return AppStart()
 
-class WindowView(object):
-    """
-    """
-
-
-    _sim_controller: 'SimController'
-    """"""
-
-
-    def __init__(self,
-        sim_controller: 'SimController'
-    ) -> None:
-        """
-        """
-        self._sim_controller = sim_controller
-
-
-    def get_controller(self
-    ) -> 'SimController':
-        """
-        """
-        return self._sim_controller
-
-
-    def run(self
-    ) -> None:
-        """
-        """
-        PrototypeGUI().run()
-        # self._print_console()
-
-    def _print_console(self) -> None:
+    def run_console_test(self, *args, **kwargs):
         print('Welcome to EasyMoney')
 
         # TRADER
@@ -303,6 +279,39 @@ class WindowView(object):
                 print(e)
 
         print('\nThank you for using EasyMoney.')
+
+
+
+
+class WindowView(object):
+    """
+    """
+
+
+    _sim_controller: 'SimController'
+    """"""
+
+
+    def __init__(self,
+        sim_controller: 'SimController'
+    ) -> None:
+        """
+        """
+        self._sim_controller = sim_controller
+
+
+    def get_controller(self
+    ) -> 'SimController':
+        """
+        """
+        return self._sim_controller
+
+
+    def run(self
+    ) -> None:
+        """
+        """
+        PrototypeGUI().run()
 
 
 # Imported last to avoid circular dependencies
