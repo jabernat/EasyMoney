@@ -189,6 +189,9 @@ class Dispatcher(object):
 
     __event_listeners: typing.Dict[str, _EventListeners]
 
+    EVENTS: typing.ClassVar[typing.FrozenSet[str]]
+    """Set of event names broadcast by `Dispatcher` subclasses."""
+
 
     def __new__(cls,
         *args: typing.Any,
