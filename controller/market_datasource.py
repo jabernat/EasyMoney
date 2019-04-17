@@ -5,210 +5,341 @@ __copyright__ = 'Copyright © 2019, Erik Anderson, James Abernathy, and Tyler Ge
 __license__ = 'MIT'
 
 
-import typing
 import datetime
+import json
+import typing
+
+import dispatch
 
 
-# TODO: Events:
-#           MARKET_DATASOURCE_CAN_CONFIRM_UPDATED,
-#           MARKET_DATASOURCE_CONFIRMATION_UPDATED,
-#           MARKET_DATASOURCE_MODE_CHANGED,
-#           MARKET_DATASOURCE_STOCK_SYMBOL_ADD_LIVE_ERROR,
-#           MARKET_DATASOURCE_STOCK_SYMBOL_REMOVED
 
-class AlphaVantageApiKeyMissingError(RuntimeError):
-    """An exception raised when attempting to access Alpha Vantage
-    without specifying an API key.
-    """
-    pass
+
+class SymbolPrice(typing.NamedTuple):
+    """A single stock symbol's price datapoint at a given time."""
+    time: datetime.datetime
+    price: float
+
+
+class CombinedPrices(typing.NamedTuple):
+    """The combined prices of all stock symbols at a given time."""
+    time: datetime.datetime
+    prices: typing.Dict[str, float]
+
+
 
 
 class DatasourceConfirmedError(RuntimeError):
-    """An exception raised when the datasource has already been
-    confirmed and a configuration attempt has been made.
+    """An exception raised when attempting to configure the datasource after it
+    has already been confirmed.
     """
-    pass
+    def __init__(self
+    ) -> None:
+        super().__init__(
+            'Cannot perform configuration when datasource is confirmed.')
+
+
+class DatasourceUnconfirmedError(RuntimeError):
+    """An exception raised when attempting to access datasource data before
+    confirming it.
+    """
+    def __init__(self
+    ) -> None:
+        super().__init__(
+            'Cannot access stock price data before datasource is confirmed.')
 
 
 class DatasourcesMissingError(RuntimeError):
-    """An exception raised when using this `MarketDatasource`'s
-    `.confirm()` method if no stock symbols have been added yet.
+    """An exception raised when attempting to confirm before adding any stock
+    symbols.
     """
-    pass
+    def __init__(self
+    ) -> None:
+        super().__init__(
+            'Cannot confirm without adding at least one stock symbol.')
 
 
-class WrongModeError(RuntimeError):
-    """An exception raised when the module attempts to add stock symbols
-    with an invalid method for the current mode.
-    """
-    pass
 
 
-class MarketDatasource(object):
-    """Depending on the source, this component has the ability to
-    collate data and pass it to the SimModel. If the source is live,
-    an API key is used to connect to Alpha Vantage to retrieve the
-    newest stock information. If the source is offline, data is
-    gathered from historical JSON files. Any pertinent datasource
-    changes are broadcasted to the Window View module.
+class MarketDatasource(dispatch.Dispatcher):
+    """This component has the ability to collate data and pass it to the
+    `SimModel`. Data is gathered from archived Alpha Vantage JSON files. Before
+    being confirmed, the data is separated. After confirmation, the data is
+    combined.
     """
 
-    def __init__(self) -> None:
-        """Initialize with no starting stock symbols."""
-        pass
+    _symbols_prices: typing.Dict[str, typing.List[SymbolPrice]]
+    """A list of all symbols and their data, separated."""
+
+    _confirmed: bool
+    """`True` while the user has confirmed the datasource for iteration."""
+
+    _combined_prices: typing.Optional[typing.List[CombinedPrices]]
+    """A list that contains the combined data for all symbols in this
+    simulation. Only set while `.is_confirmed()`.
+    """
+
+    _combined_prices_index: typing.Optional[int]
+    """The index of the next entry in `._combined_prices` for
+    `.get_next_prices()` to serve. Only set while `.is_confirmed()`.
+    """
+
+    EVENTS: typing.ClassVar[typing.FrozenSet[str]] = frozenset([
+        'MARKETDATASOURCE_CAN_CONFIRM_UPDATED',
+        'MARKETDATASOURCE_CONFIRMED',
+        'MARKETDATASOURCE_UNCONFIRMED',
+        'MARKETDATASOURCE_STOCK_SYMBOL_ADDED',
+        'MARKETDATASOURCE_STOCK_SYMBOL_REMOVED'])
+    """Events broadcast by instances of the `MarketDatasource`."""
 
 
-    def add_stock_symbol_archive(self,
+    def __init__(self
+    ) -> None:
+        """Initialize unconfirmed with no starting stock symbols."""
+        self._symbols_prices = {}
+        self._confirmed = False
+
+        self._combined_prices = None
+        self._combined_prices_index = None
+
+
+    def get_stock_symbols(self
+    ) -> typing.List[str]:
+        """Return a list of added stock symbol names. This result changes
+        following the `MARKETDATASOURCE_STOCK_SYMBOL_ADDED` and
+        `MARKETDATASOURCE_STOCK_SYMBOL_REMOVED` events.
+        """
+        return list(self._symbols_prices.keys())
+
+    def add_stock_symbol(self,
         json_filename: str
     ) -> None:
-        """Load a JSON file with a name `json_filename` for an
-        individual stock symbol. If the file is for a stock symbol
-        which has already been added, the data for the previously added
-        symbol is replaced.
+        """Load a JSON file with filename `json_filename` containing data for
+        an individual stock symbol. If the file is for a stock symbol which has
+        already been added, the data for the previously added symbol is
+        replaced.
 
-        May raise the following exceptions for failed preconditions:
-        `MarketDatasource.WrongModeError` if this datasource isn't in
-        archive mode, and `MarketDatasource.DatasourceConfirmedError` if
-        the datasource has already been confirmed.
+        Raises `DatasourceConfirmedError` if the datasource has already been
+        confirmed.
 
-        If this call succeeds at first, fire one of two events:
-        `MARKET_DATASOURCE_STOCK_SYMBOL_ADDED` if successful, or
-        `MARKET_DATASOURCE_STOCK_SYMBOL_ADD_ARCHIVE_ERROR` if an
-        error occurs.
+        Fires `MARKETDATASOURCE_STOCK_SYMBOL_ADDED` if successful.
+        Fires `MARKETDATASOURCE_CAN_CONFIRM_UPDATED` if adding the first stock
+        symbol.
         """
-        pass
+        if self.is_confirmed():
+            raise DatasourceConfirmedError()
 
+        with open(json_filename, encoding='utf_8') as json_file:
+            json_contents = json_file.read()
 
-    def add_stock_symbol_live(self,
-        stock_symbol: str
-    ) -> None:
-        """Query Alpha Vantage to confirm it has data for
-        `stock_symbol`. An example of a valid stock symbol is
-        "`NYSE:MSFT`", representing Microsoft stock on the New York
-        Stock Exchange.
+        stock_symbol, symbol_prices = self._parse_alpha_vantage_json(
+            json_contents)
+        # Replace existing data
+        self._symbols_prices[stock_symbol] = symbol_prices
 
-        May raise the following exceptions for failed preconditions:
-        `MarketDatasource.AlphaVantageApiKeyMissingError` if an API
-        key has not yet been set, `MarketDatasource.WrongModeError`
-        if this datasource is not in live mode,
-        and `MarketDatasource.DatasourceConfirmedError` if this data
-        source is already confirmed.
-
-        If this call succeeds at first, fire one of two main events:
-        `MARKET_DATASOURCE_STOCK_SYMBOL_ADDED` if successfully added, or
-        `MARKET_DATASOURCE_STOCK_SYMBOL_ADD_LIVE_ERROR` if
-        `stock_symbol` could not be found on Alpha Vantage.
-        """
-        pass
-
-
-    def can_confirm(self) -> bool:
-        """If in archive mode, return `True` if there is at least one
-        stock symbol added and there are no pending symbol additions
-        from `MarketDatasource.add_stock_symbol_archive(…)`.
-
-        If in live mode, return `True` if there is at least one stock
-        symbol has been added, there are no pending symbol additions
-        from `MarketDatasource.add_stock_symbol_live(…)`, and an API
-        key has been set.
-
-        Otherwise return `False`.
-        """
-        pass
-
-
-    def confirm(self) -> None:
-        """Disable the ability to add or remove stock symbols and
-        enable this `MarketDatasource` to use its `.get_next_prices()`
-        function. May only be called if this `MarketDatasource`'s
-        datasource is prepared to be read. If no stock symbols have
-        been added, raise a `MarketDatasource.DatasourcesMissingError`
-        exception. If no API key has been set in “`LIVE`" mode, raises a
-        `MarketDatasource.AlphaVantageApiKeyMissingError` exception.
-        """
-        pass
-
-
-    def get_live_api_key(self) -> typing.Optional[str]:
-        """Return a string containing the currently configured Alpha
-        Vantage API key, or `None` if it has not yet been specified.
-        """
-        pass
-
-
-    def get_mode(self) -> str:
-        """Return a string that signifies which mode is in use. The
-        modes can be either “`LIVE`" or “`ARCHIVE`".
-        """
-        pass
-
-
-    def get_next_prices(self
-    ) -> typing.Optional[typing.Tuple[datetime.datetime, typing.Dict[str, float]]]:
-
-        """A blocking call: Return `None` if this datasource hasn't
-        begun yet or if no more prices are left in the datasource.
-
-        Otherwise halt until a new batch of prices has been
-        collected. Getting the next data in “`LIVE`" mode in
-        particular may be slow, so query it from a background thread.
-        """
-        pass
-
-
-    def get_stock_symbols(self) -> typing.List[str]:
-        """Return a list of strings for each stock symbol that has
-        been added. The list should change after the following two
-        events: `MARKET_DATASOURCE_STOCK_SYMBOL_ADDED` and
-        `MARKET_DATASOURCE_STOCK_SYMBOL_REMOVED`.
-        """
-        pass
-
-
-    def is_confirmed(self) -> bool:
-        """Return `True` if this `MarketDatasource`'s datasource is
-        ready to be read. Otherwise return `False`.
-        """
-        pass
-
+        self.emit('MARKETDATASOURCE_STOCK_SYMBOL_ADDED',
+            datasource=self,
+            stock_symbol=stock_symbol)
+        if len(self._symbols_prices) == 1:
+            # Added first stock symbol
+            self.emit('MARKETDATASOURCE_CAN_CONFIRM_UPDATED',
+                datasource=self)
 
     def remove_stock_symbol(self,
         stock_symbol: str
     ) -> None:
-        """Remove a stock symbol whose name matches the passed
-        string. If called after the datasource has already been
-        confirmed, throw a `MarketDatasource.DatasourceConfirmedError`
-        exception.
+        """Remove the given `stock_symbol` from this datasource while
+        unconfirmed. Raises `DatasourceConfirmedError` if already confirmed.
+
+        Fires `MARKETDATASOURCE_STOCK_SYMBOL_REMOVED` if successful.
+        Fires `MARKETDATASOURCE_CAN_CONFIRM_UPDATED` if removing the last stock
+        symbol.
         """
-        pass
+        if self.is_confirmed():
+            raise DatasourceConfirmedError()
+
+        del self._symbols_prices[stock_symbol]
+
+        self.emit('MARKETDATASOURCE_STOCK_SYMBOL_REMOVED',
+            datasource=self,
+            stock_symbol=stock_symbol)
+        if not self._symbols_prices:
+            # Removed last stock symbol
+            self.emit('MARKETDATASOURCE_CAN_CONFIRM_UPDATED',
+                datasource=self)
 
 
-    def set_live_api_key(self,
-        api_key: str
+    def _parse_alpha_vantage_json(self,
+       json_contents: str
+    ) -> typing.Tuple[str, typing.List[SymbolPrice]]:
+        """Parse an Alpha Vantage `TIME_SERIES_INTRADAY` JSON result for its
+        contained stock symbol and price data.
+        """
+        json_data = json.loads(json_contents)
+
+        stock_symbol = json_data['Meta Data']['2. Symbol']
+        interval = json_data['Meta Data']['4. Interval']
+        time_series = json_data['Time Series (' + interval + ')']
+
+        symbol_prices = []
+        for time_index in time_series:
+            time: datetime.datetime = datetime.datetime.strptime(
+                time_index, '%Y-%m-%d %H:%M:%S')
+            close_price = float(time_series[time_index]['4. close'])
+
+            symbol_prices.append(
+                SymbolPrice(time=time, price=close_price))
+
+        # JSON data came in reverse-chronological order
+        symbol_prices.reverse()
+
+        return stock_symbol, symbol_prices
+
+
+    def _combine_confirmed_data(self
     ) -> None:
-        """Set the API key for Alpha Vantage access. If called after
-        the datasource has already been confirmed, throw a
-        `MarketDatasource.DatasourceConfirmedError` exception.
+        """Combine data for all symbols in the simulation. If there are any
+        times that are missing price data for a certain symbol, maintain the
+        most recent data for that symbol.
         """
-        pass
+        '''
+        TODO: Rewrite so that it automatically filters out segments missing
+        data from some stock symbols.
 
+        If this algorithm is too slow, use a merge-sort to join all
+        `SymbolPrices` lists, using the previous `dict` of prices as the base
+        for each successive entry to simultaneously fill in holes.
+        '''
+        assert self._combined_prices is None, 'Prices already combined'
 
-    def set_mode(self,
-        mode: str
+        # First add all available data
+        combined_prices: typing.List[CombinedPrices] = []
+        for stock_symbol, symbol_prices in self._symbols_prices.items():
+            for symbol_price in symbol_prices:
+                self._combine_stock_price(combined_prices,
+                    symbol_price.time, stock_symbol, symbol_price.price)
+
+        # Next fill in any data holes
+        for index, prices in enumerate(combined_prices):
+            if index == 0:
+                continue
+
+            # Check if each symbol is present
+            for symbol in self._symbols_prices.keys():
+                if (symbol not in prices.prices
+                    and symbol in combined_prices[index - 1].prices
+                ):
+                    # Carry old price over to fill in gap
+                    previous_price = combined_prices[index - 1].prices[symbol]
+                    prices.prices[symbol] = previous_price
+
+        # Save combined list
+        self._combined_prices = combined_prices
+
+    def _combine_stock_price(self,
+        combined_prices: typing.List[CombinedPrices],
+        time: datetime.datetime,
+        stock_symbol: str,
+        price: float
     ) -> None:
-        """Given a string, set which datasource will be used. The new
-        mode must be either of the two strings “`LIVE`" or
-        “`ARCHIVE`". If the datasource has not been confirmed and the
-        mode is changed, the list of added stock symbols is cleared. If
-        the datasource has been confirmed and this method is called,
-        throw a `MarketDatasource.DatasourceConfirmedError` exception.
+        """Given a `time`, `stock_symbol`, and `price`, update the running list
+        of `combined_prices` in chronological order. If there is already an
+        entry at the given `time`, add the new stock price to the existing
+        entry.
         """
-        pass
+        new_price = CombinedPrices(time=time, prices={stock_symbol: price})
+
+        for index, prices in enumerate(combined_prices):
+            if time < prices.time:
+                combined_prices.insert(index, new_price)
+                return
+            elif time == prices.time:
+                prices.prices.update(new_price.prices)
+                return
+
+        # Otherwise element is not present, add to end of list
+        combined_prices.append(new_price)
 
 
-    def unconfirm(self) -> None:
-        """Enable the ability to add or remove stock symbols and
-        prevent this `MarketDatasource`'s ability to use its
-        `.get_next_prices()` function.
+    def _find_start_index(self
+    ) -> None:
+        """Set the index at which all monitored symbols in `._combined_prices`
+        have recorded prices.
         """
-        pass
+        assert self._combined_prices is not None, 'Combined prices missing'
+
+        num_symbols = len(self._symbols_prices)
+        for index, combined_prices in enumerate(self._combined_prices):
+            if len(combined_prices.prices) == num_symbols:
+                self._combined_prices_index = index
+                return
+
+        # Otherwise, there are no complete datapoints with all prices
+        self._combined_prices_index = len(self._combined_prices)
+
+
+    def can_confirm(self
+    ) -> bool:
+        """Return `True` if there is at least one stock symbol added."""
+        return bool(self._symbols_prices)
+        # TODO: Check for at least one data point
+
+    def is_confirmed(self
+    ) -> bool:
+        """Return `True` if this `MarketDatasource`'s data is ready to be read.
+        Otherwise return `False`.
+        """
+        return self._confirmed
+
+    def confirm(self
+    ) -> None:
+        """Disable adding or removing stock symbols to this datasource, and
+        enable access to its data. Can only be called if `.can_confirm()` is
+        `True`. Otherwise if no stock symbols have been added, raises
+        `DatasourcesMissingError`.
+        """
+        if self.is_confirmed():
+            return
+
+        if not self._symbols_prices:
+            raise DatasourcesMissingError()
+
+        self._combine_confirmed_data()
+        self._find_start_index()
+        self._confirmed = True
+
+        self.emit('MARKETDATASOURCE_CONFIRMED',
+            datasource=self)
+
+    def unconfirm(self
+    ) -> None:
+        """Enable adding or removing stock symbols to the datasource, but
+        prevent access to its data.
+        """
+        if not self.is_confirmed():
+            return
+
+        self._confirmed = False
+        self._combined_prices = None
+        self._combined_prices_index = None
+
+        self.emit('MARKETDATASOURCE_UNCONFIRMED',
+            datasource=self)
+
+
+    def get_next_prices(self
+    ) -> typing.Optional[typing.Tuple[datetime.datetime, typing.Dict[str, float]]]:
+        """Return the next time and set of prices from this datasource, or
+        `None` if no more remain. Raises `DatasourceUnconfirmedError` if this
+        datasource isn't yet confirmed.
+        """
+        if not self.is_confirmed():
+            raise DatasourceUnconfirmedError()
+        assert self._combined_prices is not None, 'Combined prices missing'
+        assert self._combined_prices_index is not None, 'Prices index missing'
+
+        if self._combined_prices_index >= len(self._combined_prices):
+            return None  # Out of data
+
+        next_prices = self._combined_prices[self._combined_prices_index]
+        self._combined_prices_index += 1
+        return next_prices
