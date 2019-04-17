@@ -1,8 +1,10 @@
 import typing
 import datetime
 
-#TODO: figure out if this is a circular import or not
 from model.trader import Trader
+
+
+
 
 class MomentumTrader(Trader):
     """Trader implementation for the abstract base class. The algorithm for
@@ -19,40 +21,57 @@ class MomentumTrader(Trader):
 
     To implement the strategy, this bot will sort all symbols into a list
     based on the most significant price increases. Bigger increases are
-    intended to be at the front of the list."""
-    def trade(self
-    ) -> None:
-        """Choose to buy or sell based on updated stock market conditions.
-        The algorithm here will be a simple strategy known as momentum.
-        The bot simply assumes that current trends will continue for each
-        symbol, and makes decisions accordingly"""
-        #TODO: code cleanup. rename variables, enhance elegance
+    intended to be at the front of the list.
+    """
 
-        # prioritize the information
-        prioritized_stocks_to_purchase = self.prioritize_symbols_to_buy()
 
-        # buy as many shares of the highest priority stock as possible
-        # given the current balance
-        for quote in prioritized_stocks_to_purchase:
-            if quote[1] < self.get_account().get_balance():
-                quantity = quote[1] / self.get_account().get_balance()
-                self.get_account().buy(quote[0], quantity)
-                break
+    _prices_last: typing.Optional[typing.Dict[str, float]]
+    """Previously seen stock prices used to calculate price changes."""
 
-        # get a list of all stocks that are depreciating in value
-        stocks_to_sell = self.choose_symbols_to_sell()
-
-        # sell everything that is depreciating
-        for quote in stocks_to_sell:
-            self.get_account().sell(quote[0], quote[1])
 
     def get_algorithm_name(self
     ) -> str:
         """Return this `Trader` subclass' identifying algorithm name, unique
         to the `SimModel` that it is registered within.
         """
-        #TODO: declare name class member instead of hardcoding it
-        return "Momentum"
+        return 'Momentum'
+
+
+    def create_account(self
+    ) -> 'TraderAccount':
+        """Reinitializes the bot upon creation of a new `TraderAccount`."""
+        account = super().create_account()
+
+        # Reinitialize
+        self._prices_last = None
+        return account
+
+
+    def trade(self
+    ) -> None:
+        """Choose to buy or sell based on updated stock market conditions.
+        The algorithm here will be a simple strategy known as momentum.
+        The bot simply assumes that current trends will continue for each
+        symbol, and makes decisions accordingly
+        """
+        price_deltas = self._calculate_price_deltas()
+
+        # buy as many shares of the highest priority stock as possible
+        # given the current balance
+        free_balance = self.get_account().get_balance() - self.get_trading_fee()
+        if free_balance > 0:
+            for stock_symbol in self._choose_symbols_to_buy(price_deltas):
+                price = self.get_stock_market().get_stock_symbol_price(stock_symbol)
+                quantity = price / free_balance
+
+                self.get_account().buy(stock_symbol, quantity)
+                break
+
+        # sell everything that is depreciating
+        owned_stocks = self.get_account().get_stocks()
+        for stock_symbol in self._choose_symbols_to_sell(price_deltas):
+            self.get_account().sell(stock_symbol, owned_stocks[stock_symbol])
+
 
     def set_algorithm_settings(self,
         algorithm_settings: typing.Dict[str, typing.Any]
@@ -70,60 +89,45 @@ class MomentumTrader(Trader):
         Therefore, there isn't really anything to validate about the
         argument in this case.
         """
-        # TODO: consider possible settings to validate.
-        self._algorithm_settings = algorithm_settings
-        self.emit('TRADER_ALGORITHM_SETTINGS_CHANGED', trader=self, new_settings=algorithm_settings)
-        # Subclasses validate settings and then assign and broadcast them:
-        # self._set_algorithm_settings(algorithm_settings)
+        self._set_algorithm_settings(algorithm_settings)
 
-    def prioritize_symbols_to_buy(self
-    ) -> typing.List[typing.Tuple[str, float]]:
-        """Helper function for the trade abstract method. Rank all
-        symbols first to last based on which ones would be the
-        best buying investment, and return a list of symbol-price
-        tuples for the result. For the implemented algorithm, The best
-        investment is decided based on price differences between the
-        last set of prices and the current known prices"""
-        # TODO: error checking
 
-        # get the previous and current price dictionaries, itemized into
-        # a list of tuples
-        immediate_prices = self.get_stock_market().get_prices().items()
-        previous_prices = self.get_stock_market().get_prices(
-            datetime.datetime.now()
-            - datetime.timedelta(1)).items()
+    def _calculate_price_deltas(self
+    ) -> typing.Dict[str, float]:
+        """Calculates the difference between current stock prices and those
+        seen during the last call.
+        """
+        prices_current = self.get_stock_market().get_prices()
 
-        # calculate the price changes between the two lists of quotes,
-        # create a list of the differences in order to rank them by
-        # price increase
-        price_deltas: typing.List
-        index = 0
-        for quote in immediate_prices:
-            price_deltas.append(typing.Tuple[quote[0],
-                                             quote[1] -
-                                             previous_prices[index][1] ]) # might not work yet. my python is weak :(
-            index += 1
+        price_deltas = {}
+        for stock_symbol, price_current in prices_current:
+            if self._prices_last is None:  # First data point
+                price_delta = 0.0
+            else:
+                price_delta = price_current - self._prices_last[stock_symbol]
+            price_deltas[stock_symbol] = price_delta
 
-        # sort the list of stock quote tuples, smallest price difference to largest
-        price_deltas.sort(key=lambda tup: tup[1])
-
+        self._prices_last = prices_current
         return price_deltas
 
-    def choose_symbols_to_sell(self
-    ) -> typing.List[typing.Tuple[str, float]]:
-        """Helper function for the trade abstract method. make a list of symbols
-        to sell. for the implemented algorithm, selling is decided based on
-        price differences between the last price grouping and the current
-        known prices. If any owned stocks experienced a significant enough
-        price decrease, they are returned in a list of quote tuples to be
-        sold off."""
-        #TODO: clean up the code. improve names, make it more elegant
+    def _choose_symbols_to_buy(self,
+        price_deltas: typing.Dict[str, float]
+    ) -> typing.List[str]:
+        """Rank all symbols first to last based on which ones would be the best
+        buying investment, and return a list of symbols for the result.
+        """
+        return [stock_symbol
+            for stock_symbol, price_delta
+                in sorted(price_deltas.items(), reverse=True,
+                    key=lambda symbol, delta: delta)
+                if price_delta > 0]
 
-        # declare a list of the owned stocks, and a list of owned stocks
-        # to sell
-        owned_stocks = self.get_account().get_stocks().items()
-        stocks_to_sell: typing.List[typing.Tuple[str, float]]
-        for quote in owned_stocks:
-            if (quote[1] - self.get_stock_market().get_stock_symbol_price(quote[0])) > 1:
-                stocks_to_sell.append(quote)
-        return stocks_to_sell
+    def _choose_symbols_to_sell(self,
+        price_deltas: typing.Dict[str, float]
+    ) -> typing.List[str]:
+        """Return a list of stock symbols that should be sold."""
+        LOSS_THRESHOLD = -0.1  # Sell if delta goes below this
+
+        return [stock_symbol
+            for stock_symbol, price_delta in price_deltas
+                if price_delta <= LOSS_THRESHOLD]
