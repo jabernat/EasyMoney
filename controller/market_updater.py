@@ -98,7 +98,6 @@ class MarketUpdater(dispatch.Dispatcher):
         datasource.bind(
             MARKETDATASOURCE_UNCONFIRMED=self._on_marketdatasource_unconfirmed)
 
-
     def _on_marketdatasource_unconfirmed(self,
         datasource: 'MarketDatasource'
     ):
@@ -125,7 +124,7 @@ class MarketUpdater(dispatch.Dispatcher):
                 self.reset()
                 raise UnexpectedDatasourceUnconfirmError(self.State.PAUSED)
         else:  # Currently reset
-            self.reset()
+            self.reset(force=True)  # Force traders to create new accounts
             self._datasource.confirm()
 
         self._state = self.State.PLAYING
@@ -164,14 +163,15 @@ class MarketUpdater(dispatch.Dispatcher):
             updater=self)
 
 
-    def reset(self
+    def reset(self,
+        force: typing.Optional[bool] = False
     ) -> None:
         """Stops any paused or playing updates, resets the `model`'s market and
-        trader accounts, and unlocks the datasource.
+        trader accounts, and unlocks the datasource. If `force` is specified,
+        another reset will occur even if already in the `RESET` state.
         """
-        if not (self.is_playing() or self.is_paused()):
-            # return  # Already reset
-            pass
+        if not (force or self.is_playing() or self.is_paused()):
+            return  # Already reset
 
         self.pause()  # Stop updates if playing
 
