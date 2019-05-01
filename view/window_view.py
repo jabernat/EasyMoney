@@ -109,8 +109,6 @@ class WindowView(App):
             account: 'TraderAccount'
         )-> None:
             print_all_events(account)
-            print('ALPHA')
-            print(account)
 
         print('Welcome to EasyMoney')
         controller = self.get_controller()
@@ -146,7 +144,6 @@ class WindowView(App):
 
         print('Starting simulation')
         controller.get_updater().play()
-
 
         ''' TODO: Print statistics after updater switches to PAUSED state.
         print('Statistics')
