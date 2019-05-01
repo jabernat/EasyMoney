@@ -95,9 +95,16 @@ class MarketUpdater(dispatch.Dispatcher):
         self._state = self.State.RESET
         self._update_timer = None
 
-        # Reset if the datasource gets externally unconfirmed
         datasource.bind(
-            MARKETDATASOURCE_UNCONFIRMED=lambda **kwargs: self.reset())
+            MARKETDATASOURCE_UNCONFIRMED=self._on_marketdatasource_unconfirmed)
+
+
+    def _on_marketdatasource_unconfirmed(self,
+        datasource: 'MarketDatasource'
+    ):
+        """Resets this updater if the datasource gets externally unconfirmed.
+        """
+        self.reset()
 
 
     def is_playing(self
