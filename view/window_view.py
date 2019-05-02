@@ -5,6 +5,7 @@ __copyright__ = 'Copyright © 2019, Erik Anderson, James Abernathy, and Tyler Ge
 __license__ = 'MIT'
 
 
+import traceback
 import typing
 
 from kivy.app import App
@@ -96,6 +97,8 @@ class WindowView(App):
                 kwargs.update(enumerate(args))
                 arguments = pprinter.pformat(kwargs)
                 print('{} = \\\n{}'.format(event_name, arguments))
+                if 'exception' in kwargs and kwargs['exception'] is not None:
+                    traceback.print_tb(kwargs['exception'].__traceback__)
             return event_printer
 
         def print_all_events(
@@ -113,11 +116,11 @@ class WindowView(App):
         print('Welcome to EasyMoney')
         controller = self.get_controller()
         print_all_events(controller.get_datasource())
-        print_all_events(controller.get_updater())
+        #print_all_events(controller.get_updater())
 
         model = controller.get_model()
         print_all_events(model)
-        print_all_events(model.get_stock_market())
+        #print_all_events(model.get_stock_market())
 
         print('Adding traders')
         ALGORITHM = 'Momentum'
@@ -158,4 +161,3 @@ from controller.sim_controller import SimController
 from model.algorithms.momentum_trader import MomentumTrader
 from model.trader import Trader
 from model.trader_account import TraderAccount
-
