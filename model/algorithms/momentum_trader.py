@@ -73,7 +73,7 @@ class MomentumTrader(Trader):
         if free_balance > 0:
             for stock_symbol in self._choose_symbols_to_buy(price_deltas):
                 price = self.get_stock_market().get_stock_symbol_price(stock_symbol)
-                quantity = price / free_balance
+                quantity = free_balance / price
 
                 account.buy(stock_symbol, quantity)
                 break
@@ -81,7 +81,8 @@ class MomentumTrader(Trader):
         # sell everything that is depreciating
         owned_stocks = account.get_stocks()
         for stock_symbol in self._choose_symbols_to_sell(price_deltas):
-            account.sell(stock_symbol, owned_stocks[stock_symbol])
+            if stock_symbol in owned_stocks and owned_stocks[stock_symbol]:
+                account.sell(stock_symbol, owned_stocks[stock_symbol])
 
 
     def set_algorithm_settings(self,
