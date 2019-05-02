@@ -101,7 +101,7 @@ class StockShareQuantityError(ValueError):
         self.shares = shares
         super().__init__('Trader attempted to trade an invalid non-positive '
             '{!r} stock quantity {:.2f}.'.format(
-                shares, stock_symbol))
+                stock_symbol, shares))
 
 
 
