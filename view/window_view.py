@@ -19,6 +19,7 @@ import dispatch
 # Local package imports duplicated at end of file to resolve circular dependencies
 if typing.TYPE_CHECKING:
     from controller.sim_controller import SimController
+    from controller.market_updater import MarketUpdater
     from model.algorithms.momentum_trader import MomentumTrader
     from model.trader import Trader
     from model.trader_account import TraderAccount
@@ -113,14 +114,25 @@ class WindowView(App):
         )-> None:
             print_all_events(account)
 
+        def on_marketupdater_paused(
+            updater: 'MarketUpdater'
+        ) -> None:
+            """Print statistics after updater switches to PAUSED state."""
+            print('Statistics')
+            for trader in model.get_traders():
+                print('Trader {!r}:'.format(trader.get_name()))
+                pprinter.pprint(trader.get_account().get_statistics_overall())
+
         print('Welcome to EasyMoney')
         controller = self.get_controller()
         print_all_events(controller.get_datasource())
-        #print_all_events(controller.get_updater())
+        print_all_events(controller.get_updater())
+        controller.get_updater().bind(
+            MARKETUPDATER_PAUSED=on_marketupdater_paused)
 
         model = controller.get_model()
         print_all_events(model)
-        #print_all_events(model.get_stock_market())
+        print_all_events(model.get_stock_market())
 
         print('Adding traders')
         ALGORITHM = 'Momentum'
@@ -148,16 +160,10 @@ class WindowView(App):
         print('Starting simulation')
         controller.get_updater().play()
 
-        ''' TODO: Print statistics after updater switches to PAUSED state.
-        print('Statistics')
-        for trader in model.get_traders():
-            print('Trader {!r}:'.format(trader.get_name()))
-            pprinter.pprint(trader.get_account().get_statistics_overall())
-        '''
-
 
 # Imported last to avoid circular dependencies
 from controller.sim_controller import SimController
+from controller.market_updater import MarketUpdater
 from model.algorithms.momentum_trader import MomentumTrader
 from model.trader import Trader
 from model.trader_account import TraderAccount
