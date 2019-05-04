@@ -9,7 +9,7 @@ import traceback
 import typing
 
 from kivy.app import App
-from kivy.uix.tabbedpanel import TabbedPanel
+from kivy.uix.tabbedpanel import TabbedPanel, TabbedPanelItem
 from kivy.lang import Builder
 from kivy.uix.behaviors import ButtonBehavior
 from kivy.uix.image import Image
@@ -32,53 +32,22 @@ class ImageButton(ButtonBehavior, Image):
 
 
 class RootWidget(TabbedPanel):
+    """"""
     pass
 
 
-
-
-class WindowView(App):
-    """
-    """
-
-
-    _sim_controller: 'SimController'
+class TradingBotsTab(TabbedPanelItem):
     """"""
+    pass
 
 
-    def __init__(self,
-        sim_controller: 'SimController'
-    ) -> None:
-        """
-        """
-        super().__init__()
-
-        self._sim_controller = sim_controller
-
-        Builder.load_file('view/window.kv')
+class StockSymbolsTab(TabbedPanelItem):
+    """"""
+    pass
 
 
-    def get_controller(self
-    ) -> 'SimController':
-        """
-        """
-        return self._sim_controller
-
-
-    def build(self
-    ) -> RootWidget:
-        """
-        """
-        return RootWidget()
-
-
-    def run(self
-    ) -> None:
-        """
-        """
-        super().run()
-
-
+class SimulationTab(TabbedPanelItem):
+    """"""
     def run_console_test(self,
         *args: typing.Any,
         **kwargs: typing.Any
@@ -124,7 +93,7 @@ class WindowView(App):
                 pprinter.pprint(trader.get_account().get_statistics_overall())
 
         print('Welcome to EasyMoney')
-        controller = self.get_controller()
+        controller = App.get_running_app().get_controller()
         print_all_events(controller.get_datasource())
         print_all_events(controller.get_updater())
         controller.get_updater().bind(
@@ -143,7 +112,7 @@ class WindowView(App):
             ('Belfort', 0.50),
             ('Stewart', 5.00)
         ]:
-            trader = self._sim_controller.add_trader(name,
+            trader = controller.add_trader(name,
                 initial_funds=INITIAL_FUNDS, trading_fee=trading_fee,
                 algorithm=ALGORITHM, algorithm_settings=algorithm_settings)
             print_all_events(trader)
@@ -162,6 +131,61 @@ class WindowView(App):
 
         print('Starting simulation')
         controller.get_updater().play()
+
+
+class StatisticsTab(TabbedPanelItem):
+    """"""
+    pass
+
+
+
+
+class WindowView(App):
+    """
+    """
+
+
+    _sim_controller: 'SimController'
+    """"""
+
+
+    def __init__(self,
+        sim_controller: 'SimController'
+    ) -> None:
+        """
+        """
+        super().__init__()
+
+        self._sim_controller = sim_controller
+
+        # Parse template definitions
+        Builder.load_file('view/root.kv')
+
+        Builder.load_file('view/trading_bots_tab.kv')
+        Builder.load_file('view/stock_symbols_tab.kv')
+        Builder.load_file('view/simulation_tab.kv')
+        Builder.load_file('view/statistics_tab.kv')
+
+
+    def get_controller(self
+    ) -> 'SimController':
+        """
+        """
+        return self._sim_controller
+
+
+    def build(self
+    ) -> RootWidget:
+        """
+        """
+        return RootWidget()
+
+
+    def run(self
+    ) -> None:
+        """
+        """
+        super().run()
 
 
 # Imported last to avoid circular dependencies

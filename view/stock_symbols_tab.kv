@@ -1,0 +1,59 @@
+<StockSymbolsTab>:
+    text: 'Stock Symbols'
+    BoxLayout:
+        orientation: 'vertical'
+        BoxLayout: # Stock symbol info panel
+            orientation: 'vertical'
+            BoxLayout: # Row 1
+                canvas.before:
+                    Color:
+                        rgb: 25/255.0, 135/255.0, 184/255.0
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
+                Label:
+                    text: 'Stock Exchange'
+                Label:
+                    text: 'Stock Symbol'
+                Label:
+                Label:
+            BoxLayout: # Row 2
+                Label:
+                    text: 'NYSE'
+                Label:
+                    text: 'AAPL'
+                Label:
+                Label:
+            BoxLayout: # Row 3
+                Label:
+                    text: 'NYSE'
+                Label:
+                    text: 'AMD'
+                Label:
+                Label:
+            BoxLayout: # Row 4
+                Label:
+                    text: 'NYSE'
+                Label:
+                    text: 'CHSP'
+                Label:
+                Label:
+            BoxLayout: # Row 5
+                Label:
+                    text: 'NYSE'
+                Label:
+                    text: 'MSFT'
+                Label:
+                Label:
+        BoxLayout:
+        BoxLayout:
+        BoxLayout:
+        BoxLayout:
+        BoxLayout:
+            Button:
+                text: 'Add'
+            Button:
+                text: 'Remove'
+            Label:
+            Label:
+            Label:

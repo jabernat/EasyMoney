@@ -1,0 +1,25 @@
+<SimulationTab>:
+    text: 'Simulation'
+    BoxLayout:
+        orientation: 'vertical'
+        BoxLayout: # Sim control panel
+            BoxLayout:
+                Label:
+                ImageButton:
+                    source: 'view/pause.png'
+                    on_press: root.run_console_test()
+                Label:
+                Image:
+                    source: 'view/reset.png'
+            Label:
+            Label:
+            Label:
+            Label:
+            Label:
+        Image:
+            source: 'view/stock1.gif'
+        Image:
+            source: 'view/stock2.gif'
+        Image:
+            source: 'view/stock3.gif'
+        BoxLayout:
