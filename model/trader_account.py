@@ -101,7 +101,7 @@ class StockShareQuantityError(ValueError):
         self.shares = shares
         super().__init__('Trader attempted to trade an invalid non-positive '
             '{!r} stock quantity {:.2f}.'.format(
-                shares, stock_symbol))
+                stock_symbol, shares))
 
 
 
@@ -119,6 +119,12 @@ class TraderAccount(dispatch.Dispatcher):
     accounts if they need to continue participating.
     """
 
+
+    _MAX_ROUNDING_ERROR: typing.ClassVar[float] = 1e-6
+    """Buying or selling invalid quantities within this delta will not raise
+    errors, and instead will assume the discrepancy is due to floating point
+    rounding error and silently clamp it.
+    """
 
     _stock_market: 'StockMarket'
     """The market that this account consults to check prices."""
@@ -257,14 +263,20 @@ class TraderAccount(dispatch.Dispatcher):
         if self.is_frozen():
             raise FrozenError()
 
+        fee = self._trader.get_trading_fee()
+        price_per_share = self._stock_market.get_stock_symbol_price(stock_symbol)
+        cost = shares * price_per_share + fee
+        if cost > self.get_balance():
+            if self.get_balance() - cost < -self._MAX_ROUNDING_ERROR:
+                raise InsufficientBalanceError(
+                    stock_symbol, cost, self.get_balance())
+
+            # Ignore rounding error and spend all funds
+            cost = self.get_balance()
+            shares = (cost - fee) / price_per_share
+
         if shares <= 0:
             raise StockShareQuantityError(stock_symbol, shares)
-
-        price_per_share = self._stock_market.get_stock_symbol_price(stock_symbol)
-        cost = shares * price_per_share + self._trader.get_trading_fee()
-        if cost > self.get_balance():
-            raise InsufficientBalanceError(
-                stock_symbol, cost, self.get_balance())
 
         # Make transaction
         self._balance -= cost
@@ -300,11 +312,16 @@ class TraderAccount(dispatch.Dispatcher):
         if self.is_frozen():
             raise FrozenError()
 
+        if shares > self._stocks[stock_symbol]:
+            if self._stocks[stock_symbol] - shares < -self._MAX_ROUNDING_ERROR:
+                raise InsufficientStockSharesError(
+                    stock_symbol, shares, self._stocks[stock_symbol])
+
+            # Ignore rounding error and sell all shares
+            shares = self._stocks[stock_symbol]
+
         if shares <= 0:
             raise StockShareQuantityError(stock_symbol, shares)
-        elif shares > self._stocks[stock_symbol]:
-            raise InsufficientStockSharesError(
-                stock_symbol, shares, self._stocks[stock_symbol])
 
         price_per_share = self._stock_market.get_stock_symbol_price(stock_symbol)
         profit = shares * price_per_share - self._trader.get_trading_fee()
@@ -340,9 +357,13 @@ class TraderAccount(dispatch.Dispatcher):
         display-language-independent English identifiers, like `'PROFIT_NET'`,
         and the associated values can be converted to `str`.
         """
-        #TODO
+        fee = self._trader.get_trading_fee()
+        stocks_value = sum(
+            quantity * self._stock_market.get_stock_symbol_price(symbol) - fee
+                for symbol, quantity in self._stocks.items() if quantity > 0)
+
         return {
-            'PROFIT_NET': self._balance - self._balance_initial}
+            'PROFIT_NET': self._balance + stocks_value - self._balance_initial}
 
 
 

@@ -6,6 +6,7 @@ __license__ = 'MIT'
 
 
 import abc
+import datetime
 import inspect
 import typing
 
@@ -179,6 +180,7 @@ class Trader(dispatch.Dispatcher, metaclass=TraderMeta):
             STOCKMARKET_CLEARED=self._on_stockmarket_cleared)
 
     def _on_stockmarket_cleared(self,
+        market: 'StockMarket'
     ) -> None:
         """Responds to market resets by creating a new account."""
         self.create_account()
@@ -232,12 +234,18 @@ class Trader(dispatch.Dispatcher, metaclass=TraderMeta):
         return self._account
 
     def _on_traderaccount_frozen(self,
+        account: 'TraderAccount',
+        reason: typing.Optional[str],
+        exception: typing.Optional[Exception]
     ) -> None:
         """Stop reacting to the `StockMarket` once frozen."""
         self._stock_market.unbind(
             self._on_stockmarket_addition)
 
     def _on_stockmarket_addition(self,
+        market: 'StockMarket',
+        time: datetime.datetime,
+        stock_symbol_prices: typing.Dict[str, float]
     ) -> None:
         """Make trading decisions as `StockMarket` prices update."""
         try:
