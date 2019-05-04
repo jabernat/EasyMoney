@@ -263,8 +263,9 @@ class TraderAccount(dispatch.Dispatcher):
         if self.is_frozen():
             raise FrozenError()
 
+        fee = self._trader.get_trading_fee()
         price_per_share = self._stock_market.get_stock_symbol_price(stock_symbol)
-        cost = shares * price_per_share + self._trader.get_trading_fee()
+        cost = shares * price_per_share + fee
         if cost > self.get_balance():
             if self.get_balance() - cost < -self._MAX_ROUNDING_ERROR:
                 raise InsufficientBalanceError(
@@ -272,7 +273,7 @@ class TraderAccount(dispatch.Dispatcher):
 
             # Ignore rounding error and spend all funds
             cost = self.get_balance()
-            shares = (cost - self._trader.get_trading_fee()) / price_per_share
+            shares = (cost - fee) / price_per_share
 
         if shares <= 0:
             raise StockShareQuantityError(stock_symbol, shares)
@@ -356,9 +357,13 @@ class TraderAccount(dispatch.Dispatcher):
         display-language-independent English identifiers, like `'PROFIT_NET'`,
         and the associated values can be converted to `str`.
         """
-        #TODO
+        fee = self._trader.get_trading_fee()
+        stocks_value = sum(
+            quantity * self._stock_market.get_stock_symbol_price(symbol) - fee
+                for symbol, quantity in self._stocks.items() if quantity > 0)
+
         return {
-            'PROFIT_NET': self._balance - self._balance_initial}
+            'PROFIT_NET': self._balance + stocks_value - self._balance_initial}
 
 
 
