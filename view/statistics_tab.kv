@@ -1,0 +1,32 @@
+#:kivy 1.9
+# Defines templates related to the view.statistics_tab module.
+
+<StatisticsTab>:
+    text: 'Statistics'
+    BoxLayout:
+        orientation: 'vertical'
+        BoxLayout:
+            Label:
+                text: "Bot's Daily Statistics"
+            Label:
+                text: "Bot's Overall Statistics"
+        BoxLayout:
+            size_hint_y: 3
+            Label:
+                text: "Lorem ipsum dolor sit amet, consectetur adipiscing elit"
+                color: 0,0,0,1 
+                canvas.before:
+                    Color:
+                        rgba: 1, 1, 1, 1
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
+            Label:
+                text: "Lorem ipsum dolor sit amet, consectetur adipiscing elit"
+                color: 0,0,0,1 
+                canvas.before:
+                    Color:
+                        rgba: 1, 1, 1, 1
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
