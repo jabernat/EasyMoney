@@ -137,11 +137,14 @@ class WindowView(App):
         print('Adding traders')
         ALGORITHM = 'Momentum'
         INITIAL_FUNDS = 10_000.0
-        TRADING_FEE = 0.50
         algorithm_settings = model.get_trader_algorithm_settings_defaults(ALGORITHM)
-        for name in ['Madoff', 'Belfort', 'Stewart']:
+        for name, trading_fee in [
+            ('Madoff',  0.00),
+            ('Belfort', 0.50),
+            ('Stewart', 5.00)
+        ]:
             trader = self._sim_controller.add_trader(name,
-                initial_funds=INITIAL_FUNDS, trading_fee=TRADING_FEE,
+                initial_funds=INITIAL_FUNDS, trading_fee=trading_fee,
                 algorithm=ALGORITHM, algorithm_settings=algorithm_settings)
             print_all_events(trader)
             trader.bind(
