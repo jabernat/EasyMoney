@@ -120,6 +120,12 @@ class TraderAccount(dispatch.Dispatcher):
     """
 
 
+    _MAX_ROUNDING_ERROR: typing.ClassVar[float] = 1e-6
+    """Buying or selling invalid quantities within this delta will not raise
+    errors, and instead will assume the discrepancy is due to floating point
+    rounding error and silently clamp it.
+    """
+
     _stock_market: 'StockMarket'
     """The market that this account consults to check prices."""
 
@@ -257,14 +263,19 @@ class TraderAccount(dispatch.Dispatcher):
         if self.is_frozen():
             raise FrozenError()
 
-        if shares <= 0:
-            raise StockShareQuantityError(stock_symbol, shares)
-
         price_per_share = self._stock_market.get_stock_symbol_price(stock_symbol)
         cost = shares * price_per_share + self._trader.get_trading_fee()
         if cost > self.get_balance():
-            raise InsufficientBalanceError(
-                stock_symbol, cost, self.get_balance())
+            if self.get_balance() - cost < -self._MAX_ROUNDING_ERROR:
+                raise InsufficientBalanceError(
+                    stock_symbol, cost, self.get_balance())
+
+            # Ignore rounding error and spend all funds
+            cost = self.get_balance()
+            shares = (cost - self._trader.get_trading_fee()) / price_per_share
+
+        if shares <= 0:
+            raise StockShareQuantityError(stock_symbol, shares)
 
         # Make transaction
         self._balance -= cost
@@ -300,11 +311,16 @@ class TraderAccount(dispatch.Dispatcher):
         if self.is_frozen():
             raise FrozenError()
 
+        if shares > self._stocks[stock_symbol]:
+            if self._stocks[stock_symbol] - shares < -self._MAX_ROUNDING_ERROR:
+                raise InsufficientStockSharesError(
+                    stock_symbol, shares, self._stocks[stock_symbol])
+
+            # Ignore rounding error and sell all shares
+            shares = self._stocks[stock_symbol]
+
         if shares <= 0:
             raise StockShareQuantityError(stock_symbol, shares)
-        elif shares > self._stocks[stock_symbol]:
-            raise InsufficientStockSharesError(
-                stock_symbol, shares, self._stocks[stock_symbol])
 
         price_per_share = self._stock_market.get_stock_symbol_price(stock_symbol)
         profit = shares * price_per_share - self._trader.get_trading_fee()
