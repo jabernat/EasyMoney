@@ -10,8 +10,6 @@ import typing
 
 from kivy.app import App
 from kivy.uix.tabbedpanel import TabbedPanelItem
-from kivy.uix.behaviors import ButtonBehavior
-from kivy.uix.image import Image
 
 import dispatch
 
@@ -20,12 +18,6 @@ if typing.TYPE_CHECKING:
     from controller.market_updater import MarketUpdater
     from model.trader import Trader
     from model.trader_account import TraderAccount
-
-
-
-
-class ImageButton(ButtonBehavior, Image):
-    pass
 
 
 
