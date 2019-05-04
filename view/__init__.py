@@ -6,4 +6,5 @@ __license__ = 'MIT'
 
 
 from view import (
+    logging_view,
     window_view)

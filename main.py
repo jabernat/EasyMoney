@@ -8,6 +8,7 @@ __license__ = 'MIT'
 
 from model.sim_model import SimModel
 from controller.sim_controller import SimController
+from view.logging_view import LoggingView
 from view.window_view import WindowView
 
 
@@ -15,7 +16,12 @@ from view.window_view import WindowView
 
 def main() -> None:
     """Program entry point that opens the application window."""
-    WindowView(SimController(SimModel())).run()
+    controller = SimController(SimModel())
+
+    logger = LoggingView(controller)
+    window = WindowView(controller)
+
+    window.run()
 
 
 
