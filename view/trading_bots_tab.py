@@ -9,7 +9,6 @@ import typing
 
 from kivy.app import App
 from kivy.uix.tabbedpanel import TabbedPanelItem
-from kivy.lang import Builder
 
 # Local package imports duplicated at end of file to resolve circular dependencies
 if typing.TYPE_CHECKING:
@@ -23,13 +22,7 @@ class TradingBotsTab(TabbedPanelItem):
     """Class associated with the `<TradingBotsTab>` template defined within
     `trading_bots_tab.kv`.
     """
-
-
-    @classmethod
-    def load_templates(cls
-    ) -> None:
-        """Loads Kivy UI template files (`*.kv`) for this tab."""
-        Builder.load_file('view/trading_bots_tab.kv')
+    pass
 
 
 

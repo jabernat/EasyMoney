@@ -10,7 +10,6 @@ import typing
 
 from kivy.app import App
 from kivy.uix.tabbedpanel import TabbedPanelItem
-from kivy.lang import Builder
 from kivy.uix.behaviors import ButtonBehavior
 from kivy.uix.image import Image
 
@@ -35,13 +34,6 @@ class SimulationTab(TabbedPanelItem):
     """Class associated with the `<SimulationTab>` template defined within
     `simulation_tab.kv`.
     """
-
-
-    @classmethod
-    def load_templates(cls
-    ) -> None:
-        """Loads Kivy UI template files (`*.kv`) for this tab."""
-        Builder.load_file('view/simulation_tab.kv')
 
 
     def run_console_test(self,

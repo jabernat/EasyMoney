@@ -9,7 +9,6 @@ import typing
 
 from kivy.app import App
 from kivy.uix.tabbedpanel import TabbedPanelItem
-from kivy.lang import Builder
 
 # Local package imports duplicated at end of file to resolve circular dependencies
 if typing.TYPE_CHECKING:
@@ -23,13 +22,7 @@ class StatisticsTab(TabbedPanelItem):
     """Class associated with the `<StatisticsTab>` template defined within
     `statistics_tab.kv`.
     """
-
-
-    @classmethod
-    def load_templates(cls
-    ) -> None:
-        """Loads Kivy UI template files (`*.kv`) for this tab."""
-        Builder.load_file('view/statistics_tab.kv')
+    pass
 
 
 

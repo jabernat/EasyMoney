@@ -40,18 +40,6 @@ class WindowView(App):
     """MVC controller tied to an underlying model and driven by this view."""
 
 
-    @classmethod
-    def load_templates(cls
-    ) -> None:
-        """Loads Kivy UI template files (`*.kv`) for all widgets."""
-        TradingBotsTab.load_templates()
-        StockSymbolsTab.load_templates()
-        SimulationTab.load_templates()
-        StatisticsTab.load_templates()
-
-        Builder.load_file('view/window_view.kv')
-
-
     def __init__(self,
         sim_controller: 'SimController'
     ) -> None:
@@ -60,7 +48,8 @@ class WindowView(App):
 
         self._sim_controller = sim_controller
 
-        self.load_templates()
+        # Load all UI templates
+        Builder.load_file('view/window_view.kv')
 
 
     def get_controller(self
