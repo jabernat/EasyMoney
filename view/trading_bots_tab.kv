@@ -6,7 +6,7 @@
     group: 'TradingBots'
 
     size_hint: 1, None
-    height: 100
+    height: 50
 
     on_state: self.tab.selected_trader = self.text if self.state == 'down' else None
 
@@ -21,53 +21,67 @@
 
     selected_trader: None
 
+
+    # Tab contents
     BoxLayout:
         orientation: 'vertical'
+        padding: 0, 20, 0, 0  # Only top padding
 
 
-        # Trading bot list
-        ScrollView:
-            do_scroll_x: False,
-            bar_width: 20
+        # Trading bot list table
+        BoxLayout:
+            orientation: 'vertical'
+            padding: 20, 0  # Left and right padding
+            spacing: 5
 
-            size_hint: 1, 1
+            # Table header
+            TradingBotRow:
+                text: 'Header'
+                tab: root
 
-            BoxLayout:
-                orientation: 'vertical'
-                padding: 10
-                spacing: 10
+            # Table body
+            ScrollView:
+                do_scroll_x: False,
+                bar_width: 20
 
-                size_hint: 1, None
-                # When adding children, resize container to fit contents.
-                on_minimum_height: self.height = self.minimum_height
+                size_hint: 1, 1
 
-                TradingBotRow:
-                    text: '1'
-                    tab: root
-                TradingBotRow:
-                    text: '2'
-                    tab: root
-                TradingBotRow:
-                    text: '3'
-                    tab: root
-                TradingBotRow:
-                    text: '4'
-                    tab: root
-                TradingBotRow:
-                    text: '5'
-                    tab: root
-                TradingBotRow:
-                    text: '6'
-                    tab: root
-                TradingBotRow:
-                    text: '7'
-                    tab: root
-                TradingBotRow:
-                    text: '8'
-                    tab: root
-                TradingBotRow:
-                    text: '9'
-                    tab: root
+                # Row container
+                BoxLayout:
+                    orientation: 'vertical'
+                    spacing: 5
+
+                    size_hint: 1, None
+                    # When adding children, resize container to fit contents.
+                    on_minimum_height: self.height = self.minimum_height
+
+                    TradingBotRow:
+                        text: '1'
+                        tab: root
+                    TradingBotRow:
+                        text: '2'
+                        tab: root
+                    TradingBotRow:
+                        text: '3'
+                        tab: root
+                    TradingBotRow:
+                        text: '4'
+                        tab: root
+                    TradingBotRow:
+                        text: '5'
+                        tab: root
+                    TradingBotRow:
+                        text: '6'
+                        tab: root
+                    TradingBotRow:
+                        text: '7'
+                        tab: root
+                    TradingBotRow:
+                        text: '8'
+                        tab: root
+                    TradingBotRow:
+                        text: '9'
+                        tab: root
 
 
 

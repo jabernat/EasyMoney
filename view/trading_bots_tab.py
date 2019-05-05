@@ -26,11 +26,13 @@ class TradingBotsTab(TabbedPanelItem):
     """
 
 
+    # References to component widgets
     button_add: Button
     button_edit: Button
     button_remove: Button
 
     selected_trader: typing.Optional[str] = StringProperty(allownone=True)
+    """The selected trader's name, or `None` when unselected."""
 
 
     @staticmethod
