@@ -5,8 +5,8 @@ __copyright__ = 'Copyright © 2019, Erik Anderson, James Abernathy, and Tyler Ge
 __license__ = 'MIT'
 
 
+import logging
 import pprint
-import traceback
 import typing
 
 import dispatch
@@ -17,6 +17,39 @@ if typing.TYPE_CHECKING:
     from model.sim_model import SimModel
     from model.trader import Trader
     from model.trader_account import TraderAccount
+
+
+
+
+class _LazyPPrinter(object):
+    """Delays pretty-printing until a string representation is requested.
+    This avoids formatting unused strings when messages are filtered out.
+    """
+    __slots__ = ('_pprinter', '_data', '_string')
+
+    _pprinter: pprint.PrettyPrinter
+    """The pretty-printer to use if necessary."""
+
+    _data: typing.Any
+    """Data to pretty-print if necessary."""
+
+    _string: typing.Optional[str]
+    """The pretty-printed version of `_data` once requested."""
+
+    def __init__(self,
+        pprinter: pprint.PrettyPrinter,
+        data: typing.Any
+    ) -> None:
+        self._pprinter = pprinter
+        self._data = data
+        self._string = None
+
+    def __str__(self
+    ) -> str:
+        """Return a lazily pretty-printed version of `_data`."""
+        if self._string is None:  # Can't be lazy anymore
+            self._string = self._pprinter.pformat(self._data)
+        return self._string
 
 
 
@@ -36,8 +69,11 @@ class LoggingView(object):
     def __init__(self,
         sim_controller: 'SimController'
     ) -> None:
+        """Binds all of `sim_controller`'s events for logging."""
         self._pprinter = pprint.PrettyPrinter(indent=4)
+        self._logger = logging.getLogger().getChild(self.__module__)
         self._sim_controller = sim_controller
+
 
         self._log_all_events(sim_controller.get_datasource())
         self._log_all_events(sim_controller.get_updater())
@@ -52,7 +88,7 @@ class LoggingView(object):
         model: 'SimModel',
         trader: 'Trader'
     )-> None:
-        """Register to log a newly added `trader`'s events."""
+        """Register to log a newly-added `trader`'s events."""
         self._log_all_events(trader)
         trader.bind(
             TRADER_ACCOUNT_CREATED=self._on_trader_account_created)
@@ -71,13 +107,16 @@ class LoggingView(object):
         """Create an event callback function for the specified `event_name`.
         """
         def event_logger(*args, **kwargs):
+            # Combine positional and keyword args
             kwargs.update(enumerate(args))
 
-            print('{} = \\\n{}'.format(
-                event_name,
-                self._pprinter.pformat(kwargs)))
-            if 'exception' in kwargs and kwargs['exception'] is not None:
-                traceback.print_tb(kwargs['exception'].__traceback__)
+            exception = False
+            if 'exception' in kwargs:
+                exception = kwargs['exception'] or False
+
+            self._logger.info('%s:\n%s',
+                event_name, _LazyPPrinter(self._pprinter, kwargs),
+                exc_info=exception)
 
         return event_logger
 
