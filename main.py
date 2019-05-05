@@ -22,6 +22,9 @@ def pythonw_disable_std_streams(
         sys.stdout = open(os.devnull, 'w')
         sys.stderr = open(os.devnull, 'w')
 
+        # Don't waste time printing logs
+        os.environ['KIVY_NO_CONSOLELOG'] = '1'
+
 if __name__ == '__main__':
     # Disable streams before anything attempts to print
     pythonw_disable_std_streams()
