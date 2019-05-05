@@ -39,6 +39,12 @@ class WindowView(App):
     _sim_controller: 'SimController'
     """MVC controller tied to an underlying model and driven by this view."""
 
+    # References to tab widgets
+    trading_bots_tab: TradingBotsTab
+    stock_symbols_tab: StockSymbolsTab
+    simulation_tab: SimulationTab
+    statistics_tab: StatisticsTab
+
 
     def __init__(self,
         sim_controller: 'SimController'

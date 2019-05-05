@@ -14,7 +14,17 @@
     size_hint: 1, 1
     pos_hint: {'center_x': .5, 'center_y': .5}
 
+    # Make references to tabs available as instance attributes.
+    trading_bots_tab: trading_bots_tab.__self__
+    stock_symbols_tab: stock_symbols_tab.__self__
+    simulation_tab: simulation_tab.__self__
+    statistics_tab: statistics_tab.__self__
+
     TradingBotsTab:
+        id: trading_bots_tab
     StockSymbolsTab:
+        id: stock_symbols_tab
     SimulationTab:
+        id: simulation_tab
     StatisticsTab:
+        id: statistics_tab
