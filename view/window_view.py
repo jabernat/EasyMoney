@@ -66,6 +66,7 @@ class WindowView(App):
         definitions.
         """
         self.title = 'EasyMoney'
+        self.icon = 'view/Icon.png'
         return RootWidget()
 
 
