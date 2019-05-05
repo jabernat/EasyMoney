@@ -114,7 +114,7 @@ class LoggingView(object):
             if 'exception' in kwargs:
                 exception = kwargs['exception'] or False
 
-            self._logger.info('%s:\n%s',
+            self._logger.debug('%s:\n%s',
                 event_name, _LazyPPrinter(self._pprinter, kwargs),
                 exc_info=exception)
 
