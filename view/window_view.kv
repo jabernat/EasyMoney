@@ -6,10 +6,13 @@
 #:include view/simulation_tab.kv
 #:include view/statistics_tab.kv
 
+
 <RootWidget>:
+    tab_width: self.width / 4
+    do_default_tab: False
+
     size_hint: 1, 1
     pos_hint: {'center_x': .5, 'center_y': .5}
-    do_default_tab: False
 
     TradingBotsTab:
     StockSymbolsTab:
