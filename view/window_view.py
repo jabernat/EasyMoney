@@ -65,6 +65,7 @@ class WindowView(App):
         """Construct widget classes based on loaded `*.kv` template
         definitions.
         """
+        self.title = 'EasyMoney'
         return RootWidget()
 
 
