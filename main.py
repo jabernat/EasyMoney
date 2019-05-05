@@ -27,6 +27,9 @@ if __name__ == '__main__':
     pythonw_disable_std_streams()
 
 
+import kivy
+kivy.require('1.9.0')
+
 from model.sim_model import SimModel
 from controller.sim_controller import SimController
 from view.logging_view import LoggingView
