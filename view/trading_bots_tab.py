@@ -8,8 +8,9 @@ __license__ = 'MIT'
 import typing
 
 from kivy.app import App
-from kivy.properties import ObjectProperty
+from kivy.properties import StringProperty
 from kivy.uix.tabbedpanel import TabbedPanelItem
+from kivy.uix.button import Button
 
 # Local package imports duplicated at end of file to resolve circular dependencies
 if typing.TYPE_CHECKING:
@@ -25,21 +26,23 @@ class TradingBotsTab(TabbedPanelItem):
     """
 
 
-    button_add = ObjectProperty()
-    button_edit = ObjectProperty()
-    button_remove = ObjectProperty()
+    button_add: Button
+    button_edit: Button
+    button_remove: Button
 
-    selected_trader = ObjectProperty(allownone=True)
+    selected_trader: typing.Optional[str] = StringProperty(allownone=True)
 
 
-    def on_selected_trader(self,
-        instance, selected_trader
+    @staticmethod
+    def on_selected_trader(
+        instance: 'TradingBotsTab',
+        selected_trader: typing.Optional[str]
     ) -> None:
         """Disable edit and remove buttons when no trader is selected."""
         buttons_disabled = selected_trader is None
 
-        self.button_edit.disabled = buttons_disabled
-        self.button_remove.disabled = buttons_disabled
+        instance.button_edit.disabled = buttons_disabled
+        instance.button_remove.disabled = buttons_disabled
 
 
     def on_button_add_clicked(self,
