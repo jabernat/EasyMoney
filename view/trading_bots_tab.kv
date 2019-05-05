@@ -1,64 +1,111 @@
 #:kivy 1.9
 # Defines templates related to the view.trading_bots_tab module.
 
+<TradingBotRow@ToggleButton>:
+    # List entry
+    group: 'TradingBots'
+
+    size_hint: 1, None
+    height: 100
+
+    on_state: self.tab.selected_trader = self.text if self.state == 'down' else None
+
+
 <TradingBotsTab>:
     text: 'Trading Bots'
+    id: tab
+
+    button_add: button_add.__self__
+    button_edit: button_edit.__self__
+    button_remove: button_remove.__self__
+
+    selected_trader: None
+
     BoxLayout:
         orientation: 'vertical'
-        BoxLayout: # Bot info panel
-            orientation: 'vertical'
+
+
+        # Trading bot list
+        ScrollView:
+            do_scroll_x: False,
+            bar_width: 20
+
+            size_hint: 1, 1
+
             BoxLayout:
-                canvas.before:
-                    Color:
-                        rgb: 25/255.0, 135/255.0, 184/255.0
-                    Rectangle:
-                        pos: self.pos
-                        size: self.size
-                Label:
-                    text: 'Bot Name'
-                Label:
-                    text: 'Trading Algorithm'
-                Label:
-                    text: 'Starting Funds'
-                Label:
-                    text: 'Trading Fee'
-            BoxLayout:
-                Label:
-                    text: 'MADOFF'
-                Label:
-                    text: 'NBit Predictor'
-                Label:
-                    text: '$10,000'
-                Label:
-                    text: '$0'
-            BoxLayout:
-                Label:
-                    text: 'BELFORT'
-                Label:
-                    text: 'NBit Predictor'
-                Label:
-                    text: '$10,000'
-                Label:
-                    text: '$0'
-            BoxLayout:
-                Label:
-                    text: 'STEWART'
-                Label:
-                    text: 'Random Trading'
-                Label:
-                    text: '$50,000'
-                Label:
-                    text: '$5'
+                orientation: 'vertical'
+                padding: 10
+                spacing: 10
+
+                size_hint: 1, None
+                # When adding children, resize container to fit contents.
+                on_minimum_height: self.height = self.minimum_height
+
+                TradingBotRow:
+                    text: '1'
+                    tab: root
+                TradingBotRow:
+                    text: '2'
+                    tab: root
+                TradingBotRow:
+                    text: '3'
+                    tab: root
+                TradingBotRow:
+                    text: '4'
+                    tab: root
+                TradingBotRow:
+                    text: '5'
+                    tab: root
+                TradingBotRow:
+                    text: '6'
+                    tab: root
+                TradingBotRow:
+                    text: '7'
+                    tab: root
+                TradingBotRow:
+                    text: '8'
+                    tab: root
+                TradingBotRow:
+                    text: '9'
+                    tab: root
+
+
+
+        # Bottom buttons
         BoxLayout:
-        BoxLayout:
-        BoxLayout:
-        BoxLayout:
-        BoxLayout: # Button panel
+            orientation: 'horizontal'
+            size_hint: 1, None
+            height: 75
+
             Button:
+                id: button_add
                 text: 'Add'
+
+                size_hint: None, 1
+                width: 150
+
+                on_release: root.on_button_add_clicked()
+
             Button:
+                id: button_edit
                 text: 'Edit'
+                disabled: True
+
+                size_hint: None, 1
+                width: 150
+
+                on_release: root.on_button_edit_clicked()
+
             Button:
+                id: button_remove
                 text: 'Remove'
-            Label:
-            Label:
+                disabled: True
+
+                size_hint: None, 1
+                width: 150
+
+                on_release: root.on_button_remove_clicked()
+
+            # Spacer
+            Widget:
+                size_hint: 1, 1
