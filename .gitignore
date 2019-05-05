@@ -4,6 +4,9 @@
 # mypy static analysis cache
 /.mypy_cache/
 
+# Kivy settings and logs
+/.kivy/
+
 # IntelliJ Idea
 /.idea/
 
