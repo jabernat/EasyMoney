@@ -67,9 +67,10 @@ class SimulationTab(TabbedPanelItem):
             """Print statistics after updater switches to PAUSED state."""
             print('Statistics')
             for trader in model.get_traders():
-                print('Trader {!r}: {}'.format(
-                    trader.get_name(),
-                    trader.get_account().get_statistics_overall()))
+                if trader.get_account():
+                    print('Trader {!r}: {}'.format(
+                        trader.get_name(),
+                        trader.get_account().get_statistics_overall()))
         controller.get_updater().bind(
             MARKETUPDATER_PAUSED=on_marketupdater_paused)
 
