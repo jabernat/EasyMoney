@@ -1,14 +1,110 @@
 #:kivy 1.9
 # Defines templates related to the view.trading_bots_tab module.
 
-<TradingBotRow@ToggleButton>:
-    # List entry
-    group: 'TradingBots'
+# Base style of all table cells.
+<TableCell@Label>:
+    shorten: True
+    shorten_from: 'right'
+    text_size: self.size
 
+    padding: cm(0.05), cm(0.05)
+    size_hint_y: 1
+
+
+# Style of table header cells.
+<HeaderCell@TableCell>:
+    bold: True
+    halign: 'center'
+    valign: 'bottom'
+
+
+# Style of table body cells.
+<BodyCell@TableCell>:
+    halign: 'left'
+    padding: cm(0.4), cm(0.05)
+
+
+# Style of dollar-value table body cells.
+<BodyCellDollars@BodyCell>:
+    halign: 'right'
+    font_name: 'Roboto'
+
+
+# Vertical bar dividing cell columns.
+<CellDivider@Widget>:
+    pos_hint: {'y': 0.1}
+    size_hint: None, 0.8
+    width: '1pt'
+
+    canvas:
+        Color:
+            rgba: 1, 1, 1, 0.5
+        Rectangle:
+            size: self.size
+            pos: self.pos
+
+
+# Base styles of table column cells.
+<ColumnTraderName@Widget>:
+    size_hint_x: 0.3
+<ColumnTradingAlgorithm@Widget>:
+    size_hint_x: 0.3
+<ColumnStartingFunds@Widget>:
+    size_hint_x: 0.2
+<ColumnTradingFee@Widget>:
+    size_hint_x: 0.2
+
+
+# Table header cells.
+<HeaderCellTraderName@HeaderCell+ColumnTraderName>:
+    text: 'Trader Name'
+<HeaderCellTradingAlgorithm@HeaderCell+ColumnTradingAlgorithm>:
+    text: 'Trading Algorithm'
+<HeaderCellStartingFunds@HeaderCell+ColumnStartingFunds>:
+    text: 'Starting Funds'
+<HeaderCellTradingFee@HeaderCell+ColumnTradingFee>:
+    text: 'Trading Fee'
+
+
+# Table body cells.
+<BodyCellTraderName@BodyCell+ColumnTraderName>:
+<BodyCellTradingAlgorithm@BodyCell+ColumnTradingAlgorithm>:
+<BodyCellStartingFunds@BodyCellDollars+ColumnStartingFunds>:
+<BodyCellTradingFee@BodyCellDollars+ColumnTradingFee>:
+
+
+# Selectable table body row representing a trading bot.
+<TradingBotRow@ToggleButtonBehavior+BoxLayout>:
+    orientation: 'horizontal'
+
+    spacing: cm(0.1)
     size_hint: 1, None
-    height: 50
+    height: cm(1)
 
-    on_state: self.tab.selected_trader = self.text if self.state == 'down' else None
+    trader_name: ''
+    trading_algorithm: ''
+    starting_funds: 0
+    trading_fee: 0
+
+    on_state: self.tab.selected_trader = self.trader_name if self.state == 'down' else None
+
+    BodyCellTraderName:
+        text: repr(root.trader_name)
+    CellDivider:
+    BodyCellTradingAlgorithm:
+        text: root.trading_algorithm
+    CellDivider:
+    BodyCellStartingFunds:
+        text: '${:,.2f}'.format(root.starting_funds)
+    CellDivider:
+    BodyCellTradingFee:
+        text: '${:,.2f}'.format(root.trading_fee)
+
+
+# Button along bottom bar for controlling selected traders.
+<BottomButton@Button>:
+    size_hint: None, 1
+    width: cm(3)
 
 
 <TradingBotsTab>:
@@ -25,96 +121,157 @@
     # Tab contents
     BoxLayout:
         orientation: 'vertical'
-        padding: 0, 20, 0, 0  # Only top padding
+
+        padding: 0, cm(0.4), 0, 0  # Only top padding
+
+        # Black background
+        canvas:
+            Color:
+                rgba: 0, 0, 0, 1
+            Rectangle:
+                size: self.size
+                pos: self.pos
 
 
         # Trading bot list table
         BoxLayout:
             orientation: 'vertical'
-            padding: 20, 0  # Left and right padding
-            spacing: 5
+
+            padding: cm(0.4), 0  # Left and right padding
+            spacing: cm(0.2)
 
             # Table header
-            TradingBotRow:
-                text: 'Header'
-                tab: root
+            BoxLayout:
+                orientation: 'horizontal'
+                spacing: cm(0.1)
+                size_hint: 1, None
+                height: cm(1)
+
+                # Gray background
+                canvas:
+                    Color:
+                        rgba: 0.2, 0.2, 0.2, 1
+                    Rectangle:
+                        size: self.size
+                        pos: self.pos
+
+                HeaderCellTraderName:
+                CellDivider:
+                HeaderCellTradingAlgorithm:
+                CellDivider:
+                HeaderCellStartingFunds:
+                CellDivider:
+                HeaderCellTradingFee:
 
             # Table body
             ScrollView:
-                do_scroll_x: False,
-                bar_width: 20
+                do_scroll_x: False
 
                 size_hint: 1, 1
 
                 # Row container
                 BoxLayout:
                     orientation: 'vertical'
-                    spacing: 5
 
+                    spacing: cm(0.2)
                     size_hint: 1, None
+
                     # When adding children, resize container to fit contents.
                     on_minimum_height: self.height = self.minimum_height
 
                     TradingBotRow:
-                        text: '1'
                         tab: root
+                        trader_name: '1'
                     TradingBotRow:
-                        text: '2'
                         tab: root
+                        trader_name: '2'
                     TradingBotRow:
-                        text: '3'
                         tab: root
+                        trader_name: '3'
                     TradingBotRow:
-                        text: '4'
                         tab: root
+                        trader_name: '4'
                     TradingBotRow:
-                        text: '5'
                         tab: root
+                        trader_name: '5'
                     TradingBotRow:
-                        text: '6'
                         tab: root
+                        trader_name: '6'
                     TradingBotRow:
-                        text: '7'
                         tab: root
+                        trader_name: '7'
                     TradingBotRow:
-                        text: '8'
                         tab: root
+                        trader_name: '8'
                     TradingBotRow:
-                        text: '9'
                         tab: root
+                        trader_name: '9'
+                    TradingBotRow:
+                        tab: root
+                        trader_name: '10'
+                    TradingBotRow:
+                        tab: root
+                        trader_name: '11'
+                    TradingBotRow:
+                        tab: root
+                        trader_name: '12'
+                    TradingBotRow:
+                        tab: root
+                        trader_name: '13'
+                    TradingBotRow:
+                        tab: root
+                        trader_name: '14'
+                    TradingBotRow:
+                        tab: root
+                        trader_name: '15'
+                    TradingBotRow:
+                        tab: root
+                        trader_name: '16'
+                    TradingBotRow:
+                        tab: root
+                        trader_name: '17'
+                    TradingBotRow:
+                        tab: root
+                        trader_name: '18'
+                    TradingBotRow:
+                        tab: root
+                        trader_name: '19'
+                    TradingBotRow:
+                        tab: root
+                        trader_name: '20'
 
 
 
         # Bottom buttons
         BoxLayout:
             orientation: 'horizontal'
-            size_hint: 1, None
-            height: 75
 
-            Button:
+            size_hint: 1, None
+            height: cm(1.5)
+
+            # Gray background
+            canvas:
+                Color:
+                    rgba: 0.2, 0.2, 0.2, 1
+                Rectangle:
+                    size: self.size
+                    pos: self.pos
+
+            BottomButton:
                 id: button_add
                 text: 'Add'
 
-                size_hint: None, 1
-                width: 150
-
                 on_release: root.on_button_add_clicked()
 
-            Button:
+            BottomButton:
                 id: button_edit
                 text: 'Edit'
 
-                size_hint: None, 1
-                width: 150
-
                 on_release: root.on_button_edit_clicked()
 
-            Button:
+            BottomButton:
                 id: button_remove
                 text: 'Remove'
-
-                size_hint: None, 1
-                width: 150
 
                 on_release: root.on_button_remove_clicked()
 
