@@ -18,11 +18,17 @@
     effect_cls: 'ScrollEffect'
 
     # Blue scroll indicator
-    bar_color: 0.2, 0.6, 0.8, 0.9
+    bar_color: 0.2, 0.6, 0.8, 0.9  # Light blue
     bar_inactive_color: 0.2, 0.6, 0.8, 0.2
 
 <TabbedPanelItem>:
-    color: 1, 0.84, 0, 1  # Logo yellow
+    color: 0.4, 0.8, 1, 1  # Light blue
+    outline_width: '2pt'
+    outline_color: 0.3, 0.3, 0.3
+
+    shorten: True
+    shorten_from: 'right'
+    text_size: self.size
 
 
 <RootWidget>:
