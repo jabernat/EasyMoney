@@ -53,7 +53,7 @@
     size_hint_x: 0.3
 <ColumnTradingAlgorithm@Widget>:
     size_hint_x: 0.3
-<ColumnStartingFunds@Widget>:
+<ColumnInitialFunds@Widget>:
     size_hint_x: 0.2
 <ColumnTradingFee@Widget>:
     size_hint_x: 0.2
@@ -64,8 +64,8 @@
     text: 'Trader Name'
 <HeaderCellTradingAlgorithm@HeaderCell+ColumnTradingAlgorithm>:
     text: 'Trading Algorithm'
-<HeaderCellStartingFunds@HeaderCell+ColumnStartingFunds>:
-    text: 'Starting Funds'
+<HeaderCellInitialFunds@HeaderCell+ColumnInitialFunds>:
+    text: 'Initial Funds'
 <HeaderCellTradingFee@HeaderCell+ColumnTradingFee>:
     text: 'Trading Fee'
 
@@ -73,7 +73,7 @@
 # Table body cells.
 <BodyCellTraderName@BodyCell+ColumnTraderName>:
 <BodyCellTradingAlgorithm@BodyCell+ColumnTradingAlgorithm>:
-<BodyCellStartingFunds@BodyCellDollars+ColumnStartingFunds>:
+<BodyCellInitialFunds@BodyCellDollars+ColumnInitialFunds>:
 <BodyCellTradingFee@BodyCellDollars+ColumnTradingFee>:
 
 
@@ -101,8 +101,8 @@
         BodyCellTradingAlgorithm:
             text: root.trading_algorithm
         CellDivider:
-        BodyCellStartingFunds:
-            text: '${:,.2f}'.format(root.starting_funds)
+        BodyCellInitialFunds:
+            text: '${:,.2f}'.format(root.initial_funds)
         CellDivider:
         BodyCellTradingFee:
             text: '${:,.2f}'.format(root.trading_fee)
@@ -166,7 +166,7 @@
                 CellDivider:
                 HeaderCellTradingAlgorithm:
                 CellDivider:
-                HeaderCellStartingFunds:
+                HeaderCellInitialFunds:
                 CellDivider:
                 HeaderCellTradingFee:
 

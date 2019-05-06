@@ -17,8 +17,8 @@ from kivy.uix.tabbedpanel import TabbedPanelItem
 
 # Local package imports duplicated at end of file to resolve circular dependencies
 if typing.TYPE_CHECKING:
-    #from controller.sim_controller import SimController
-    pass
+    from model.sim_model import SimModel
+    from model.trader import Trader
 
 
 
@@ -28,7 +28,7 @@ class TradingBotRow(FloatLayout):
     tab: 'TradingBotsTab' = ObjectProperty()
     trader_name: str = StringProperty()
     trading_algorithm: str = StringProperty()
-    starting_funds: float = BoundedNumericProperty(0.00, min=0.00)
+    initial_funds: float = BoundedNumericProperty(0.00, min=0.00)
     trading_fee: float = BoundedNumericProperty(0.00, min=0.00)
 
 
@@ -50,6 +50,30 @@ class TradingBotsTab(TabbedPanelItem):
         None, allownone=True)
     """The selected trader's table row, or `None` when unselected."""
 
+    trader_names_to_rows: typing.Dict[str, TradingBotRow]
+    """Mapping of trader names to their corresponding table rows."""
+
+
+    def __init__(self,
+        *args, **kwargs
+    ) -> None:
+        super().__init__(*args, **kwargs)
+
+        self.trader_names_to_rows = {}
+
+        controller = App.get_running_app().get_controller()
+        model = controller.get_model()
+
+        model.bind(
+            SIMMODEL_TRADER_ADDED=self.on_simmodel_trader_added,
+            SIMMODEL_TRADER_REMOVED=self.on_simmodel_trader_removed)
+
+        # Add preexisting traders
+        for trader in model.get_traders():
+            self.on_simmodel_trader_added(
+                model=model,
+                trader=trader)
+
 
     @staticmethod
     def on_selected_trader(
@@ -70,12 +94,24 @@ class TradingBotsTab(TabbedPanelItem):
     def on_button_add_clicked(self
     ) -> None:
         """Show a popup to add a new trader."""
-        self.table_rows.add_widget(TradingBotRow(
-            tab=self,
-            trader_name='2',
-            trading_algorithm='ALG',
-            starting_funds=10,
-            trading_fee=1))
+        controller = App.get_running_app().get_controller()
+        controller.add_trader('John Madden',
+            initial_funds=999_999, trading_fee=0.01,
+            algorithm='Momentum')
+
+    def on_simmodel_trader_added(self,
+        model: 'SimModel',
+        trader: 'Trader'
+    ) -> None:
+        """Add a table row for the newly added `trader`."""
+        trading_bot_row = TradingBotRow(tab=self,
+            trader_name=trader.get_name(),
+            trading_algorithm=trader.get_algorithm_name(),
+            initial_funds=trader.get_initial_funds(),
+            trading_fee=trader.get_trading_fee())
+
+        self.table_rows.add_widget(trading_bot_row)
+        self.trader_names_to_rows[trader.get_name()] = trading_bot_row
 
 
     def on_button_edit_clicked(self
@@ -91,11 +127,26 @@ class TradingBotsTab(TabbedPanelItem):
         """Remove `selected_trader`."""
         assert self.selected_trader is not None, \
             'Remove button clicked without a trader row selected.'
-        self.table_rows.remove_widget(self.selected_trader)
-        self.selected_trader = None
+        controller = App.get_running_app().get_controller()
+        controller.remove_trader(
+            self.selected_trader.trader_name)
+
+    def on_simmodel_trader_removed(self,
+        model: 'SimModel',
+        trader: 'Trader'
+    ) -> None:
+        """Remove the table row for deleted `trader`."""
+        trading_bot_row = self.trader_names_to_rows[trader.get_name()]
+
+        self.table_rows.remove_widget(trading_bot_row)
+        del self.trader_names_to_rows[trader.get_name()]
+
+        if self.selected_trader is trading_bot_row:
+            self.selected_trader = None
 
 
 
 
 # Imported last to avoid circular dependencies
-#from controller.sim_controller import SimController
+    from model.sim_model import SimModel
+    from model.trader import Trader
