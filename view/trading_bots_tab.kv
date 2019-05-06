@@ -8,7 +8,6 @@
     text_size: self.size
 
     padding: cm(0.05), cm(0.05)
-    size_hint_y: 1
 
 
 # Style of table header cells.
@@ -43,7 +42,7 @@
 
     canvas:
         Color:
-            rgba: 1, 1, 1, 0.5
+            rgba: 1, 1, 1, 0.5  # Translucent white
         Rectangle:
             size: self.size
             pos: self.pos
@@ -79,36 +78,21 @@
 
 
 # Selectable table body row representing a trading bot.
-<TradingBotRow@FloatLayout>:
-    size_hint: 1, None
+<TradingBotRow>:
+    size_hint_y: None
     height: cm(1)
-
-    trader_name: ''
-    trading_algorithm: ''
-    starting_funds: 0
-    trading_fee: 0
-
-    # Gray background
-    canvas:
-        Color:
-            rgba: 0.2, 0.2, 0.2, 1
-        Rectangle:
-            size: self.size
-            pos: self.pos
 
     ToggleButton:
         group: 'TradingBots'
 
-        size_hint: 1, 1
         pos_hint: {'x': 0, 'y': 0}
 
-        on_state: root.tab.selected_trader = root.trader_name if self.state == 'down' else None
+        on_state: root.tab.selected_trader = root if self.state == 'down' else None
 
     BoxLayout:
         orientation: 'horizontal'
 
         spacing: cm(0.1)
-        size_hint: 1, 1
         pos_hint: {'x': 0, 'y': 0}
 
         BodyCellTraderName:
@@ -126,7 +110,7 @@
 
 # Button along bottom bar for controlling selected traders.
 <BottomButton@Button>:
-    size_hint: None, 1
+    size_hint_x: None
     width: cm(3)
 
 
@@ -138,7 +122,7 @@
     button_edit: button_edit.__self__
     button_remove: button_remove.__self__
 
-    selected_trader: None
+    table_rows: table_rows.__self__
 
 
     # Tab contents
@@ -167,7 +151,7 @@
             BoxLayout:
                 orientation: 'horizontal'
                 spacing: cm(0.1)
-                size_hint: 1, None
+                size_hint_y: None
                 height: cm(1)
 
                 # Gray background
@@ -190,78 +174,14 @@
             ScrollView:
                 do_scroll_x: False
 
-                size_hint: 1, 1
-
                 # Row container
                 BoxLayout:
+                    id: table_rows
                     orientation: 'vertical'
 
                     spacing: cm(0.2)
-                    size_hint: 1, None
-
-                    # When adding children, resize container to fit contents.
-                    on_minimum_height: self.height = self.minimum_height
-
-                    TradingBotRow:
-                        tab: root
-                        trader_name: '1'
-                    TradingBotRow:
-                        tab: root
-                        trader_name: '2'
-                    TradingBotRow:
-                        tab: root
-                        trader_name: '3'
-                    TradingBotRow:
-                        tab: root
-                        trader_name: '4'
-                    TradingBotRow:
-                        tab: root
-                        trader_name: '5'
-                    TradingBotRow:
-                        tab: root
-                        trader_name: '6'
-                    TradingBotRow:
-                        tab: root
-                        trader_name: '7'
-                    TradingBotRow:
-                        tab: root
-                        trader_name: '8'
-                    TradingBotRow:
-                        tab: root
-                        trader_name: '9'
-                    TradingBotRow:
-                        tab: root
-                        trader_name: '10'
-                    TradingBotRow:
-                        tab: root
-                        trader_name: '11'
-                    TradingBotRow:
-                        tab: root
-                        trader_name: '12'
-                    TradingBotRow:
-                        tab: root
-                        trader_name: '13'
-                    TradingBotRow:
-                        tab: root
-                        trader_name: '14'
-                    TradingBotRow:
-                        tab: root
-                        trader_name: '15'
-                    TradingBotRow:
-                        tab: root
-                        trader_name: '16'
-                    TradingBotRow:
-                        tab: root
-                        trader_name: '17'
-                    TradingBotRow:
-                        tab: root
-                        trader_name: '18'
-                    TradingBotRow:
-                        tab: root
-                        trader_name: '19'
-                    TradingBotRow:
-                        tab: root
-                        trader_name: '20'
+                    size_hint_y: None
+                    height: self.minimum_height
 
 
 
@@ -269,7 +189,7 @@
         BoxLayout:
             orientation: 'horizontal'
 
-            size_hint: 1, None
+            size_hint_y: None
             height: cm(1.5)
 
             # Gray background
@@ -289,15 +209,16 @@
             BottomButton:
                 id: button_edit
                 text: 'Edit'
+                disabled: True
 
                 on_release: root.on_button_edit_clicked()
 
             BottomButton:
                 id: button_remove
                 text: 'Remove'
+                disabled: True
 
                 on_release: root.on_button_remove_clicked()
 
             # Spacer
             Widget:
-                size_hint: 1, 1
