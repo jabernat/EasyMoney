@@ -1,12 +1,18 @@
 #:kivy 1.9
-# Defines templates related to the view.stock_symbols_tab module.
+# Defines templates related to the view.trading_bots_tab module.
 
 <StockSymbolsTab>:
     text: 'Stock Symbols'
+    id: tab
+
+    button_add: button_add.__self__	
+    button_remove: button_remove.__self__
+
     BoxLayout:
         orientation: 'vertical'
         BoxLayout: # Stock symbol info panel
             orientation: 'vertical'
+
             BoxLayout: # Row 1
                 canvas.before:
                     Color:
@@ -20,11 +26,16 @@
                     text: 'Stock Symbol'
                 Label:
                 Label:
+
             BoxLayout: # Row 2
                 Label:
                     text: 'NYSE'
                 Label:
                     text: 'AAPL'
+                ToggleButton:
+                    text: 'Select'
+                    group: 'g1'
+                    on_press: root.on_symbol_label_select('AAPL') 
                 Label:
                 Label:
             BoxLayout: # Row 3
@@ -32,6 +43,10 @@
                     text: 'NYSE'
                 Label:
                     text: 'AMD'
+                ToggleButton:
+                    text: 'Select'
+                    group: 'g1'
+                    on_press: root.on_symbol_label_select('AMD')
                 Label:
                 Label:
             BoxLayout: # Row 4
@@ -39,6 +54,10 @@
                     text: 'NYSE'
                 Label:
                     text: 'CHSP'
+                ToggleButton:
+                    text: 'Select'
+                    group: 'g1'
+                    on_press: root.on_symbol_label_select('CHSP')
                 Label:
                 Label:
             BoxLayout: # Row 5
@@ -46,16 +65,64 @@
                     text: 'NYSE'
                 Label:
                     text: 'MSFT'
+                ToggleButton:
+                    text: 'Select'
+                    group: 'g1'
+                    on_press: root.on_symbol_label_select('MSFT')
+                Label:
+                Label:
+            BoxLayout: # Row 6
+                Label:
+                    text: 'NYSE'
+                Label:
+                    text: 'JCOM'
+                ToggleButton:
+                    text: 'Select'
+                    group: 'g1'
+                    on_press: root.on_symbol_label_select('JCOM') 
+                Label:
+                Label:
+            BoxLayout: # Row 7
+                Label:
+                    text: 'NYSE'
+                Label:
+                    text: 'MMS'
+                ToggleButton:
+                    text: 'Select'
+                    group: 'g1'
+                    on_press: root.on_symbol_label_select('MMS') 
+                Label:
+                Label:
+            BoxLayout: # Row 8
+                Label:
+                    text: 'NYSE'
+                Label:
+                    text: 'MU'
+                ToggleButton:
+                    text: 'Select'
+                    group: 'g1'
+                    on_press: root.on_symbol_label_select('MU') 
+                Label:
+                Label:
+            BoxLayout: # Row 9
+                Label:
+                    text: 'NYSE'
+                Label:
+                    text: 'PEB'
+                ToggleButton:
+                    text: 'Select'
+                    group: 'g1'
+                    on_press: root.on_symbol_label_select('PEB') 
                 Label:
                 Label:
         BoxLayout:
-        BoxLayout:
-        BoxLayout:
-        BoxLayout:
+        # Bottom buttons
         BoxLayout:
             Button:
+                id: button_add
                 text: 'Add'
-		on_press: root.on_add_button_press()
+                on_release: root.on_add_button_click(app.get_controller())
             Button:
+                id: button_remove
                 text: 'Remove'
-		on_press: root.on_remove_button_press()
+                on_release: root.on_remove_button_click(app.get_controller())	
