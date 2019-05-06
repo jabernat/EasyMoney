@@ -7,12 +7,27 @@
 #:include view/statistics_tab.kv
 
 
+# Global styles
+<ScrollView>:
+    bar_width: cm(0.4)
+
+    # Allow swiping over the content, or dragging the scroll bar
+    scroll_type: ['bars', 'content']
+
+    # Disable overscrolling beyond contents
+    effect_cls: 'ScrollEffect'
+
+    # Blue scroll indicator
+    bar_color: 0.2, 0.6, 0.8, 0.9
+    bar_inactive_color: 0.2, 0.6, 0.8, 0.2
+
+
 <RootWidget>:
     tab_width: self.width / 4
     do_default_tab: False
 
     size_hint: 1, 1
-    pos_hint: {'center_x': .5, 'center_y': .5}
+    pos_hint: {'center_x': 0.5, 'center_y': 0.5}
 
     # Make references to tabs available as instance attributes.
     trading_bots_tab: trading_bots_tab.__self__
