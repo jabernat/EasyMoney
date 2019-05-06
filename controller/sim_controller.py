@@ -96,7 +96,7 @@ class SimController(object):
         initial_funds: float,
         trading_fee: float,
         algorithm: str,
-        algorithm_settings: typing.Dict[str, typing.Any]
+        algorithm_settings: typing.Optional[typing.Dict[str, typing.Any]] = None
     ) -> 'Trader':
         """Add and return a uniquely named `Trader` to the simulation that will
         buy and sell in response to `StockMarket` updates based on `algorithm`.
@@ -124,8 +124,13 @@ class SimController(object):
 
         The contents of `algorithm_settings` are validated according to
         `algorithm`, and invalid arguments raise subclasses of `TypeError` and
-        `ValueError`.
+        `ValueError`. If `algorithm_settings` isn't specified, appropriate
+        default settings are used.
         """
+        if algorithm_settings is None:
+            algorithm_settings = self._model.get_trader_algorithm_settings_defaults(
+                algorithm)
+
         return self._model.add_trader(
             name, initial_funds, trading_fee,
             algorithm, algorithm_settings)
