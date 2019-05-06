@@ -21,7 +21,12 @@
 # Style of table body cells.
 <BodyCell@TableCell>:
     halign: 'left'
+    valign: 'center'
     padding: cm(0.4), cm(0.05)
+
+    # Improve readability when row is selected
+    outline_width: '2pt'
+    outline_color: 0.35, 0.35, 0.35  # Same gray as button
 
 
 # Style of dollar-value table body cells.
@@ -74,10 +79,7 @@
 
 
 # Selectable table body row representing a trading bot.
-<TradingBotRow@ToggleButtonBehavior+BoxLayout>:
-    orientation: 'horizontal'
-
-    spacing: cm(0.1)
+<TradingBotRow@FloatLayout>:
     size_hint: 1, None
     height: cm(1)
 
@@ -86,19 +88,40 @@
     starting_funds: 0
     trading_fee: 0
 
-    on_state: self.tab.selected_trader = self.trader_name if self.state == 'down' else None
+    # Gray background
+    canvas:
+        Color:
+            rgba: 0.2, 0.2, 0.2, 1
+        Rectangle:
+            size: self.size
+            pos: self.pos
 
-    BodyCellTraderName:
-        text: repr(root.trader_name)
-    CellDivider:
-    BodyCellTradingAlgorithm:
-        text: root.trading_algorithm
-    CellDivider:
-    BodyCellStartingFunds:
-        text: '${:,.2f}'.format(root.starting_funds)
-    CellDivider:
-    BodyCellTradingFee:
-        text: '${:,.2f}'.format(root.trading_fee)
+    ToggleButton:
+        group: 'TradingBots'
+
+        size_hint: 1, 1
+        pos_hint: {'x': 0, 'y': 0}
+
+        on_state: root.tab.selected_trader = root.trader_name if self.state == 'down' else None
+
+    BoxLayout:
+        orientation: 'horizontal'
+
+        spacing: cm(0.1)
+        size_hint: 1, 1
+        pos_hint: {'x': 0, 'y': 0}
+
+        BodyCellTraderName:
+            text: repr(root.trader_name)
+        CellDivider:
+        BodyCellTradingAlgorithm:
+            text: root.trading_algorithm
+        CellDivider:
+        BodyCellStartingFunds:
+            text: '${:,.2f}'.format(root.starting_funds)
+        CellDivider:
+        BodyCellTradingFee:
+            text: '${:,.2f}'.format(root.trading_fee)
 
 
 # Button along bottom bar for controlling selected traders.
