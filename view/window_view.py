@@ -8,7 +8,7 @@ __license__ = 'MIT'
 import typing
 
 from kivy.app import App
-from kivy.uix.tabbedpanel import TabbedPanel
+from kivy.uix.tabbedpanel import TabbedPanel, TabbedPanelItem
 from kivy.lang import Builder
 
 from view.trading_bots_tab import TradingBotsTab
@@ -27,7 +27,15 @@ class RootWidget(TabbedPanel):
     """Class associated with the `<RootWidget>` remplate defined within
     `window_view.kv`.
     """
-    pass
+    @staticmethod
+    def on_current_tab(
+        instance: 'RootWidget',
+        current_tab: TabbedPanelItem
+    ):
+        """Bolds the active tab's label."""
+        for tab in instance.tab_list:
+            tab.bold = False;
+        current_tab.bold = True
 
 
 
