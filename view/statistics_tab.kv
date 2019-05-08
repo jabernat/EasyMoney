@@ -2,31 +2,128 @@
 # Defines templates related to the view.statistics_tab module.
 
 <StatisticsTab>:
+    daily_label: daily_label
+    bot_spinner: bot_spinner
     text: 'Statistics'
+    # main panel
     BoxLayout:
         orientation: 'vertical'
+        # first level of main
         BoxLayout:
+            size_hint: 1, .4
+            padding: 0, 10
+            BoxLayout:
+                orientation: 'horizontal'
+                BoxLayout:
+                    padding: 10, 1, 5, 1
+                    Button:
+                        text: 'Save Report'
+                        on_release: root.show_save()
+                BoxLayout:
+                    padding: 5, 1, 10, 1
+                    Button:
+                        text: 'Clear All'
+                        on_release: daily_label.text = overall_label.text = ""
+                Label:
+                Label:
+                    text: 'Displayed Trading Bot:'
+                BoxLayout:
+                    padding: 0, 0, 10, 0
+                    Spinner:
+                        id: bot_spinner
+        # second level of main panel
+        BoxLayout:
+            size_hint: 1, .2
             Label:
                 text: "Bot's Daily Statistics"
             Label:
                 text: "Bot's Overall Statistics"
+
+        # third level of main panel
+        # container for both scroll views
         BoxLayout:
             size_hint_y: 3
-            Label:
-                text: "Lorem ipsum dolor sit amet, consectetur adipiscing elit"
-                color: 0,0,0,1 
-                canvas.before:
-                    Color:
-                        rgba: 1, 1, 1, 1
-                    Rectangle:
-                        pos: self.pos
-                        size: self.size
-            Label:
-                text: "Lorem ipsum dolor sit amet, consectetur adipiscing elit"
-                color: 0,0,0,1 
-                canvas.before:
-                    Color:
-                        rgba: 1, 1, 1, 1
-                    Rectangle:
-                        pos: self.pos
-                        size: self.size
+            padding: 0, 0
+            # container for scroll view 1 (daily)
+            BoxLayout:
+                padding: 10, 0, 5, 10
+                ScrollView:
+                    # scroll foreground/background
+                    color: 0,0,0,1
+                    canvas.before:
+                        Color:
+                            rgba: 1, 1, 1, 1
+                        Rectangle:
+                            pos: self.pos
+                            size: self.size
+                    size_hint: .2, 1
+                    Label:
+                        id: daily_label
+                        padding: 10, 10
+                        size_hint_y: None
+                        height: self.texture_size[1]
+                        text_size: self.width, None
+                        text: "Statistics could not be retrieved" if not bot_spinner.text or bot_spinner.text == "No bots added" else root.statistics_daily_label_text
+                        # text foreground/background
+                        color: 0,0,0,1
+                        canvas.before:
+                            Color:
+                                rgba: 1, 1, 1, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+            # container for scroll view 2 (overall)
+            BoxLayout:
+                padding: 5, 0, 10, 10
+                ScrollView:
+                    # scroll foreground/background
+                    color: 0,0,0,1
+                    canvas.before:
+                        Color:
+                            rgba: 1, 1, 1, 1
+                        Rectangle:
+                            pos: self.pos
+                            size: self.size
+                    size_hint: .2, 1
+                    Label:
+                        id: overall_label
+                        padding: 10, 10
+                        size_hint_y: None
+                        height: self.texture_size[1]
+                        text_size: self.width, None
+                        text: "Statistics could not be retrieved" if not bot_spinner.text or bot_spinner.text == "No bots added" else root.statistics_overall_label_text
+                        # text foreground/background
+                        color: 0,0,0,1
+                        canvas.before:
+                            Color:
+                                rgba: 1, 1, 1, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+
+<SaveDialog>:
+
+    BoxLayout:
+        size: root.size
+        pos: root.pos
+        orientation: "vertical"
+        FileChooserListView:
+            id: filechooser
+            on_selection: text_input.text = self.selection and self.selection[0] or ''
+
+        TextInput:
+            id: text_input
+            size_hint_y: None
+            height: 30
+            multiline: False
+
+        BoxLayout:
+            size_hint_y: None
+            height: 30
+            Button:
+                text: "Cancel"
+                on_release: root.cancel()
+
+            Button:
+                text: "Save"
+                on_release: root.save(filechooser.path, text_input.text)
