@@ -95,9 +95,10 @@ class TradingBotsTab(TabbedPanelItem):
     ) -> None:
         """Show a popup to add a new trader."""
         controller = App.get_running_app().get_controller()
-        controller.add_trader('John Madden',
-            initial_funds=999_999, trading_fee=0.01,
-            algorithm='Momentum')
+        for index in range(1, 21):
+            controller.add_trader('John Madden {}'.format(index),
+                initial_funds=999_999, trading_fee=0.01,
+                algorithm='Momentum')
 
     def on_simmodel_trader_added(self,
         model: 'SimModel',
@@ -148,5 +149,5 @@ class TradingBotsTab(TabbedPanelItem):
 
 
 # Imported last to avoid circular dependencies
-    from model.sim_model import SimModel
-    from model.trader import Trader
+from model.sim_model import SimModel
+from model.trader import Trader
