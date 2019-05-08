@@ -1,7 +1,7 @@
 #:kivy 1.9
 # Defines templates related to the WindowView's root widget.
 
-#:include view/trading_bots_tab.kv
+#:include view/traders_tab.kv
 #:include view/stock_symbols_tab.kv
 #:include view/simulation_tab.kv
 #:include view/statistics_tab.kv
@@ -39,13 +39,13 @@
     pos_hint: {'center_x': 0.5, 'center_y': 0.5}
 
     # Make references to tabs available as instance attributes.
-    trading_bots_tab: trading_bots_tab.__self__
+    traders_tab: traders_tab.__self__
     stock_symbols_tab: stock_symbols_tab.__self__
     simulation_tab: simulation_tab.__self__
     statistics_tab: statistics_tab.__self__
 
-    TradingBotsTab:
-        id: trading_bots_tab
+    TradersTab:
+        id: traders_tab
     StockSymbolsTab:
         id: stock_symbols_tab
     SimulationTab:

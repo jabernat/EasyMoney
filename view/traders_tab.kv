@@ -1,8 +1,8 @@
 #:kivy 1.9
-# Defines templates related to the view.trading_bots_tab module.
+# Defines templates related to the view.traders_tab module.
 
 
-<TradingBotPopup>:
+<TraderPopup>:
     auto_dismiss: False
 
     size_hint: .5, .5
@@ -92,13 +92,13 @@
 
 
 
-# Selectable table body row representing a trading bot.
-<TradingBotRow>:
+# Selectable table body row representing a trader.
+<TraderRow>:
     size_hint_y: None
     height: cm(1)
 
     ToggleButton:
-        group: 'TradingBots'
+        group: 'Traders'
 
         pos_hint: {'x': 0, 'y': 0}
 
@@ -133,8 +133,8 @@
 
 
 
-<TradingBotsTab>:
-    text: 'Trading Bots'
+<TradersTab>:
+    text: 'Traders'
     id: tab
 
     button_add: button_add.__self__
@@ -159,7 +159,7 @@
                 pos: self.pos
 
 
-        # Trading bot list table
+        # Trader list table
         BoxLayout:
             orientation: 'vertical'
 

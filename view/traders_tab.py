@@ -1,4 +1,4 @@
-"""Defines `TradingBotsTab` and supporting classes."""
+"""Defines `TradersTab` and supporting classes."""
 
 
 __copyright__ = 'Copyright © 2019, Erik Anderson, James Abernathy, and Tyler Gerritsen'
@@ -24,18 +24,18 @@ if typing.TYPE_CHECKING:
 
 
 
-class TradingBotPopup(Popup):
-    """Popup dialog for adding and editing trading bots."""
+class TraderPopup(Popup):
+    """Popup dialog for adding and editing traders."""
     pass
 
 
 
 
-class TradingBotRow(FloatLayout):
-    """Selectable table body row representing a trading bot."""
+class TraderRow(FloatLayout):
+    """Selectable table body row representing a trader."""
 
 
-    tab: 'TradingBotsTab' = ObjectProperty()
+    tab: 'TradersTab' = ObjectProperty()
     """Reference to parent tab for tracking the selected row."""
 
     trader_name: str = StringProperty()
@@ -74,9 +74,9 @@ class TradingBotRow(FloatLayout):
 
 
 
-class TradingBotsTab(TabbedPanelItem):
-    """Class associated with the `<TradingBotsTab>` template defined within
-    `trading_bots_tab.kv`.
+class TradersTab(TabbedPanelItem):
+    """Class associated with the `<TradersTab>` template defined within
+    `traders_tab.kv`.
     """
 
 
@@ -86,11 +86,11 @@ class TradingBotsTab(TabbedPanelItem):
     button_remove: Button
     table_rows: BoxLayout
 
-    selected_trader: typing.Optional[TradingBotRow] = ObjectProperty(
+    selected_trader: typing.Optional[TraderRow] = ObjectProperty(
         None, allownone=True)
     """The selected trader's table row, or `None` when unselected."""
 
-    trader_names_to_rows: typing.Dict[str, TradingBotRow]
+    trader_names_to_rows: typing.Dict[str, TraderRow]
     """Mapping of trader names to their corresponding table rows."""
 
 
@@ -116,8 +116,8 @@ class TradingBotsTab(TabbedPanelItem):
 
     @staticmethod
     def on_selected_trader(
-        instance: 'TradingBotsTab',
-        selected_trader: typing.Optional[TradingBotRow]
+        instance: 'TradersTab',
+        selected_trader: typing.Optional[TraderRow]
     ) -> None:
         """Disable edit and remove buttons when no trader is selected.
 
@@ -144,14 +144,14 @@ class TradingBotsTab(TabbedPanelItem):
         trader: 'Trader'
     ) -> None:
         """Add a table row for the newly added `trader`."""
-        trading_bot_row = TradingBotRow(tab=self,
+        trader_row = TraderRow(tab=self,
             trader_name=trader.get_name(),
             trading_algorithm=trader.get_algorithm_name(),
             initial_funds=trader.get_initial_funds(),
             trading_fee=trader.get_trading_fee())
 
-        self.table_rows.add_widget(trading_bot_row)
-        self.trader_names_to_rows[trader.get_name()] = trading_bot_row
+        self.table_rows.add_widget(trader_row)
+        self.trader_names_to_rows[trader.get_name()] = trader_row
 
 
     def on_button_edit_clicked(self
@@ -160,7 +160,7 @@ class TradingBotsTab(TabbedPanelItem):
         assert self.selected_trader is not None, \
             'Edit button clicked without a trader row selected.'
 
-        TradingBotPopup(title='Edit Trader').open()
+        TraderPopup(title='Edit Trader').open()
 
 
     def on_button_remove_clicked(self
@@ -178,12 +178,12 @@ class TradingBotsTab(TabbedPanelItem):
         trader: 'Trader'
     ) -> None:
         """Remove the table row for deleted `trader`."""
-        trading_bot_row = self.trader_names_to_rows[trader.get_name()]
+        trader_row = self.trader_names_to_rows[trader.get_name()]
 
-        self.table_rows.remove_widget(trading_bot_row)
+        self.table_rows.remove_widget(trader_row)
         del self.trader_names_to_rows[trader.get_name()]
 
-        if self.selected_trader == trading_bot_row:
+        if self.selected_trader == trader_row:
             self.selected_trader = None
 
 

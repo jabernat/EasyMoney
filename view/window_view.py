@@ -11,7 +11,7 @@ from kivy.app import App
 from kivy.uix.tabbedpanel import TabbedPanel, TabbedPanelItem
 from kivy.lang import Builder
 
-from view.trading_bots_tab import TradingBotsTab
+from view.traders_tab import TradersTab
 from view.stock_symbols_tab import StockSymbolsTab
 from view.simulation_tab import SimulationTab
 from view.statistics_tab import StatisticsTab
@@ -48,7 +48,7 @@ class WindowView(App):
     """MVC controller tied to an underlying model and driven by this view."""
 
     # References to tab widgets
-    trading_bots_tab: TradingBotsTab
+    traders_tab: TradersTab
     stock_symbols_tab: StockSymbolsTab
     simulation_tab: SimulationTab
     statistics_tab: StatisticsTab
