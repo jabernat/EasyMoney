@@ -1,6 +1,19 @@
 #:kivy 1.9
 # Defines templates related to the view.trading_bots_tab module.
 
+
+<TradingBotPopup>:
+    auto_dismiss: False
+
+    size_hint: .5, .5
+
+    Button:
+        text: 'Click me to dismiss'
+        on_press: root.dismiss()
+
+
+
+
 # Base style of all table cells.
 <TableCell@Label>:
     shorten: True
@@ -77,6 +90,8 @@
 <BodyCellTradingFee@BodyCellDollars+ColumnTradingFee>:
 
 
+
+
 # Selectable table body row representing a trading bot.
 <TradingBotRow>:
     size_hint_y: None
@@ -108,10 +123,14 @@
             text: '${:,.2f}'.format(root.trading_fee)
 
 
+
+
 # Button along bottom bar for controlling selected traders.
 <BottomButton@Button>:
     size_hint_x: None
     width: cm(3)
+
+
 
 
 <TradingBotsTab>:

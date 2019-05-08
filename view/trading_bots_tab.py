@@ -13,12 +13,20 @@ from kivy.properties import (
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
 from kivy.uix.floatlayout import FloatLayout
+from kivy.uix.popup import Popup
 from kivy.uix.tabbedpanel import TabbedPanelItem
 
 # Local package imports duplicated at end of file to resolve circular dependencies
 if typing.TYPE_CHECKING:
     from model.sim_model import SimModel
     from model.trader import Trader
+
+
+
+
+class TradingBotPopup(Popup):
+    """Popup dialog for adding and editing trading bots."""
+    pass
 
 
 
@@ -151,7 +159,8 @@ class TradingBotsTab(TabbedPanelItem):
         """Show a popup to edit `selected_trader`."""
         assert self.selected_trader is not None, \
             'Edit button clicked without a trader row selected.'
-        self.selected_trader.trading_fee += 1
+
+        TradingBotPopup(title='Edit Trader').open()
 
 
     def on_button_remove_clicked(self
@@ -159,6 +168,7 @@ class TradingBotsTab(TabbedPanelItem):
         """Remove `selected_trader`."""
         assert self.selected_trader is not None, \
             'Remove button clicked without a trader row selected.'
+
         controller = App.get_running_app().get_controller()
         controller.remove_trader(
             self.selected_trader.trader_name)
