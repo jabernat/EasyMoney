@@ -46,8 +46,9 @@ class SimulationTab(TabbedPanelItem):
             ('Stewart', 5.00)
         ]:
             controller.add_trader(name,
-                initial_funds=INITIAL_FUNDS, trading_fee=trading_fee,
+                initial_funds=1, trading_fee=trading_fee,
                 algorithm=ALGORITHM, algorithm_settings=algorithm_settings)
+            controller.set_trader_initial_funds(name, INITIAL_FUNDS)
 
 
         print('Adding datasources')

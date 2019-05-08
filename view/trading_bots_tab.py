@@ -9,7 +9,7 @@ import typing
 
 from kivy.app import App
 from kivy.properties import (
-    BoundedNumericProperty, ObjectProperty, StringProperty)
+    NumericProperty, ObjectProperty, StringProperty)
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
 from kivy.uix.floatlayout import FloatLayout
@@ -25,11 +25,43 @@ if typing.TYPE_CHECKING:
 
 class TradingBotRow(FloatLayout):
     """Selectable table body row representing a trading bot."""
+
+
     tab: 'TradingBotsTab' = ObjectProperty()
+    """Reference to parent tab for tracking the selected row."""
+
     trader_name: str = StringProperty()
     trading_algorithm: str = StringProperty()
-    initial_funds: float = BoundedNumericProperty(0.00, min=0.00)
-    trading_fee: float = BoundedNumericProperty(0.00, min=0.00)
+    initial_funds: float = NumericProperty()
+    trading_fee: float = NumericProperty()
+
+
+    def __init__(self,
+        *args, **kwargs
+    ) -> None:
+        super().__init__(*args, **kwargs)
+
+        model = App.get_running_app().get_controller().get_model()
+        trader = model.get_trader(self.trader_name)
+        assert trader is not None, \
+            'Attempt to create table row for non-existent trader.'
+
+        trader.bind(
+            TRADER_INITIAL_FUNDS_CHANGED=self.on_trader_initial_funds_changed,
+            TRADER_TRADING_FEE_CHANGED=self.on_trader_trading_fee_changed)
+
+
+    def on_trader_initial_funds_changed(self,
+        trader: 'Trader',
+        initial_funds: float
+    ) -> None:
+        self.initial_funds = initial_funds
+
+    def on_trader_trading_fee_changed(self,
+        trader: 'Trader',
+        trading_fee: float
+    ) -> None:
+        self.trading_fee = trading_fee
 
 
 
@@ -61,8 +93,7 @@ class TradingBotsTab(TabbedPanelItem):
 
         self.trader_names_to_rows = {}
 
-        controller = App.get_running_app().get_controller()
-        model = controller.get_model()
+        model = App.get_running_app().get_controller().get_model()
 
         model.bind(
             SIMMODEL_TRADER_ADDED=self.on_simmodel_trader_added,
