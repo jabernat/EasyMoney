@@ -142,7 +142,7 @@ class TradingBotsTab(TabbedPanelItem):
         self.table_rows.remove_widget(trading_bot_row)
         del self.trader_names_to_rows[trader.get_name()]
 
-        if self.selected_trader is trading_bot_row:
+        if self.selected_trader == trading_bot_row:
             self.selected_trader = None
 
 
