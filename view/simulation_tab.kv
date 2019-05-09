@@ -5,8 +5,28 @@
 
 <SymbolRow>:
 
+<TraderBox>:
+    BoxLayout:
+        # Gray background
+        canvas:
+            Color:
+                rgba: 0.2, 0.2, 0.2, 1
+            Rectangle:
+                size: self.size
+                pos: self.pos
+        spacing: mm(1)
+        pos_hint: {'x': 0, 'y': 0}
+        orientation: 'vertical'
+        BoxLayout:
+            text: root.trader_name
+        BoxLayout:
+            text: root.bought_str
+        BoxLayout:
+            text: root.sold_str
+
 <SimulationTab>:
     text: 'Simulation'
+    trader_boxes: trader_boxes
     BoxLayout:
         orientation: 'vertical'
 
@@ -77,9 +97,13 @@
             padding: 10, 0, 10, 10
             size_hint_y: .2
             ScrollView:
-                canvas.before:
-                    Color:
-                        rgba: 1, 1, 1, 1
-                    Rectangle:
-                        pos: self.pos
-                        size: self.size
+                do_scroll_x: False
+
+                # Row container
+                BoxLayout:
+                    id: trader_boxes
+                    orientation: 'horizontal'
+
+                    spacing: mm(2)
+                    size_hint_y: None
+                    height: self.minimum_height

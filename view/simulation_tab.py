@@ -46,12 +46,15 @@ class SymbolRow(BoxLayout):
     def on_stockmarket_addition(self):
         pass
 
-class TraderBox(BoxLayout):
+class TraderBox(FloatLayout):
     """Box for an individual trader"""
 
     trader_name: str = StringProperty()
     bought_str: str = StringProperty()
     sold_str: str = StringProperty()
+
+    trader_account: 'TraderAccount'
+    model: 'SimModel'
 
     def __init__(self,
         *args: typing.Any,
@@ -60,9 +63,18 @@ class TraderBox(BoxLayout):
         super().__init__(*args, **kwargs)
 
 
-        model = App.get_running_app().get_controller().get_model()
-        trader = model.get_trader(self.trader_name)
-        trader.bind(
+        self.model = App.get_running_app().get_controller().get_model()
+        trader = self.model.get_trader(self.trader_name)
+        trader.bind(TRADER_ACCOUNT_CREATED=self.on_trader_account_created)
+
+    def on_trader_account_created(self,
+        trader: 'Trader',
+        account: 'TraderAccount'
+    ) -> None:
+        self.trader_account = self.model.get_trader(
+            self.trader_name).get_account()
+
+        self.trader_account.bind(
             TRADERACCOUNT_SOLD=self.on_traderaccount_sold,
             TRADERACCOUNT_BOUGHT=self.on_traderaccount_bought)
 
@@ -70,13 +82,22 @@ class TraderBox(BoxLayout):
     ) -> None:
         pass
 
-    def on_traderaccount_sold(self
+    def on_traderaccount_sold(self,
+        account: 'TraderAccount',
+        stock_symbol: str,
+        shares: float,
+        profit: float
     ) -> None:
-        pass
+        self.sold_str = "Sold {} {}".format(stock_symbol, profit)
+        print(self.sold_str)
 
-    def on_traderaccount_bought(self
+    def on_traderaccount_bought(self,
+        account: 'TraderAccount',
+        stock_symbol: str,
+        shares: float,
+        cost: float
     ) -> None:
-        pass
+        self.bought_str = "Bought {} {}".format(stock_symbol, cost)
 
 
 class SimulationTab(TabbedPanelItem):
@@ -84,17 +105,27 @@ class SimulationTab(TabbedPanelItem):
     `simulation_tab.kv`.
     """
 
+    # References to component widgets
+    symbol_rows: BoxLayout
+    trader_boxes: BoxLayout
+
     symbol_names_to_rows: typing.Dict[str, SymbolRow]
     """Mapping of symbol names to their corresponding rows."""
 
-    trader_names_to_box: typing.Dict[str, TraderBox]
+    trader_names_to_boxes: typing.Dict[str, TraderBox]
     """Mapping of trader names to their corresponding boxes."""
 
 
     def __init__(self,
+        *args: typing.Any,
         **kwargs
     ) -> None:
-        super(SimulationTab, self).__init__(**kwargs)
+        super().__init__(*args, **kwargs)
+
+        self.symbol_names_to_rows = {}
+        self.trader_names_to_boxes = {}
+        self.symbol_rows = BoxLayout()
+        self.trader_boxes = BoxLayout()
 
         controller = App.get_running_app().get_controller()
         model = controller.get_model()
@@ -104,14 +135,24 @@ class SimulationTab(TabbedPanelItem):
             SIMMODEL_TRADER_REMOVED=self.on_simmodel_trader_removed)
 
 
-    def on_simmodel_trader_added(self
+    def on_simmodel_trader_added(self,
+        model: 'SimModel',
+        trader: 'Trader'
     ) -> None:
-        self.refresh_trader_display()
+        """Add a trader box for the newly added 'trader'"""
+        trader_box = TraderBox(trader_name=trader.get_name())
+        self.trader_boxes.add_widget((trader_box))
+        self.trader_names_to_boxes[trader.get_name()] = trader_box
 
-    def on_simmodel_trader_removed(self
+    def on_simmodel_trader_removed(self,
+        model: 'SimModel',
+        trader: 'Trader'
     ) -> None:
-        self.refresh_trader_display()
+        """Remove the trader box for deleted `trader`."""
+        trader_box = self.trader_names_to_boxes[trader.get_name()]
 
+        self.trader_boxes.remove_widget(trader_box)
+        del self.trader_names_to_boxes[trader.get_name()]
 
     def run_console_test(self
     ) -> None:
@@ -172,3 +213,4 @@ class SimulationTab(TabbedPanelItem):
 # Imported last to avoid circular dependencies
 from controller.market_updater import MarketUpdater
 from controller.market_datasource import MarketDatasource
+from model.trader_account import TraderAccount
