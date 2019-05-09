@@ -2,11 +2,20 @@
 # Defines templates related to the view.traders_tab module.
 
 
+<PopupInputLabel@Label>:
+    halign: 'right'
+    size_hint_x: 0.3
+    shorten: True
+    shorten_from: 'right'
+    text_size: self.size
+
 <PopupInput@Widget>:
     valid: False
+    tooltip: False  # Gets set to a PopupInputTooltip
 
     background_color: (1, 1, 1, 1) if self.valid else (1, 0.4, 0.4, 1)  # White or light red
 
+    size_hint_x: 0.6
 
 <PopupInputText@TextInput+PopupInput>:
     multiline: False
@@ -18,39 +27,43 @@
     font_name: 'RobotoMono-Regular'
 
 <PopupInputSpinner@Spinner+PopupInput>:
+    sync_height: True
 
-<PopupInputInvalid@Bubble>:
+<PopupInputTooltip>:
     arrow_pos: 'left_mid'
     orientation: 'vertical'
 
+    x: self.input.right - mm(2)
+    y: self.input.center_y - self.height / 2
     size_hint: None, None
-    size: cm(4.5), cm(4.5)
-    padding: cm(2)
+    size: app.root.width - self.input.right, label_message.height
 
-    Button:
-        id: invalid_reason
-        text: 'This is a long error message that goes on for a line or two.'
+    Label:
+        id: label_message
         color: 1, 0.4, 0.4, 1  # Light red
         italic: True
+        text: root.message
 
-        #size_hint_x: None
-        #width: cm(4)
+        text_size: self.width, None
         size_hint: None, None
-        size: cm(2), cm(1)
+        size: root.width, self.texture_size[1]
+        padding: mm(2), mm(2)
 
 
 <TraderPopup>:
     title: 'Add Trader' if self.trader is None else 'Edit Trader'
     auto_dismiss: False
 
-    size_hint: .5, .5
+    size_hint: 0.5, 0.5
 
+    tooltip_container: tooltip_container.__self__
     input_name: input_name.__self__
     input_algorithm: input_algorithm.__self__
     input_initial_funds: input_initial_funds.__self__
     input_trading_fee: input_trading_fee.__self__
 
     FloatLayout:
+        id: tooltip_container
 
         BoxLayout:
             orientation: 'vertical'
@@ -71,7 +84,7 @@
                         size: self.size
                         pos: self.pos
 
-                Label:
+                PopupInputLabel:
                     text: 'Name:'
                 PopupInputText:
                     id: input_name
@@ -80,7 +93,7 @@
                     disabled: root.trader is not None
                     on_text: root.validate_name()
 
-                Label:
+                PopupInputLabel:
                     text: 'Algorithm:'
                 PopupInputSpinner:
                     id: input_algorithm
@@ -90,7 +103,7 @@
                     values: app.get_controller().get_model().get_trader_algorithms()
                     on_text: root.validate_algorithm()
 
-                Label:
+                PopupInputLabel:
                     text: 'Initial Funds ($):'
                 PopupInputNumber:
                     id: input_initial_funds
@@ -98,7 +111,7 @@
                     text: '' if root.trader is None else '{:.2f}'.format(root.trader.get_initial_funds())
                     on_text: root.validate_initial_funds()
 
-                Label:
+                PopupInputLabel:
                     text: 'Trading Fee ($):'
                 PopupInputNumber:
                     id: input_trading_fee
@@ -119,26 +132,6 @@
                 Button:
                     text: 'Cancel'
                     on_press: root.dismiss()
-
-        Bubble:
-            arrow_pos: 'left_mid'
-            orientation: 'vertical'
-
-            x: input_name.right - mm(2)
-            y: input_name.center_y - self.height / 2
-            size_hint: None, None
-            size: app.root.width - input_name.right, invalid_reason.height
-
-            Label:
-                id: invalid_reason
-                text: '#'*300
-                color: 1, 0.4, 0.4, 1  # Light red
-                italic: True
-
-                text_size: self.width, None
-                size_hint: None, None
-                size: self.parent.width, self.texture_size[1]
-                padding: mm(2), mm(2)
 
 
 

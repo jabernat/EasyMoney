@@ -10,6 +10,7 @@ import typing
 from kivy.app import App
 from kivy.properties import (
     NumericProperty, ObjectProperty, StringProperty)
+from kivy.uix.bubble import Bubble
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.popup import Popup
@@ -25,6 +26,16 @@ if typing.TYPE_CHECKING:
 
 
 
+class PopupInputTooltip(Bubble):
+    """Tooltip to explain an invalid input."""
+
+    input: typing.Union[TextInput, Spinner] = ObjectProperty()
+
+    message: str = StringProperty()
+
+
+
+
 class TraderPopup(Popup):
     """Popup dialog for adding and editing traders."""
 
@@ -33,6 +44,7 @@ class TraderPopup(Popup):
     """The `Trader` to edit, or `None` to add a new trader."""
 
     # References to component widgets
+    tooltip_container: FloatLayout
     input_name: TextInput
     input_algorithm: Spinner
     input_initial_funds: TextInput
@@ -56,6 +68,29 @@ class TraderPopup(Popup):
         self.validate_trading_fee()
 
 
+    def validate_input(self,
+        input: typing.Union[TextInput, Spinner],
+        validate: typing.Callable[[str], typing.Tuple[bool, typing.Optional[str]]]
+    ) -> None:
+        """Check the contents of `input` with `validate`, and display an error
+        message if invalid.
+        """
+        input.valid, invalid_reason = validate(
+            input.text)
+
+        if input.valid:
+            if input.tooltip:  # Remove old error
+                self.tooltip_container.remove_widget(input.tooltip)
+                input.tooltip = False
+
+        # Invalid
+        elif input.tooltip:  # Update old error
+            input.tooltip.message = invalid_reason
+        else:  # Show new error
+            input.tooltip = PopupInputTooltip(
+                input=input, message=invalid_reason)
+            self.tooltip_container.add_widget(input.tooltip)
+
     def validate_name(self
     ) -> None:
         controller = App.get_running_app().get_controller()
@@ -65,35 +100,28 @@ class TraderPopup(Popup):
             input.valid = True  # Changing name isn't allowed anyway
             return
 
-        input.valid, invalid_reason = controller.validate_trader_name(
-            input.text)
-
+        self.validate_input(input, controller.validate_trader_name)
 
     def validate_algorithm(self
     ) -> None:
         controller = App.get_running_app().get_controller()
 
-        input = self.input_algorithm
-        input.valid, invalid_reason = controller.validate_trader_algorithm(
-            input.text)
-
+        self.validate_input(self.input_algorithm,
+            controller.validate_trader_algorithm)
 
     def validate_initial_funds(self
     ) -> None:
         controller = App.get_running_app().get_controller()
 
-        input = self.input_initial_funds
-        input.valid, invalid_reason = controller.validate_trader_initial_funds(
-            input.text)
-
+        self.validate_input(self.input_initial_funds,
+            controller.validate_trader_initial_funds)
 
     def validate_trading_fee(self
     ) -> None:
         controller = App.get_running_app().get_controller()
 
-        input = self.input_trading_fee
-        input.valid, invalid_reason = controller.validate_trader_trading_fee(
-            input.text)
+        self.validate_input(self.input_trading_fee,
+            controller.validate_trader_trading_fee)
 
 
     def _save(self
