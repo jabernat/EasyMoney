@@ -93,10 +93,10 @@ class SimController(object):
 
     def add_trader(self,
         name: str,
-        initial_funds: float,
-        trading_fee: float,
+        initial_funds: typing.Union[float, str],
+        trading_fee: typing.Union[float, str],
         algorithm: str,
-        algorithm_settings: typing.Dict[str, typing.Any]
+        algorithm_settings: typing.Optional[typing.Dict[str, typing.Any]] = None
     ) -> 'Trader':
         """Add and return a uniquely named `Trader` to the simulation that will
         buy and sell in response to `StockMarket` updates based on `algorithm`.
@@ -110,11 +110,13 @@ class SimController(object):
         When this new trader creates a `TraderAccount`, its balance will start
         at `initial_funds`, measured in the same currency used by the
         `StockMarket`. If `initial_funds` is not positive,
-        `model.trader.InitialFundsError` is raised.
+        `model.trader.InitialFundsError` is raised. If it cannot be interpreted
+        as a `float`, `ValueError` is raised.
 
         The new trader must pay `trading_fee` to buy or sell through its
         created `TraderAccount`s. If `trading_fee` is negative,
-        `model.trader.TradingFeeError` is raised.
+        `model.trader.TradingFeeError` is raised. If it cannot be interpreted
+        as a `float`, `ValueError` is raised.
 
         The new trader's named `algorithm` determines how it reacts to stock
         market changes and makes trading decisions. The specified algorithm
@@ -124,10 +126,15 @@ class SimController(object):
 
         The contents of `algorithm_settings` are validated according to
         `algorithm`, and invalid arguments raise subclasses of `TypeError` and
-        `ValueError`.
+        `ValueError`. If `algorithm_settings` isn't specified, appropriate
+        default settings are used.
         """
-        return self._model.add_trader(
-            name, initial_funds, trading_fee,
+        if algorithm_settings is None:
+            algorithm_settings = self._model.get_trader_algorithm_settings_defaults(
+                algorithm)
+
+        return self._model.add_trader(name,
+            float(initial_funds), float(trading_fee),
             algorithm, algorithm_settings)
 
     def remove_trader(self,
@@ -156,35 +163,37 @@ class SimController(object):
 
     def set_trader_initial_funds(self,
         trader_name: str,
-        initial_funds: float
+        initial_funds: typing.Union[float, str]
     ) -> None:
         """Configure the trader with `trader_name` to initialize all future
         `TraderAccounts` with an initial balance of `initial_funds`.
 
         The `initial_funds` value is measured in the same units of currency as
         `StockMarket` prices within the `SimModel`. It must be positive, or
-        else this method raises `model.trader.InitialFundsError`.
+        else this method raises `model.trader.InitialFundsError`. If it cannot
+        be interpreted as a `float`, `ValueError` is raised.
         """
         trader = self._model.get_trader(trader_name)
         if trader is None:
             raise TraderNotFoundError(trader_name)
 
-        trader.set_initial_funds(initial_funds)
+        trader.set_initial_funds(float(initial_funds))
 
     def set_trader_trading_fee(self,
         trader_name: str,
-        trading_fee: float
+        trading_fee: typing.Union[float, str]
     ) -> None:
         """Change the cost that this trader must pay in order to buy or sell
         stocks through its created `TraderAccount`s. The new `trading_fee` must
         be non-negative, otherwise this method raises
-        `model.trader.TradingFeeError`.
+        `model.trader.TradingFeeError`. If it cannot be interpreted as a
+        `float`, `ValueError` is raised.
         """
         trader = self._model.get_trader(trader_name)
         if trader is None:
             raise TraderNotFoundError(trader_name)
 
-        trader.set_trading_fee(trading_fee)
+        trader.set_trading_fee(float(trading_fee))
 
     def set_trader_algorithm_settings(self,
         trader_name: str,
@@ -235,28 +244,38 @@ class SimController(object):
         return True, None
 
     def validate_trader_initial_funds(self,
-        initial_funds: float
+        initial_funds: typing.Union[float, str]
     ) -> typing.Tuple[bool, typing.Optional[str]]:
         """Validate the given `initial_funds` value and return a `tuple`
         containing a flag indicating valid arguments along with a string
-        explaining the reason if not. If the number is positive quantity, the
-        method returns `(True, None)`. Otherwise the method returns
-        `(False, reason_string)`.
+        explaining the reason if not. If `initial_funds` cannot be interpreted
+        as a `float` or it isn't positive, the method returns
+        `(False, reason_string)`. Otherwise the method returns `(True, None)`.
         """
+        try:
+            initial_funds = float(initial_funds)
+        except ValueError:
+            return False, 'Initial funds must be a number.'
+
         if initial_funds <= 0:
             return False, 'Initial funds must be a positive number.'
 
         return True, None
 
     def validate_trader_trading_fee(self,
-        trading_fee: float
+        trading_fee: typing.Union[float, str]
     ) -> typing.Tuple[bool, typing.Optional[str]]:
         """Validate the given `trading_fee`, and return a `tuple` containing a
         flag indicating valid arguments along with a string explaining the
-        reason if not. If `trading_fee` is negative, the
-        method returns `(False, reason_string)`. Otherwise the method returns
-        `(True, None)`.
+        reason if not. If `trading_fee` cannot be interpreted as a `float` or
+        is negative, the method returns `(False, reason_string)`. Otherwise the
+        method returns `(True, None)`.
         """
+        try:
+            trading_fee = float(trading_fee)
+        except ValueError:
+            return False, 'Trading fee must be a number.'
+
         if trading_fee < 0:
             return False, 'Trading fee cannot be negative.'
 

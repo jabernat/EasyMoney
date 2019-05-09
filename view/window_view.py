@@ -8,10 +8,10 @@ __license__ = 'MIT'
 import typing
 
 from kivy.app import App
-from kivy.uix.tabbedpanel import TabbedPanel
+from kivy.uix.tabbedpanel import TabbedPanel, TabbedPanelItem
 from kivy.lang import Builder
 
-from view.trading_bots_tab import TradingBotsTab
+from view.traders_tab import TradersTab
 from view.stock_symbols_tab import StockSymbolsTab
 from view.simulation_tab import SimulationTab
 from view.statistics_tab import StatisticsTab
@@ -27,7 +27,15 @@ class RootWidget(TabbedPanel):
     """Class associated with the `<RootWidget>` remplate defined within
     `window_view.kv`.
     """
-    pass
+    @staticmethod
+    def on_current_tab(
+        instance: 'RootWidget',
+        current_tab: TabbedPanelItem
+    ):
+        """Bolds the active tab's label."""
+        for tab in instance.tab_list:
+            tab.bold = False;
+        current_tab.bold = True
 
 
 
@@ -39,6 +47,12 @@ class WindowView(App):
     _sim_controller: 'SimController'
     """MVC controller tied to an underlying model and driven by this view."""
 
+    # References to tab widgets
+    traders_tab: TradersTab
+    stock_symbols_tab: StockSymbolsTab
+    simulation_tab: SimulationTab
+    statistics_tab: StatisticsTab
+
 
     def __init__(self,
         sim_controller: 'SimController'
@@ -47,6 +61,10 @@ class WindowView(App):
         super().__init__()
 
         self._sim_controller = sim_controller
+
+        # Disable closing the app with escape
+        from kivy.config import Config
+        Config.set('kivy', 'exit_on_escape', '0')
 
         # Load all UI templates
         Builder.load_file('view/window_view.kv')
@@ -65,6 +83,8 @@ class WindowView(App):
         """Construct widget classes based on loaded `*.kv` template
         definitions.
         """
+        self.title = 'EasyMoney'
+        self.icon = 'view/Icon.png'
         return RootWidget()
 
 
