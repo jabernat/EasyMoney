@@ -9,7 +9,7 @@
 
 # Global styles
 <ScrollView>:
-    bar_width: cm(0.4)
+    bar_width: mm(4)
 
     # Allow swiping over the content, or dragging the scroll bar
     scroll_type: ['bars', 'content']
@@ -23,12 +23,18 @@
 
 <TabbedPanelItem>:
     color: 0.4, 0.8, 1, 1  # Light blue
-    outline_width: '2pt'
+    outline_width: sp(2)
     outline_color: 0.3, 0.3, 0.3
 
     shorten: True
     shorten_from: 'right'
     text_size: self.size
+
+<TextInput>:
+    write_tab: False  # Tab focuses next control
+
+    cursor_color: 0.2, 0.6, 0.8, 0.9  # Light blue
+    cursor_width: sp(4)
 
 
 <RootWidget>:
