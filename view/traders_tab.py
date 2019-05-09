@@ -58,31 +58,63 @@ class TraderPopup(Popup):
 
     def validate_name(self
     ) -> None:
+        controller = App.get_running_app().get_controller()
+
         input = self.input_name
-        input.valid = len(input.text) > 0
+        if self.trader is not None:  # Name in use by this trader
+            input.valid = True  # Changing name isn't allowed anyway
+            return
+
+        input.valid, invalid_reason = controller.validate_trader_name(
+            input.text)
 
 
     def validate_algorithm(self
     ) -> None:
+        controller = App.get_running_app().get_controller()
+
         input = self.input_algorithm
-        input.valid = len(input.text) > 0
+        input.valid, invalid_reason = controller.validate_trader_algorithm(
+            input.text)
 
 
     def validate_initial_funds(self
     ) -> None:
+        controller = App.get_running_app().get_controller()
+
         input = self.input_initial_funds
-        input.valid = len(input.text) > 0
+        input.valid, invalid_reason = controller.validate_trader_initial_funds(
+            input.text)
 
 
     def validate_trading_fee(self
     ) -> None:
+        controller = App.get_running_app().get_controller()
+
         input = self.input_trading_fee
-        input.valid = len(input.text) > 0
+        input.valid, invalid_reason = controller.validate_trader_trading_fee(
+            input.text)
 
 
-    def save(self
+    def _save(self
     ) -> None:
-        """Applies valid trader info before closing the popup."""
+        """Apply presumably valid trader info before closing the popup."""
+        controller = App.get_running_app().get_controller()
+
+        if self.trader is None:  # Create new trader
+            controller.add_trader(
+                name=self.input_name.text,
+                initial_funds=self.input_initial_funds.text,
+                trading_fee=self.input_trading_fee.text,
+                algorithm=self.input_algorithm.text)
+
+        else:  # Edit existing trader
+            trader_name = self.trader.get_name()
+            controller.set_trader_initial_funds(
+                trader_name, self.input_initial_funds.text)
+            controller.set_trader_trading_fee(
+                trader_name, self.input_trading_fee.text)
+
         self.dismiss()
 
 

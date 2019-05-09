@@ -2,6 +2,24 @@
 # Defines templates related to the view.traders_tab module.
 
 
+<PopupInput@Widget>:
+    valid: False
+
+    background_color: (1, 1, 1, 1) if self.valid else (1, 0.4, 0.4, 1)
+
+
+<PopupInputText@TextInput+PopupInput>:
+    multiline: False
+
+<PopupInputNumber@PopupInputText>:
+    input_type: 'number'
+    input_filter: 'float'
+
+    font_name: 'RobotoMono-Regular'
+
+<PopupInputSpinner@Spinner+PopupInput>:
+
+
 <TraderPopup>:
     title: 'Add Trader' if self.trader is None else 'Edit Trader'
     auto_dismiss: False
@@ -34,21 +52,17 @@
 
                 Label:
                     text: 'Name:'
-                TextInput:
+                PopupInputText:
                     id: input_name
-                    valid: False
 
                     text: '' if root.trader is None else root.trader.get_name()
                     disabled: root.trader is not None
                     on_text: root.validate_name()
 
-                    multiline: False
-
                 Label:
                     text: 'Algorithm:'
-                Spinner:
+                PopupInputSpinner:
                     id: input_algorithm
-                    valid: False
 
                     text: '' if root.trader is None else root.trader.get_algorithm_name()
                     disabled: root.trader is not None
@@ -57,33 +71,19 @@
 
                 Label:
                     text: 'Initial Funds ($):'
-                TextInput:
+                PopupInputNumber:
                     id: input_initial_funds
-                    valid: False
 
-                    input_type: 'number'
-                    input_filter: 'float'
                     text: '' if root.trader is None else '{:.2f}'.format(root.trader.get_initial_funds())
                     on_text: root.validate_initial_funds()
 
-                    multiline: False
-                    halign: 'right'
-                    font_name: 'RobotoMono-Regular'
-
                 Label:
                     text: 'Trading Fee ($):'
-                TextInput:
+                PopupInputNumber:
                     id: input_trading_fee
-                    valid: False
 
-                    input_type: 'number'
-                    input_filter: 'float'
                     text: '' if root.trader is None else '{:.2f}'.format(root.trader.get_trading_fee())
                     on_text: root.validate_trading_fee()
-
-                    multiline: False
-                    halign: 'right'
-                    font_name: 'RobotoMono-Regular'
 
         BoxLayout:
             orientation: 'horizontal'
@@ -94,7 +94,7 @@
             Button:
                 text: 'Save'
                 disabled: not (input_name.valid and input_algorithm.valid and input_initial_funds.valid and input_trading_fee.valid)
-                on_press: root.save()
+                on_press: root._save()
             Button:
                 text: 'Cancel'
                 on_press: root.dismiss()
