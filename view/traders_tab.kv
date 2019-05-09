@@ -5,7 +5,7 @@
 <PopupInput@Widget>:
     valid: False
 
-    background_color: (1, 1, 1, 1) if self.valid else (1, 0.4, 0.4, 1)
+    background_color: (1, 1, 1, 1) if self.valid else (1, 0.4, 0.4, 1)  # White or light red
 
 
 <PopupInputText@TextInput+PopupInput>:
@@ -19,6 +19,25 @@
 
 <PopupInputSpinner@Spinner+PopupInput>:
 
+<PopupInputInvalid@Bubble>:
+    arrow_pos: 'left_mid'
+    orientation: 'vertical'
+
+    size_hint: None, None
+    size: cm(4.5), cm(4.5)
+    padding: cm(2)
+
+    Button:
+        id: invalid_reason
+        text: 'This is a long error message that goes on for a line or two.'
+        color: 1, 0.4, 0.4, 1  # Light red
+        italic: True
+
+        #size_hint_x: None
+        #width: cm(4)
+        size_hint: None, None
+        size: cm(2), cm(1)
+
 
 <TraderPopup>:
     title: 'Add Trader' if self.trader is None else 'Edit Trader'
@@ -31,24 +50,26 @@
     input_initial_funds: input_initial_funds.__self__
     input_trading_fee: input_trading_fee.__self__
 
-    BoxLayout:
-        orientation: 'vertical'
+    FloatLayout:
 
-        FloatLayout:
-            # Black background
-            canvas:
-                Color:
-                    rgba: 0, 0, 0, 1
-                Rectangle:
-                    size: self.size
-                    pos: self.pos
+        BoxLayout:
+            orientation: 'vertical'
+
+            pos_hint: {'x': 0, 'y': 0}
 
             GridLayout:
                 cols: 2
 
                 padding: mm(4), mm(2)
                 spacing: mm(2)
-                pos_hint: {'x': 0, 'y': 0}
+
+                # Black background
+                canvas:
+                    Color:
+                        rgba: 0, 0, 0, 1
+                    Rectangle:
+                        size: self.size
+                        pos: self.pos
 
                 Label:
                     text: 'Name:'
@@ -85,19 +106,39 @@
                     text: '' if root.trader is None else '{:.2f}'.format(root.trader.get_trading_fee())
                     on_text: root.validate_trading_fee()
 
-        BoxLayout:
-            orientation: 'horizontal'
+            BoxLayout:
+                orientation: 'horizontal'
 
-            size_hint_y: None
-            height: cm(1.5)
+                size_hint_y: None
+                height: cm(1.5)
 
-            Button:
-                text: 'Save'
-                disabled: not (input_name.valid and input_algorithm.valid and input_initial_funds.valid and input_trading_fee.valid)
-                on_press: root._save()
-            Button:
-                text: 'Cancel'
-                on_press: root.dismiss()
+                Button:
+                    text: 'Save'
+                    disabled: not (input_name.valid and input_algorithm.valid and input_initial_funds.valid and input_trading_fee.valid)
+                    on_press: root._save()
+                Button:
+                    text: 'Cancel'
+                    on_press: root.dismiss()
+
+        Bubble:
+            arrow_pos: 'left_mid'
+            orientation: 'vertical'
+
+            x: input_name.right - mm(2)
+            y: input_name.center_y - self.height / 2
+            size_hint: None, None
+            size: app.root.width - input_name.right, invalid_reason.height
+
+            Label:
+                id: invalid_reason
+                text: '#'*300
+                color: 1, 0.4, 0.4, 1  # Light red
+                italic: True
+
+                text_size: self.width, None
+                size_hint: None, None
+                size: self.parent.width, self.texture_size[1]
+                padding: mm(2), mm(2)
 
 
 
