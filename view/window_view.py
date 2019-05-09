@@ -62,6 +62,10 @@ class WindowView(App):
 
         self._sim_controller = sim_controller
 
+        # Disable closing the app with escape
+        from kivy.config import Config
+        Config.set('kivy', 'exit_on_escape', '0')
+
         # Load all UI templates
         Builder.load_file('view/window_view.kv')
 
