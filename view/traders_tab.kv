@@ -3,13 +3,101 @@
 
 
 <TraderPopup>:
+    title: 'Add Trader' if self.trader is None else 'Edit Trader'
     auto_dismiss: False
 
     size_hint: .5, .5
 
-    Button:
-        text: 'Click me to dismiss'
-        on_press: root.dismiss()
+    input_name: input_name.__self__
+    input_algorithm: input_algorithm.__self__
+    input_initial_funds: input_initial_funds.__self__
+    input_trading_fee: input_trading_fee.__self__
+
+    BoxLayout:
+        orientation: 'vertical'
+
+        FloatLayout:
+            # Black background
+            canvas:
+                Color:
+                    rgba: 0, 0, 0, 1
+                Rectangle:
+                    size: self.size
+                    pos: self.pos
+
+            GridLayout:
+                cols: 2
+
+                padding: mm(4), mm(2)
+                spacing: mm(2)
+                pos_hint: {'x': 0, 'y': 0}
+
+                Label:
+                    text: 'Name:'
+                TextInput:
+                    id: input_name
+                    valid: False
+
+                    text: '' if root.trader is None else root.trader.get_name()
+                    disabled: root.trader is not None
+                    on_text: root.validate_name()
+
+                    multiline: False
+
+                Label:
+                    text: 'Algorithm:'
+                Spinner:
+                    id: input_algorithm
+                    valid: False
+
+                    text: '' if root.trader is None else root.trader.get_algorithm_name()
+                    disabled: root.trader is not None
+                    values: app.get_controller().get_model().get_trader_algorithms()
+                    on_text: root.validate_algorithm()
+
+                Label:
+                    text: 'Initial Funds ($):'
+                TextInput:
+                    id: input_initial_funds
+                    valid: False
+
+                    input_type: 'number'
+                    input_filter: 'float'
+                    text: '' if root.trader is None else '{:.2f}'.format(root.trader.get_initial_funds())
+                    on_text: root.validate_initial_funds()
+
+                    multiline: False
+                    halign: 'right'
+                    font_name: 'RobotoMono-Regular'
+
+                Label:
+                    text: 'Trading Fee ($):'
+                TextInput:
+                    id: input_trading_fee
+                    valid: False
+
+                    input_type: 'number'
+                    input_filter: 'float'
+                    text: '' if root.trader is None else '{:.2f}'.format(root.trader.get_trading_fee())
+                    on_text: root.validate_trading_fee()
+
+                    multiline: False
+                    halign: 'right'
+                    font_name: 'RobotoMono-Regular'
+
+        BoxLayout:
+            orientation: 'horizontal'
+
+            size_hint_y: None
+            height: cm(1.5)
+
+            Button:
+                text: 'Save'
+                disabled: not (input_name.valid and input_algorithm.valid and input_initial_funds.valid and input_trading_fee.valid)
+                on_press: root.save()
+            Button:
+                text: 'Cancel'
+                on_press: root.dismiss()
 
 
 
@@ -20,7 +108,7 @@
     shorten_from: 'right'
     text_size: self.size
 
-    padding: cm(0.05), cm(0.05)
+    padding: mm(0.5), mm(0.5)
 
 
 # Style of table header cells.
@@ -34,10 +122,10 @@
 <BodyCell@TableCell>:
     halign: 'left'
     valign: 'center'
-    padding: cm(0.4), cm(0.05)
+    padding: mm(4), mm(0.5)
 
     # Improve readability when row is selected
-    outline_width: '2pt'
+    outline_width: sp(2)
     outline_color: 0.35, 0.35, 0.35  # Same gray as button
 
 
@@ -51,7 +139,7 @@
 <CellDivider@Widget>:
     pos_hint: {'y': 0.1}
     size_hint: None, 0.8
-    width: '1pt'
+    width: sp(1)
 
     canvas:
         Color:
@@ -102,12 +190,12 @@
 
         pos_hint: {'x': 0, 'y': 0}
 
-        on_state: root.tab.selected_trader = root if self.state == 'down' else None
+        on_state: root.tab.selected_trader_row = root if self.state == 'down' else None
 
     BoxLayout:
         orientation: 'horizontal'
 
-        spacing: cm(0.1)
+        spacing: mm(1)
         pos_hint: {'x': 0, 'y': 0}
 
         BodyCellTraderName:
@@ -137,10 +225,6 @@
     text: 'Traders'
     id: tab
 
-    button_add: button_add.__self__
-    button_edit: button_edit.__self__
-    button_remove: button_remove.__self__
-
     table_rows: table_rows.__self__
 
 
@@ -148,7 +232,7 @@
     BoxLayout:
         orientation: 'vertical'
 
-        padding: 0, cm(0.4), 0, 0  # Only top padding
+        padding: 0, mm(4), 0, 0  # Only top padding
 
         # Black background
         canvas:
@@ -163,13 +247,13 @@
         BoxLayout:
             orientation: 'vertical'
 
-            padding: cm(0.4), 0  # Left and right padding
-            spacing: cm(0.2)
+            padding: mm(4), 0  # Left and right padding
+            spacing: mm(2)
 
             # Table header
             BoxLayout:
                 orientation: 'horizontal'
-                spacing: cm(0.1)
+                spacing: mm(1)
                 size_hint_y: None
                 height: cm(1)
 
@@ -198,7 +282,7 @@
                     id: table_rows
                     orientation: 'vertical'
 
-                    spacing: cm(0.2)
+                    spacing: mm(2)
                     size_hint_y: None
                     height: self.minimum_height
 
@@ -220,24 +304,21 @@
                     pos: self.pos
 
             BottomButton:
-                id: button_add
                 text: 'Add'
 
-                on_release: root.on_button_add_clicked()
+                on_release: root.on_add_clicked()
 
             BottomButton:
-                id: button_edit
                 text: 'Edit'
-                disabled: True
+                disabled: root.selected_trader_row is None
 
-                on_release: root.on_button_edit_clicked()
+                on_release: root.on_edit_clicked()
 
             BottomButton:
-                id: button_remove
                 text: 'Remove'
-                disabled: True
+                disabled: root.selected_trader_row is None
 
-                on_release: root.on_button_remove_clicked()
+                on_release: root.on_remove_clicked()
 
             # Spacer
             Widget:
