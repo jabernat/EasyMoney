@@ -3,22 +3,83 @@
 
 <ImageButton@ButtonBehavior+Image>:
 
+<SymbolRow>:
+
 <SimulationTab>:
     text: 'Simulation'
     BoxLayout:
         orientation: 'vertical'
-        BoxLayout: # Sim control panel
+
+        # Main layout is broken up into three areas: top area, center area, and bottom area
+        # Top area: play/pause buttons, simulation time
+        # Center area: scrollable stock symbol display
+        # Bottom area: Trade bots behavior
+
+        # Top area
+        BoxLayout:
+            size_hint: 1, .1
+            padding: 10, 10
+            BoxLayout:
+                padding: 0, 0, 15, 0
+                orientation: 'horizontal'
+                BoxLayout:
+                    ImageButton:
+                        source: 'view/pause.png'
+                        on_press: root.run_console_test()
+                BoxLayout:
+                    ImageButton:
+                        source: 'view/reset.png'
+                        #on_press:
+                # Spacer
+                Label:
+                Label:
+                    text: 'Simulation Time:'
+
+            # Simulation time field
             BoxLayout:
                 Label:
-                ImageButton:
-                    source: 'view/pause.png'
-                    on_press: root.run_console_test()
-                Label:
-                Image:
-                    source: 'view/reset.png'
+                    # White background
+                    canvas:
+                        Color:
+                            rgba: 1, 1, 1, 1
+                        Rectangle:
+                            size: self.size
+                            pos: self.pos
+        # Center area
+        BoxLayout:
+            size_hint: 1, .1
             Label:
-            Label:
+                text: "Bot's Daily Statistics"
+            # Spacers
             Label:
             Label:
             Label:
         BoxLayout:
+            padding: 10, 0, 10, 10
+            size_hint_y: .5
+            ScrollView:
+                canvas.before:
+                    Color:
+                        rgba: 1, 1, 1, 1
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
+        # Bottom area
+        BoxLayout:
+            size_hint: 1, .1
+            Label:
+                text: "Trade Bots"
+            # Spacers
+            Label:
+            Label:
+            Label:
+        BoxLayout:
+            padding: 10, 0, 10, 10
+            size_hint_y: .2
+            ScrollView:
+                canvas.before:
+                    Color:
+                        rgba: 1, 1, 1, 1
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
