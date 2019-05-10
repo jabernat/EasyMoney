@@ -1,5 +1,5 @@
 #:kivy 1.9
-# Defines templates related to the view.traders_tab module.
+# Defines templates related to the view.symbols_tab module.
 
 <FilePopup@popup>:
     title: 'Add Symbol'
@@ -23,6 +23,7 @@
 
             Button:
                 text: 'Open'
+                on_release: root._open(str(filechooser.selection[0]))
             Button:
                 text: 'Cancel'
                 on_press: root.dismiss()
@@ -96,7 +97,7 @@
 
 
 
-# Selectable table body row representing a trader.
+# Selectable table body row representing a symbol.
 <SymbolRow>:
     size_hint_y: None
     height: cm(1)
@@ -124,7 +125,7 @@
 
 
 
-# Button along bottom bar for controlling selected traders.
+# Button along bottom bar for controlling selected symbols.
 <BottomButton@Button>:
     size_hint_x: None
     width: cm(3)
@@ -154,7 +155,7 @@
                 pos: self.pos
 
 
-        # Trader list table
+        # symbol list table
         BoxLayout:
             orientation: 'vertical'
 
