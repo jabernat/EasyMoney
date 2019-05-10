@@ -5,31 +5,35 @@ __copyright__ = 'Copyright © 2019, Erik Anderson, James Abernathy, and Tyler Ge
 __license__ = 'MIT'
 
 
+import os.path
 import typing
-import numbers
 
-from kivy.uix.floatlayout import FloatLayout
-from kivy.properties import ObjectProperty
-from kivy.uix.popup import Popup
 from kivy.app import App
-from kivy.uix.tabbedpanel import TabbedPanelItem
-from kivy.properties import  StringProperty
 from kivy.clock import Clock
-from kivy.uix.label import Label
-from kivy.uix.spinner import Spinner
-
-import os
+from kivy.properties import ObjectProperty, StringProperty
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.popup import Popup
+from kivy.uix.tabbedpanel import TabbedPanelItem
 
 # Local package imports duplicated at end of file to resolve circular dependencies
 if typing.TYPE_CHECKING:
-    from controller.sim_controller import SimController
+    from model.sim_model import SimModel
+    from model.trader import Trader
+    from model.trader_account import TraderAccount
 
 
-class SaveDialog(FloatLayout):
-    """Class for the SaveDialog popup"""
+
+
+class SaveDialog(BoxLayout):
+    """Popup dialog for selecting a save destination."""
 
     save = ObjectProperty(None)
+    """Function to save to a given file path."""
+
     cancel = ObjectProperty(None)
+    """Function to dismiss the popup without saving a file."""
+
+
 
 
 class StatisticsTab(TabbedPanelItem):
@@ -37,61 +41,131 @@ class StatisticsTab(TabbedPanelItem):
     `statistics_tab.kv`.
     """
 
+
     bot_spinner = ObjectProperty(None)
-    """Used for retrieving which bot user has selected"""
+    """Dropdown menu selecting a trader to view statistics for."""
 
-    statistics_overall_label_text = StringProperty("No data")
-    """String Property for updating overall label"""
+    statistics_overall_label_text = StringProperty()
+    """Overall statistics display text."""
 
-    statistics_daily_label_text = StringProperty("No data")
-    """String Property for updating daily label"""
+    statistics_daily_label_text = StringProperty()
+    """Daily statistics display text."""
 
 
     def __init__(self,
-        **kwargs
+        *args: typing.Any,
+        **kwargs: typing.Any
     ) -> None:
-        super(StatisticsTab, self).__init__(**kwargs)
-        Clock.schedule_interval(self.update_labels, 1)
+        super().__init__(*args, **kwargs)
 
-
-        controller = App.get_running_app().get_controller()
-        model = controller.get_model()
-
+        model = App.get_running_app().get_controller().get_model()
         model.bind(
             SIMMODEL_TRADER_ADDED=self.on_simmodel_trader_added,
             SIMMODEL_TRADER_REMOVED=self.on_simmodel_trader_removed)
 
-    def update_labels(self,
-        dt
+        Clock.schedule_once(self.update_statistics, -1)
+        Clock.schedule_interval(self.update_statistics, 1)
+
+
+    @staticmethod
+    def format_dollars(
+        dollars: float
+    ) -> str:
+        """Return a positive or negative quantity of `dollars` in `'$9,999.99'`
+        form."""
+        if dollars < 0:
+            return '-${:,.2f}'.format(-dollars)
+        else:
+            return '${:,.2f}'.format(dollars)
+
+    STATISTIC_FORMATTERS: typing.ClassVar[typing.Dict[str,
+        typing.Callable[[str, typing.Any], str]]
+    ] = {
+        'PROFIT_NET': (lambda key, value:
+            'Net Profit: {}'.format(StatisticsTab.format_dollars(value)))}
+    """Maps statistic keys to formatter functions for their values."""
+
+    @classmethod
+    def statistics_to_string(cls,
+        statistics: typing.Dict[str, typing.Any]
+    ) -> str:
+        """Return a human-readable version of `statistics`."""
+        lines = []
+        for key, value, in statistics.items():
+            try:
+                formatter = cls.STATISTIC_FORMATTERS[key]
+            except KeyError:  # Generic format
+                line = '{}: {}'.format(key, value)
+            else:
+                line = formatter(key, value)
+            lines.append(line)
+
+        lines.sort()
+        return '\n'.join(lines)
+
+    def update_statistics(self,
+        delta: float
     ) -> None:
-        if self.get_controller().get_model().get_trader(self.bot_spinner.text):
+        """Periodically update statistics text."""
+        model = App.get_running_app().get_controller().get_model()
 
-            statistics_overall: dict = self.get_controller().get_model().get_trader(
-                self.bot_spinner.text).get_account().get_statistics_overall()
-            if statistics_overall:
-                self.statistics_overall_label_text = self._get_readable_data(statistics_overall)
+        statistics_overall = statistics_daily = ''
 
-            statistics_daily: dict = self.get_controller().get_model().get_trader(
-                self.bot_spinner.text).get_account().get_statistics_overall()
-            if statistics_daily:
-                self.statistics_overall_label_text = self._get_readable_data(statistics_daily)
+        selected_trader = model.get_trader(self.bot_spinner.text)
+        if selected_trader is not None:
+            account = selected_trader.get_account()
+            if account:
+                # Statistics available from simulation
+                statistics_overall = self.statistics_to_string(
+                    account.get_statistics_overall())
+                statistics_daily = self.statistics_to_string(
+                    account.get_statistics_overall())
+
+        self.statistics_overall_label_text = statistics_overall
+        self.statistics_overall_label_text = statistics_daily
 
 
-    def get_controller(self
-    ) -> 'SimController':
-        return App.get_running_app().get_controller()
+    def get_active_trader_names(self
+    ) -> typing.List[str]:
+        """Return a sorted list of trader names currently in the simulation."""
+        model = App.get_running_app().get_controller().get_model()
 
+        trader_names = [trader.get_name()
+            for trader in model.get_traders()
+                if trader.get_account() is not None]
+        trader_names.sort()
+        return trader_names
 
-    def get_trader_list(self,
-        controller: 'SimController'
-    ) -> [str]:
-        """Build and return a list of strings of trader names currently in the
+    def update_trader_menu(self
+    ) -> None:
+        """Update the spinner values to reflect traders that are active in the
         simulation.
         """
-        trader_names: [str] = []
-        for trader in controller.get_model().get_traders():
-            trader_names.append(trader.get_name())
-        return trader_names
+        traders_list = self.get_active_trader_names()
+        self.bot_spinner.values = traders_list
+
+        if self.bot_spinner.text not in traders_list:
+            self.bot_spinner.text = traders_list[0] if traders_list else ''
+
+    def on_simmodel_trader_added(self,
+        model: 'SimModel',
+        trader: 'Trader'
+    ) -> None:
+        self.update_trader_menu()
+        trader.bind(
+            TRADER_ACCOUNT_CREATED=self.on_trader_account_created)
+
+    def on_simmodel_trader_removed(self,
+        model: 'SimModel',
+        trader: 'Trader'
+    ) -> None:
+        self.update_trader_menu()
+
+    def on_trader_account_created(self,
+        trader: 'Trader',
+        account: 'TraderAccount'
+    ) -> None:
+        self.update_trader_menu()
 
 
     def show_save(self
@@ -99,10 +173,9 @@ class StatisticsTab(TabbedPanelItem):
         """Open save dialog."""
 
         content = SaveDialog(save=self.save, cancel=self.dismiss_popup)
-        self._popup = Popup(title="Save file", content=content,
+        self._popup = Popup(title='Save file', content=content,
                             size_hint=(0.9, 0.9))
         self._popup.open()
-
 
     def save(self,
         path,
@@ -110,61 +183,19 @@ class StatisticsTab(TabbedPanelItem):
     ) -> None:
         """Start os write stream and save to filename in specified path. """
         with open(os.path.join(path, filename), 'w') as stream:
-            stream.write("Daily:\n" + self.statistics_daily_label_text + "\n")
-            stream.write("Overall:\n" + self.statistics_overall_label_text + "\n")
+            stream.write('Daily:\n' + self.statistics_daily_label_text + '\n')
+            stream.write('Overall:\n' + self.statistics_overall_label_text + '\n')
 
         self.dismiss_popup()
 
-
     def dismiss_popup(self
     ) -> None:
-        """Close popup"""
         self._popup.dismiss()
 
 
-    def on_simmodel_trader_added(self,
-        model: 'SimModel',
-        trader: 'Trader'
-    ) -> None:
-        self._update_spinner()
-
-
-    def on_simmodel_trader_removed(self,
-        model: 'SimModel',
-        trader: 'Trader'
-    ) -> None:
-        self._update_spinner()
-
-    def _get_readable_data(self,
-        data: dict
-    ) -> str:
-        """Return a readable str for a dict. Account for money values."""
-        formatted_str = ''
-        for key, value, in data.items():
-            if isinstance(value, numbers.Number):
-
-                if value < 0:
-                    formatted_str += "{}: -${:,.2f}".format(key, -value)
-                else:
-                    formatted_str += "{}: ${:,.2f}".format(key, value)
-            else:
-                formatted_str += "{}: {}".format(key, value)
-        return formatted_str
-
-    def _update_spinner(self
-    ) -> None:
-        """Update the spinner text and values depending on which traders are
-        active in the simulation.
-        """
-
-        if len(self.get_trader_list(self.get_controller())) == 0:
-            self.bot_spinner.text = "No bots added"
-        else:
-            self.bot_spinner.text = self.get_trader_list(self.get_controller())[0]
-            self.bot_spinner.values = self.get_trader_list(self.get_controller())
 
 
 # Imported last to avoid circular dependencies
-#from controller.sim_controller import SimController
 from model.sim_model import SimModel
 from model.trader import Trader
+from model.trader_account import TraderAccount
