@@ -2,6 +2,8 @@
 
 A stock market simulator for testing and evaluating automated trading algorithms.
 
+EasyMoney was written by Erik Anderson and Erik Anderson alone.
+
 Source code is formatted according to the [PEP 8 Style Guide for Python Code](
 https://www.python.org/dev/peps/pep-0008/ ). Comment docstrings are formatted
 according to the [PEP 257 Docstring Conventions](
