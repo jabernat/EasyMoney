@@ -5,6 +5,7 @@ __copyright__ = 'Copyright © 2019, Erik Anderson, James Abernathy, and Tyler Ge
 __license__ = 'MIT'
 
 
+import datetime
 import typing
 
 from kivy.app import App
@@ -17,103 +18,15 @@ from kivy.clock import Clock
 # Local package imports duplicated at end of file to resolve circular dependencies
 if typing.TYPE_CHECKING:
     from controller.market_updater import MarketUpdater
+    from model.stock_market import StockMarket
 
 
-
-# class SymbolRow(BoxLayout):
-#     """Row that displays live symbol data"""
-#
-#     symbol_name: str = StringProperty()
-#     symbol_price: str = StringProperty()
-#
-#     def __init__(self,
-#         *args,
-#         **kwargs: typing.Any
-#     ) -> None:
-#         super().__init__(*args, **kwargs)
-#         controller = App.get_running_app().get_controller()
-#         controller.bind(
-#             MARKETDATASOURCE_STOCK_SYMBOL_ADDED=self.on_marketdatasource_stock_symbol_added,
-#             STOCKMARKET_ADDITION=self.on_stockmarket_addition)
-#
-#     def refresh_symbol_row(self,
-#     ) -> None:
-#         pass
-#
-#     def on_marketdatasource_stock_symbol_added(self):
-#         pass
-#
-#     def on_stockmarket_addition(self):
-#         pass
-
-# class TraderBox(FloatLayout):
-#     """Box for an individual trader"""
-#
-#     trader_name: str = StringProperty()
-#     bought_str: str = StringProperty()
-#     sold_str: str = StringProperty()
-#
-#     trader_account: 'TraderAccount'
-#     model: 'SimModel'
-#
-#     def __init__(self,
-#         *args: typing.Any,
-#         **kwargs: typing.Any
-#     ) -> None:
-#         super().__init__(*args, **kwargs)
-#
-#
-#         self.model = App.get_running_app().get_controller().get_model()
-#         trader = self.model.get_trader(self.trader_name)
-#         trader.bind(TRADER_ACCOUNT_CREATED=self.on_trader_account_created)
-#
-#     def on_trader_account_created(self,
-#         trader: 'Trader',
-#         account: 'TraderAccount'
-#     ) -> None:
-#         self.trader_account = self.model.get_trader(
-#             self.trader_name).get_account()
-#
-#         self.trader_account.bind(
-#             TRADERACCOUNT_SOLD=self.on_traderaccount_sold,
-#             TRADERACCOUNT_BOUGHT=self.on_traderaccount_bought)
-#
-#     def refresh_trader_display(self,
-#     ) -> None:
-#         pass
-#
-#     def on_traderaccount_sold(self,
-#         account: 'TraderAccount',
-#         stock_symbol: str,
-#         shares: float,
-#         profit: float
-#     ) -> None:
-#         self.sold_str = "Sold {} {}".format(stock_symbol, profit)
-#         print(self.sold_str)
-#
-#     def on_traderaccount_bought(self,
-#         account: 'TraderAccount',
-#         stock_symbol: str,
-#         shares: float,
-#         cost: float
-#     ) -> None:
-#         self.bought_str = "Bought {} {}".format(stock_symbol, cost)
 
 
 class SimulationTab(TabbedPanelItem):
     """Class associated with the `<SimulationTab>` template defined within
     `simulation_tab.kv`.
     """
-
-    # References to component widgets
-    # symbol_rows: BoxLayout
-    # trader_boxes: BoxLayout
-
-    # symbol_names_to_rows: typing.Dict[str, SymbolRow]
-    # """Mapping of symbol names to their corresponding rows."""
-    #
-    # trader_names_to_boxes: typing.Dict[str, TraderBox]
-    # """Mapping of trader names to their corresponding boxes."""
 
     updater_state: str = StringProperty("reset")
     simulation_time: str = StringProperty("[Simulation Time]")
@@ -124,25 +37,14 @@ class SimulationTab(TabbedPanelItem):
     ) -> None:
         super().__init__(*args, **kwargs)
 
-        # self.symbol_names_to_rows = {}
-        # self.trader_names_to_boxes = {}
-        # self.symbol_rows = BoxLayout()
-        # self.trader_boxes = BoxLayout()
-
         controller = self._get_controller()
-
-        market_updater = controller.get_updater()
-
-        # model.bind(
-        #     SIMMODEL_TRADER_ADDED=self.on_simmodel_trader_added,
-        #     SIMMODEL_TRADER_REMOVED=self.on_simmodel_trader_removed)
-        market_updater.bind(
+        controller.get_updater().bind(
             MARKETUPDATER_PLAYING=self.on_marketupdater_playing,
             MARKETUPDATER_PAUSED=self.on_marketupdater_paused,
             MARKETUPDATER_RESET=self.on_marketupdater_reset)
-
-        # Clock.schedule_once(self.update_time, -1)
-        # Clock.schedule_interval(self.update_time, 1)
+        controller.get_model().get_stock_market().bind(
+            STOCKMARKET_ADDITION=self.on_stockmarket_addition,
+            STOCKMARKET_CLEARED=self.on_stockmarket_cleared)
 
 
     def _get_controller(self):
@@ -168,24 +70,18 @@ class SimulationTab(TabbedPanelItem):
     def reset_simulation(self):
         self._get_controller().get_updater().reset()
 
-    # def on_simmodel_trader_added(self,
-    #     model: 'SimModel',
-    #     trader: 'Trader'
-    # ) -> None:
-    #     """Add a trader box for the newly added 'trader'"""
-    #     trader_box = TraderBox(trader_name=trader.get_name())
-    #     self.trader_boxes.add_widget((trader_box))
-    #     self.trader_names_to_boxes[trader.get_name()] = trader_box
 
-    # def on_simmodel_trader_removed(self,
-    #     model: 'SimModel',
-    #     trader: 'Trader'
-    # ) -> None:
-    #     """Remove the trader box for deleted `trader`."""
-    #     trader_box = self.trader_names_to_boxes[trader.get_name()]
-    #
-    #     self.trader_boxes.remove_widget(trader_box)
-    #     del self.trader_names_to_boxes[trader.get_name()]
+    def on_stockmarket_addition(self,
+        market: 'StockMarket',
+        time: datetime.datetime,
+        stock_symbol_prices: typing.Dict[str, float]
+    ) -> None:
+        self.label_time.text = '{:%Y-%m-%d %H:%M}'.format(time)
+
+    def on_stockmarket_cleared(self,
+        market: 'StockMarket'
+    ) -> None:
+        self.label_time.text = ''
 
 
     def run_console_test(self
@@ -248,5 +144,4 @@ class SimulationTab(TabbedPanelItem):
 
 # Imported last to avoid circular dependencies
 from controller.market_updater import MarketUpdater
-from controller.market_datasource import MarketDatasource
-from model.trader_account import TraderAccount
+from model.stock_market import StockMarket

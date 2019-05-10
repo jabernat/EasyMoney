@@ -24,51 +24,44 @@
 
 <SimulationTab>:
     text: 'Simulation'
+
+    label_time: label_time.__self__
+
     BoxLayout:
         orientation: 'vertical'
 
-        # Main layout is broken up into three areas: top area, center area, and bottom area
-        # Top area: play/pause buttons, simulation time
-        # Center area: scrollable stock symbol display
-        # Bottom area: Trade bots behavior
+        BottomButtonBar:
+            BottomButton:
+                text: 'Reset'
+                disabled: root.updater_state == 'reset'
+                on_release: root.reset_simulation()
+            BottomButton:
+                text: 'Play'
+                disabled: root.updater_state == 'playing'
+                on_release: root.play_simulation()
+            BottomButton:
+                text: 'Pause'
+                disabled: root.updater_state != 'playing'
+                on_release: root.pause_simulation()
+            BottomButton:
+                opacity: 0
+                text: 'Test'
+                on_press: root.run_console_test()
 
-        # Button area
-        BoxLayout:
-            size_hint_y: None
-            height: cm(1.5)
-            padding: 10, 10
+            Label:
+                text: 'Simulation Time:'
+                halign: 'right'
+                valign: 'middle'
+                text_size: self.size
             BoxLayout:
-                padding: 0, 0, 30, 0
-                orientation: 'horizontal'
-                Button:
-                    text: 'Reset'
-                    disabled: root.updater_state == 'reset'
-                    on_release: root.reset_simulation()
-                Button:
-                    text: 'Play'
-                    disabled: root.updater_state == 'playing'
-                    on_release: root.play_simulation()
-                Button:
-                    text: 'Pause'
-                    disabled: root.updater_state != 'playing'
-                    on_release: root.pause_simulation()
-                Button:
-                    opacity: 0
-                    text: 'Test'
-                    on_press: root.run_console_test()
+                padding: mm(2), mm(2)
+                size_hint_x: None
+                width: sp(200)
 
-                # Spacer
-                Label:
-                Label:
-                    text: 'Simulation Time:'
+                TextInput:
+                    id: label_time
+                    font_name: 'RobotoMono-Regular'
+                    disabled: True
+                    multiline: False
 
-            # Simulation time field
-            BoxLayout:
-                Label:
-                    # White background
-                    canvas:
-                        Color:
-                            rgba: 1, 1, 1, 1
-                        Rectangle:
-                            size: self.size
-                            pos: self.pos
+                    padding: mm(2.5), mm(2.5)
