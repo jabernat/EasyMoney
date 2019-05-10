@@ -12,6 +12,7 @@ from kivy.app import App
 from kivy.properties import (
     ObjectProperty, StringProperty)
 from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.filechooser import FileChooserController
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.popup import Popup
 from kivy.uix.tabbedpanel import TabbedPanelItem
@@ -29,6 +30,8 @@ if typing.TYPE_CHECKING:
 class AddSymbolFilePopup(Popup):
     """Popup dialog for adding `*.json` symbol files from AlphaVantage."""
 
+    filechooser: FileChooserController
+
     def open_file(self,
         path: str,
         filepath: str
@@ -45,6 +48,26 @@ class AddSymbolFilePopup(Popup):
             popup.open()
         else:
             self.dismiss()
+
+
+
+
+class UnconfirmPrompt(Popup):
+    """Popup dialog to confirm resetting the simulation before changing
+    data sources.
+    """
+
+    blocked_action: typing.Callable[..., None] = ObjectProperty()
+    """Action to perform once the datasource is unconfirmed."""
+
+    def reset_and_continue(self
+    ) -> None:
+        """Reset the simulation before continuing with the blocked action."""
+        datasource = App.get_running_app().get_controller().get_datasource()
+        datasource.unconfirm()  # Will reset the running simulation
+
+        self.dismiss()
+        self.blocked_action()
 
 
 
@@ -104,9 +127,16 @@ class StockSymbolsTab(TabbedPanelItem):
     def on_add_clicked(self
     ) -> None:
         """Show a popup to add a new symbol."""
-        popup = AddSymbolFilePopup()
-        popup.filechooser.path = os.getcwd()
-        popup.open()
+        datasource = App.get_running_app().get_controller().get_datasource()
+        if datasource.is_confirmed():
+            unconfirm_popup = UnconfirmPrompt(
+                blocked_action=self.on_add_clicked)
+            unconfirm_popup.open()
+            return
+
+        add_popup = AddSymbolFilePopup()
+        add_popup.filechooser.path = os.getcwd()
+        add_popup.open()
 
     def on_datasource_symbol_added(self,
         datasource: 'MarketDatasource',
@@ -119,6 +149,7 @@ class StockSymbolsTab(TabbedPanelItem):
         exchange_name, symbol_name = exchange_and_symbol[:2]
 
         symbol_row = SymbolRow(tab=self,
+            stock_symbol=stock_symbol,
             exchange_name=exchange_name,
             symbol_name=symbol_name)
         self.table_rows.add_widget(symbol_row)
@@ -132,6 +163,12 @@ class StockSymbolsTab(TabbedPanelItem):
             'Remove button clicked without a symbol row selected.'
 
         datasource = App.get_running_app().get_controller().get_datasource()
+        if datasource.is_confirmed():
+            unconfirm_popup = UnconfirmPrompt(
+                blocked_action=self.on_remove_clicked)
+            unconfirm_popup.open()
+            return
+
         datasource.remove_stock_symbol(
             self.selected_symbol_row.stock_symbol)
 

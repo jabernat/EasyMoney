@@ -29,7 +29,47 @@
 
             Button:
                 text: 'Cancel'
-                on_press: root.dismiss()
+                on_release: root.dismiss()
+
+
+
+
+<UnconfirmPrompt>:
+    title: 'Reset Simulation?'
+
+    size_hint: 0.5, None
+    height: self.title_size + self.separator_height + self.content.height + self.border[0] + self.border[2] + self.padding[0] + self.padding[2] + mm(5)
+
+    BoxLayout:
+        orientation: 'vertical'
+
+        spacing: mm(2)
+        size_hint_y: None
+        height: self.minimum_height
+
+        Label:
+            text: 'You must reset the current simulation before adding or removing stock symbols.\n\nReset simulation and continue?'
+            color: 1, 0.4, 0.4, 1  # Light red
+
+            text_size: root.width, None
+            size_hint: None, None
+            size: self.texture_size
+
+        BoxLayout:
+            orientation: 'horizontal'
+
+            spacing: mm(2)
+            size_hint_y: None
+            height: cm(1)
+
+            Button:
+                text: 'Continue'
+                color: 1, 0.4, 0.4, 1  # Light red
+                on_release: root.reset_and_continue()
+
+            Button:
+                text: 'Cancel'
+                on_release: root.dismiss()
 
 
 
