@@ -1,19 +1,20 @@
 #:kivy 1.9
 # Defines templates related to the view.symbols_tab module.
 
-<FilePopup@popup>:
-    title: 'Add Symbol'
+<AddSymbolFilePopup>:
+    title: 'Add AlphaVantage Stock Symbol (*.json)'
     auto_dismiss: False
 
-    size_hint: .5, .5
+    filechooser: filechooser.__self__
+
+    size_hint: 0.75, 0.75
 
     BoxLayout:
         orientation: 'vertical'
 
-        FileChooser:
-            id: filechooser	
-            orientation: 'vertical'
-            FileChooserListLayout
+        FileChooserListView:
+            id: filechooser
+            filters: ['*.json']
 
         BoxLayout:
             orientation: 'horizontal'
@@ -23,7 +24,9 @@
 
             Button:
                 text: 'Open'
-                on_release: root._open(str(filechooser.selection[0]))
+                disabled: not filechooser.selection
+                on_release: root.open_file(filechooser.path, filechooser.selection[0])
+
             Button:
                 text: 'Cancel'
                 on_press: root.dismiss()
@@ -31,52 +34,7 @@
 
 
 
-# Base style of all table cells.
-<TableCell@Label>:
-    shorten: True
-    shorten_from: 'right'
-    text_size: self.size
-
-    padding: mm(0.5), mm(0.5)
-
-
-# Style of table header cells.
-<HeaderCell@TableCell>:
-    bold: True
-    halign: 'center'
-    valign: 'bottom'
-
-
-# Style of table body cells.
-<BodyCell@TableCell>:
-    halign: 'left'
-    valign: 'center'
-    padding: mm(4), mm(0.5)
-
-    # Improve readability when row is selected
-    outline_width: sp(2)
-    outline_color: 0.35, 0.35, 0.35  # Same gray as button
-
-
-# Style of dollar-value table body cells.
-<BodyCellDollars@BodyCell>:
-    halign: 'right'
-    font_name: 'RobotoMono-Regular'
-
-
-# Vertical bar dividing cell columns.
-<CellDivider@Widget>:
-    pos_hint: {'y': 0.1}
-    size_hint: None, 0.8
-    width: sp(1)
-
-    canvas:
-        Color:
-            rgba: 1, 1, 1, 0.5  # Translucent white
-        Rectangle:
-            size: self.size
-            pos: self.pos
-
+# Table parts
 
 # Base styles of table column cells.
 <ColumnExchangeName@Widget>:
@@ -87,13 +45,14 @@
 
 # Table header cells.
 <HeaderCellExchangeName@HeaderCell+ColumnExchangeName>:
-    text: 'Exchange'
+    text: 'Stock Exchange'
 <HeaderCellSymbol@HeaderCell+ColumnSymbol>:
-    text: 'Symbol'
+    text: 'Stock Symbol'
 
 # Table body cells.
 <BodyCellExchangeName@BodyCell+ColumnExchangeName>:
 <BodyCellSymbol@BodyCell+ColumnSymbol>:
+
 
 
 
@@ -116,21 +75,14 @@
         pos_hint: {'x': 0, 'y': 0}
 
         BodyCellExchangeName:
-            text: 'NYSE'
+            text: root.exchange_name or 'Unknown'
+            color: [1, 1, 1, 1] if root.exchange_name else [1, 1, 1, 0.75]
             halign: 'center'
+
         CellDivider:
         BodyCellSymbol:
             text: root.symbol_name
             halign: 'center'
-        CellDivider:
-
-
-
-
-# Button along bottom bar for controlling selected symbols.
-<BottomButton@Button>:
-    size_hint_x: None
-    width: cm(3)
 
 
 
@@ -181,8 +133,8 @@
 
                 HeaderCellExchangeName:
                 CellDivider:
+
                 HeaderCellSymbol:
-                CellDivider:
 
             # Table body
             ScrollView:
@@ -200,29 +152,14 @@
 
 
         # Bottom buttons
-        BoxLayout:
-            orientation: 'horizontal'
-
-            size_hint_y: None
-            height: cm(1.5)
-
-            # Gray background
-            canvas:
-                Color:
-                    rgba: 0.2, 0.2, 0.2, 1
-                Rectangle:
-                    size: self.size
-                    pos: self.pos
-
+        BottomButtonBar:
             BottomButton:
                 text: 'Add'
-
                 on_release: root.on_add_clicked()
 
             BottomButton:
                 text: 'Remove'
                 disabled: root.selected_symbol_row is None
-
                 on_release: root.on_remove_clicked()
 
             # Spacer
