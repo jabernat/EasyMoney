@@ -20,6 +20,7 @@ from view.window_view import ErrorPopup
 
 # Local package imports duplicated at end of file to resolve circular dependencies
 if typing.TYPE_CHECKING:
+    from controller.market_updater import MarketUpdater
     from model.sim_model import SimModel
     from model.trader import Trader
     from model.trader_account import TraderAccount
@@ -61,13 +62,17 @@ class StatisticsTab(TabbedPanelItem):
     ) -> None:
         super().__init__(*args, **kwargs)
 
-        model = App.get_running_app().get_controller().get_model()
+        controller = App.get_running_app().get_controller()
+        controller.get_updater().bind(
+            MARKETUPDATER_RESET=self.on_marketupdater_reset)
+
+        model = controller.get_model()
         model.bind(
             SIMMODEL_TRADER_ADDED=self.on_simmodel_trader_added,
             SIMMODEL_TRADER_REMOVED=self.on_simmodel_trader_removed)
 
         Clock.schedule_once(self.update_statistics, -1)
-        Clock.schedule_interval(self.update_statistics, 1)
+        Clock.schedule_interval(self.update_statistics, 0.5)
 
 
     @staticmethod
@@ -131,8 +136,11 @@ class StatisticsTab(TabbedPanelItem):
     def get_active_trader_names(self
     ) -> typing.List[str]:
         """Return a sorted list of trader names currently in the simulation."""
-        model = App.get_running_app().get_controller().get_model()
+        controller = App.get_running_app().get_controller()
+        if controller.get_updater().is_reset():
+            return []
 
+        model = controller.get_model()
         trader_names = [trader.get_name()
             for trader in model.get_traders()
                 if trader.get_account() is not None]
@@ -167,6 +175,11 @@ class StatisticsTab(TabbedPanelItem):
     def on_trader_account_created(self,
         trader: 'Trader',
         account: 'TraderAccount'
+    ) -> None:
+        self.update_trader_menu()
+
+    def on_marketupdater_reset(self,
+        updater: 'MarketUpdater'
     ) -> None:
         self.update_trader_menu()
 
@@ -214,6 +227,7 @@ class StatisticsTab(TabbedPanelItem):
 
 
 # Imported last to avoid circular dependencies
+from controller.market_updater import MarketUpdater
 from model.sim_model import SimModel
 from model.trader import Trader
 from model.trader_account import TraderAccount
