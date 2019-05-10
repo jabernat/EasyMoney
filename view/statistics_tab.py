@@ -16,6 +16,8 @@ from kivy.uix.label import Label
 from kivy.uix.popup import Popup
 from kivy.uix.tabbedpanel import TabbedPanelItem
 
+from view.window_view import ErrorPopup
+
 # Local package imports duplicated at end of file to resolve circular dependencies
 if typing.TYPE_CHECKING:
     from model.sim_model import SimModel
@@ -33,11 +35,6 @@ class SaveDialog(BoxLayout):
 
     cancel = ObjectProperty(None)
     """Function to dismiss the popup without saving a file."""
-
-class SaveErrorPopup(Popup):
-    """Popup dialog for showing file save errors."""
-
-    error_message = StringProperty()
 
 
 
@@ -203,11 +200,11 @@ class StatisticsTab(TabbedPanelItem):
                 stream.write('Overall Statistics:\n'
                     + self.statistics_overall_label_text + '\n')
         except Exception as e:
-            popup = SaveErrorPopup(error_message=str(e))
+            popup = ErrorPopup(
+                description='Cannot save to file:', exception=e)
             popup.open()
-            return
-
-        self.dismiss_popup()
+        else:
+            self.dismiss_popup()
 
     def dismiss_popup(self
     ) -> None:

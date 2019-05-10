@@ -6,6 +6,8 @@
 #:include view/simulation_tab.kv
 #:include view/statistics_tab.kv
 
+#:import traceback traceback
+
 
 # Global styles
 <ScrollView>:
@@ -38,6 +40,26 @@
 
 <Popup>:
     background_color: 0.4, 0.4, 0.4, 0.7  # Light gray
+
+
+
+
+<ErrorPopup>:
+    title: 'Error'
+
+    size_hint: 0.5, None
+    height: self.title_size + self.separator_height + label.height + self.border[0] + self.border[2] + self.padding[0] + self.padding[2] + mm(5)
+
+    Label:
+        id: label
+        text: ''.join([root.description, '\n', *traceback.format_exception_only(type(root.exception), root.exception)]).strip()
+        color: 1, 0.4, 0.4, 1  # Light red
+
+        text_size: root.width, None
+        size_hint: None, None
+        size: self.texture_size
+
+
 
 
 <RootWidget>:
