@@ -12,6 +12,7 @@ from kivy.app import App
 from kivy.clock import Clock
 from kivy.properties import ObjectProperty, StringProperty
 from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.label import Label
 from kivy.uix.popup import Popup
 from kivy.uix.tabbedpanel import TabbedPanelItem
 
@@ -32,6 +33,11 @@ class SaveDialog(BoxLayout):
 
     cancel = ObjectProperty(None)
     """Function to dismiss the popup without saving a file."""
+
+class SaveErrorPopup(Popup):
+    """Popup dialog for showing file save errors."""
+
+    error_message = StringProperty()
 
 
 
@@ -173,6 +179,7 @@ class StatisticsTab(TabbedPanelItem):
         """Open save dialog."""
 
         content = SaveDialog(save=self.save, cancel=self.dismiss_popup)
+        content.filechooser.path = os.getcwd()
         self._popup = Popup(title='Save file', content=content,
                             size_hint=(0.9, 0.9))
         self._popup.open()
@@ -182,9 +189,23 @@ class StatisticsTab(TabbedPanelItem):
         filename
     ) -> None:
         """Start os write stream and save to filename in specified path. """
-        with open(os.path.join(path, filename), 'w') as stream:
-            stream.write('Daily:\n' + self.statistics_daily_label_text + '\n')
-            stream.write('Overall:\n' + self.statistics_overall_label_text + '\n')
+        if not filename:
+            return
+
+        os.chdir(path)  # Remember chosen folder for next time
+        filepath = os.path.join(path, filename)
+
+        try:
+            with open(filepath, 'w', encoding='utf_8') as stream:
+                stream.write('Trader: ' + self.bot_spinner.text + '\n\n')
+                stream.write('Daily Statistics:\n'
+                    + self.statistics_daily_label_text + '\n\n')
+                stream.write('Overall Statistics:\n'
+                    + self.statistics_overall_label_text + '\n')
+        except Exception as e:
+            popup = SaveErrorPopup(error_message=str(e))
+            popup.open()
+            return
 
         self.dismiss_popup()
 

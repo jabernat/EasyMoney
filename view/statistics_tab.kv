@@ -112,6 +112,7 @@
 
 
 <SaveDialog>:
+    filechooser: filechooser.__self__
     orientation: 'vertical'
     FileChooserListView:
         id: filechooser
@@ -122,14 +123,35 @@
         size_hint_y: None
         height: 30
         multiline: False
+        on_text_validate: root.save(filechooser.path, text_input.text)
 
     BoxLayout:
         size_hint_y: None
         height: 30
-        Button:
-            text: 'Cancel'
-            on_release: root.cancel()
 
         Button:
             text: 'Save'
             on_release: root.save(filechooser.path, text_input.text)
+            disabled: not text_input.text
+
+        Button:
+            text: 'Cancel'
+            on_release: root.cancel()
+
+
+
+
+<SaveErrorPopup>:
+    title: 'Save Error'
+
+    size_hint: 0.5, None
+    height: self.title_size + self.separator_height + label.height + self.border[0] + self.border[2] + self.padding[0] + self.padding[2] + cm(1)
+
+    Label:
+        id: label
+        text: root.error_message
+        color: 1, 0.4, 0.4, 1  # Light red
+
+        text_size: root.width, None
+        size_hint: None, None
+        size: self.texture_size
