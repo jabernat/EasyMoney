@@ -1,8 +1,6 @@
 #:kivy 1.9
 # Defines templates related to the view.simulation_tab module.
 
-<ImageButton@ButtonBehavior+Image>:
-
 <SymbolRow>:
 
 <TraderBox>:
@@ -44,18 +42,19 @@
                 orientation: 'horizontal'
                 Button:
                     text: 'Reset'
+                    disabled: root.updater_state == 'reset'
                     on_release: root.reset_simulation
                 Button:
                     text: 'Play'
-                    disabled: root.state == 'playing'
+                    disabled: root.updater_state == 'playing'
                     on_release: root.play_simulation()
                 Button:
                     text: 'Pause'
-                    disabled: root.state == 'paused'
+                    disabled: root.updater_state != 'playing'
                     on_release: root.pause_simulation()
-                ImageButton:
+                Button:
                     opacity: 0
-                    source: 'view/pause.png'
+                    text: 'Test'
                     on_press: root.run_console_test()
 
                 # Spacer

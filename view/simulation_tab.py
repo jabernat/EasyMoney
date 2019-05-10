@@ -115,7 +115,7 @@ class SimulationTab(TabbedPanelItem):
     # trader_names_to_boxes: typing.Dict[str, TraderBox]
     # """Mapping of trader names to their corresponding boxes."""
 
-    state: str = StringProperty("reset")
+    updater_state: str = StringProperty("reset")
     simulation_time: str = StringProperty("[Simulation Time]")
 
     def __init__(self,
@@ -149,15 +149,15 @@ class SimulationTab(TabbedPanelItem):
         return App.get_running_app().get_controller()
 
     def on_marketupdater_playing(self, updater: 'MarketUpdater'):
-        self.state = 'playing'
+        self.updater_state = 'playing'
 
 
     def on_marketupdater_paused(self, updater: 'MarketUpdater'):
-        self.state = 'paused'
+        self.updater_state = 'paused'
 
 
     def on_marketupdater_reset(self, updater: 'MarketUpdater'):
-        self.state = 'reset'
+        self.updater_state = 'reset'
 
     def play_simulation(self):
         self._get_controller().get_updater().play()
