@@ -133,12 +133,17 @@ class MarketDatasource(dispatch.Dispatcher):
 
         stock_symbol, symbol_prices = self._parse_alpha_vantage_json(
             json_contents)
-        # Replace existing data
-        self._symbols_prices[stock_symbol] = symbol_prices
 
+        if stock_symbol in self._symbols_prices:
+            # Replace existing data
+            self.emit('MARKETDATASOURCE_STOCK_SYMBOL_REMOVED',
+                datasource=self,
+                stock_symbol=stock_symbol)
+        self._symbols_prices[stock_symbol] = symbol_prices
         self.emit('MARKETDATASOURCE_STOCK_SYMBOL_ADDED',
             datasource=self,
             stock_symbol=stock_symbol)
+
         if len(self._symbols_prices) == 1:
             # Added first stock symbol
             self.emit('MARKETDATASOURCE_CAN_CONFIRM_UPDATED',
