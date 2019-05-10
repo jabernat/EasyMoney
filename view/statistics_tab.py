@@ -64,7 +64,8 @@ class StatisticsTab(TabbedPanelItem):
 
         controller = App.get_running_app().get_controller()
         controller.get_updater().bind(
-            MARKETUPDATER_RESET=self.on_marketupdater_reset)
+            MARKETUPDATER_PLAYING=self.on_marketupdater_change,
+            MARKETUPDATER_RESET=self.on_marketupdater_change)
 
         model = controller.get_model()
         model.bind(
@@ -89,8 +90,20 @@ class StatisticsTab(TabbedPanelItem):
     STATISTIC_FORMATTERS: typing.ClassVar[typing.Dict[str,
         typing.Callable[[str, typing.Any], str]]
     ] = {
+        'FROZEN': (lambda key, value:
+            'Account Frozen: {}'.format(value)),
         'PROFIT_NET': (lambda key, value:
-            'Net Profit: {}'.format(StatisticsTab.format_dollars(value)))}
+            'Net Profit: {}'.format(StatisticsTab.format_dollars(value))),
+
+        'PURCHASE_COUNT': (lambda key, value:
+            'Purchase Count: {:d}'.format(value)),
+        'PURCHASE_AVERAGE': (lambda key, value:
+            'Purchase Average: {}'.format(StatisticsTab.format_dollars(value))),
+
+        'SALE_COUNT': (lambda key, value:
+            'Sale Count: {:d}'.format(value)),
+        'SALE_AVERAGE': (lambda key, value:
+            'Sale Average: {}'.format(StatisticsTab.format_dollars(value)))}
     """Maps statistic keys to formatter functions for their values."""
 
     @classmethod
@@ -178,7 +191,7 @@ class StatisticsTab(TabbedPanelItem):
     ) -> None:
         self.update_trader_menu()
 
-    def on_marketupdater_reset(self,
+    def on_marketupdater_change(self,
         updater: 'MarketUpdater'
     ) -> None:
         self.update_trader_menu()

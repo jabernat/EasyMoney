@@ -142,6 +142,18 @@ class TraderAccount(dispatch.Dispatcher):
     currency as `_stock_market`'s price data.
     """
 
+    _num_purchases: int
+    """The total number of purchases made with `buy()`."""
+
+    _num_sales: int
+    """The total number of sales made with `sell()`."""
+
+    _purchases_cost: float
+    """The total cost of all purchases made with `buy()`."""
+
+    _sales_profit: float
+    """The total profit of all sales made with `sell()`."""
+
     _stocks: typing.DefaultDict[str, float]
     """A `collections.defaultdict` of owned stock symbols mapped to
     non-negative quantities owned, defaulting to `0.0` for new keys.
@@ -169,6 +181,10 @@ class TraderAccount(dispatch.Dispatcher):
 
         self._balance_initial = trader.get_initial_funds()
         self._balance = self._balance_initial
+
+        self._num_purchases = self._num_sales = 0
+        self._purchases_cost = self._sales_profit = 0.0
+
         self._stocks = collections.defaultdict(float)  # Default to 0.0
         self._frozen = False
 
@@ -281,6 +297,10 @@ class TraderAccount(dispatch.Dispatcher):
         # Make transaction
         self._balance -= cost
         self._stocks[stock_symbol] += shares
+
+        self._num_purchases += 1
+        self._purchases_cost += cost
+
         self.emit('TRADERACCOUNT_BOUGHT',
             account=self,
             stock_symbol=stock_symbol,
@@ -333,6 +353,10 @@ class TraderAccount(dispatch.Dispatcher):
         # Make transaction
         self._balance += profit
         self._stocks[stock_symbol] -= shares
+
+        self._num_sales += 1
+        self._sales_profit += profit
+
         self.emit('TRADERACCOUNT_SOLD',
             account=self,
             stock_symbol=stock_symbol,
@@ -348,7 +372,8 @@ class TraderAccount(dispatch.Dispatcher):
         and the associated values can be converted to `str`.
         """
         #TODO
-        return {}
+        return {
+            'IS_IMPLEMENTED': False}
 
     def get_statistics_overall(self
     ) -> typing.Dict[str, typing.Any]:
@@ -363,7 +388,16 @@ class TraderAccount(dispatch.Dispatcher):
                 for symbol, quantity in self._stocks.items() if quantity > 0)
 
         return {
-            'PROFIT_NET': self._balance + stocks_value - self._balance_initial}
+            'PROFIT_NET': self._balance + stocks_value - self._balance_initial,
+            'FROZEN': self.is_frozen(),
+
+            'PURCHASE_COUNT': self._num_purchases,
+            'PURCHASE_AVERAGE': (self._purchases_cost / self._num_purchases
+                if self._num_purchases else 0.0),
+
+            'SALE_COUNT': self._num_sales,
+            'SALE_AVERAGE': (self._sales_profit / self._num_sales
+                if self._num_sales else 0.0)}
 
 
 
