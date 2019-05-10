@@ -16,7 +16,11 @@ from kivy.clock import Clock
 
 # Local package imports duplicated at end of file to resolve circular dependencies
 if typing.TYPE_CHECKING:
+    from controller.market_datasource import MarketDatasource
     from controller.market_updater import MarketUpdater
+    from model.sim_model import SimModel
+    from model.trader import Trader
+    from model.trader_account import TraderAccount
 
 
 
@@ -213,6 +217,8 @@ class SimulationTab(TabbedPanelItem):
 
 
 # Imported last to avoid circular dependencies
-from controller.market_updater import MarketUpdater
 from controller.market_datasource import MarketDatasource
+from controller.market_updater import MarketUpdater
+from model.sim_model import SimModel
+from model.trader import Trader
 from model.trader_account import TraderAccount
