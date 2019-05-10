@@ -177,8 +177,9 @@ class SimulationTab(TabbedPanelItem):
             ('Stewart', 5.00)
         ]:
             controller.add_trader(name,
-                initial_funds=INITIAL_FUNDS, trading_fee=trading_fee,
+                initial_funds=1, trading_fee=trading_fee,
                 algorithm=ALGORITHM, algorithm_settings=algorithm_settings)
+            controller.set_trader_initial_funds(name, INITIAL_FUNDS)
 
 
         print('Adding datasources')
@@ -198,9 +199,10 @@ class SimulationTab(TabbedPanelItem):
             """Print statistics after updater switches to PAUSED state."""
             print('Statistics')
             for trader in model.get_traders():
-                print('Trader {!r}: {}'.format(
-                    trader.get_name(),
-                    trader.get_account().get_statistics_overall()))
+                if trader.get_account():
+                    print('Trader {!r}: {}'.format(
+                        trader.get_name(),
+                        trader.get_account().get_statistics_overall()))
         controller.get_updater().bind(
             MARKETUPDATER_PAUSED=on_marketupdater_paused)
 

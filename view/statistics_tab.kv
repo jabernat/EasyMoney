@@ -2,31 +2,156 @@
 # Defines templates related to the view.statistics_tab module.
 
 <StatisticsTab>:
+    bot_spinner: bot_spinner.__self__
     text: 'Statistics'
+
+    # main panel
     BoxLayout:
         orientation: 'vertical'
+        padding: mm(2)
+        spacing: cm(1)
+
+        # Buttons bar
         BoxLayout:
+            orientation: 'horizontal'
+
+            size_hint_y: None
+            height: cm(1)
+            spacing: mm(2)
+
+            Button:
+                text: 'Save Report'
+                disabled: not daily_label.text and not overall_label.text
+
+                on_release: root.show_save()
+
+            Button:
+                text: 'Clear'
+                disabled: not daily_label.text and not overall_label.text
+
+                on_release: daily_label.text = overall_label.text = ''
+
             Label:
-                text: "Bot's Daily Statistics"
-            Label:
-                text: "Bot's Overall Statistics"
+                text: 'Displayed Trader:'
+                halign: 'right'
+                valign: 'middle'
+
+                size_hint_x: 2
+                text_size: self.size
+            Spinner:
+                id: bot_spinner
+
+                disabled: not self.values
+                sync_height: True
+
+                on_text: root.update_statistics(0)  # Update immediately
+
+
+        # Statistics columns
         BoxLayout:
-            size_hint_y: 3
-            Label:
-                text: "Lorem ipsum dolor sit amet, consectetur adipiscing elit"
-                color: 0,0,0,1 
-                canvas.before:
-                    Color:
-                        rgba: 1, 1, 1, 1
-                    Rectangle:
-                        pos: self.pos
-                        size: self.size
-            Label:
-                text: "Lorem ipsum dolor sit amet, consectetur adipiscing elit"
-                color: 0,0,0,1 
-                canvas.before:
-                    Color:
-                        rgba: 1, 1, 1, 1
-                    Rectangle:
-                        pos: self.pos
-                        size: self.size
+            orientation: 'horizontal'
+
+            spacing: mm(2)
+
+            # Daily statistics
+            BoxLayout:
+                orientation: 'vertical'
+
+                spacing: mm(2)
+
+                Label:
+                    text: "Trader's Daily Statistics"
+                    bold: True
+                    valign: 'bottom'
+
+                    size_hint_y: None
+                    height: self.texture_size[1]
+
+                ScrollView:
+                    do_scroll_x: False
+
+                    TextInput:
+                        id: daily_label
+                        text: root.statistics_daily_label_text
+                        readonly: True
+
+                        padding: mm(2), mm(2)
+                        size_hint_y: None
+                        height: max(self.minimum_height, self.parent.height)
+
+                        on_focus: self.select_all()
+                        on_text: if self.focus: self.select_all()
+
+            # Overall statistics
+            BoxLayout:
+                orientation: 'vertical'
+
+                spacing: mm(2)
+
+                Label:
+                    text: "Trader's Overall Statistics"
+                    bold: True
+                    valign: 'bottom'
+
+                    size_hint_y: None
+                    height: self.texture_size[1]
+
+                ScrollView:
+                    do_scroll_x: False
+
+                    TextInput:
+                        id: overall_label
+                        text: root.statistics_overall_label_text
+                        readonly: True
+
+                        padding: mm(2), mm(2)
+                        size_hint_y: None
+                        height: max(self.minimum_height, self.parent.height)
+
+
+
+
+<SaveDialog>:
+    filechooser: filechooser.__self__
+    orientation: 'vertical'
+    FileChooserListView:
+        id: filechooser
+        on_selection: text_input.text = self.selection and self.selection[0] or ''
+
+    TextInput:
+        id: text_input
+        size_hint_y: None
+        height: 30
+        multiline: False
+        on_text_validate: root.save(filechooser.path, text_input.text)
+
+    BoxLayout:
+        size_hint_y: None
+        height: 30
+
+        Button:
+            text: 'Save'
+            on_release: root.save(filechooser.path, text_input.text)
+            disabled: not text_input.text
+
+        Button:
+            text: 'Cancel'
+            on_release: root.cancel()
+
+
+
+
+<SaveErrorPopup>:
+    title: 'Save Error'
+
+    size_hint: 0.5, None
+    height: self.title_size + self.separator_height + label.height + self.border[0] + self.border[2] + self.padding[0] + self.padding[2] + cm(1)
+
+    Label:
+        id: label
+        text: root.error_message
+        color: 1, 0.4, 0.4, 1  # Light red
+
+        text_size: root.width, None
+        size_hint: None, None
+        size: self.texture_size

@@ -1,0 +1,358 @@
+#:kivy 1.9
+# Defines templates related to the view.traders_tab module.
+
+
+<PopupInputLabel@Label>:
+    halign: 'right'
+    size_hint_x: 0.3
+    shorten: True
+    shorten_from: 'right'
+    text_size: self.size
+
+<PopupInput@Widget>:
+    valid: False
+    tooltip: False  # Gets set to a PopupInputTooltip
+
+    background_color: (1, 1, 1, 1) if self.valid else (1, 0.4, 0.4, 1)  # White or light red
+
+    size_hint_x: 0.6
+
+<PopupInputText@TextInput+PopupInput>:
+    multiline: False
+
+<PopupInputNumber@PopupInputText>:
+    input_type: 'number'
+    input_filter: 'float'
+
+    font_name: 'RobotoMono-Regular'
+
+<PopupInputSpinner@Spinner+PopupInput>:
+    sync_height: True
+
+<PopupInputTooltip>:
+    arrow_pos: 'left_mid'
+    orientation: 'vertical'
+
+    x: self.input.right - mm(2)
+    y: self.input.center_y - self.height / 2
+    size_hint: None, None
+    size: app.root.width - self.input.right, label_message.height
+
+    Label:
+        id: label_message
+        color: 1, 0.4, 0.4, 1  # Light red
+        italic: True
+        text: root.message
+
+        text_size: self.width, None
+        size_hint: None, None
+        size: root.width, self.texture_size[1]
+        padding: mm(2), mm(2)
+
+
+<TraderPopup>:
+    title: 'Add Trader' if self.trader is None else 'Edit Trader'
+    auto_dismiss: False
+
+    size_hint: 0.5, 0.5
+
+    tooltip_container: tooltip_container.__self__
+    input_name: input_name.__self__
+    input_algorithm: input_algorithm.__self__
+    input_initial_funds: input_initial_funds.__self__
+    input_trading_fee: input_trading_fee.__self__
+
+    FloatLayout:
+        id: tooltip_container
+
+        BoxLayout:
+            orientation: 'vertical'
+
+            pos_hint: {'x': 0, 'y': 0}
+
+            GridLayout:
+                cols: 2
+
+                padding: mm(4), mm(2)
+                spacing: mm(2)
+
+                # Black background
+                canvas:
+                    Color:
+                        rgba: 0, 0, 0, 1
+                    Rectangle:
+                        size: self.size
+                        pos: self.pos
+
+                PopupInputLabel:
+                    text: 'Name:'
+                PopupInputText:
+                    id: input_name
+
+                    text: '' if root.trader is None else root.trader.get_name()
+                    disabled: root.trader is not None
+                    on_text: root.validate_name()
+
+                PopupInputLabel:
+                    text: 'Algorithm:'
+                PopupInputSpinner:
+                    id: input_algorithm
+
+                    text: '' if root.trader is None else root.trader.get_algorithm_name()
+                    disabled: root.trader is not None
+                    values: app.get_controller().get_model().get_trader_algorithms()
+                    on_text: root.validate_algorithm()
+
+                PopupInputLabel:
+                    text: 'Initial Funds ($):'
+                PopupInputNumber:
+                    id: input_initial_funds
+
+                    text: '' if root.trader is None else '{:.2f}'.format(root.trader.get_initial_funds())
+                    on_text: root.validate_initial_funds()
+
+                PopupInputLabel:
+                    text: 'Trading Fee ($):'
+                PopupInputNumber:
+                    id: input_trading_fee
+
+                    text: '' if root.trader is None else '{:.2f}'.format(root.trader.get_trading_fee())
+                    on_text: root.validate_trading_fee()
+
+            BoxLayout:
+                orientation: 'horizontal'
+
+                size_hint_y: None
+                height: cm(1.5)
+
+                Button:
+                    text: 'Save'
+                    disabled: not (input_name.valid and input_algorithm.valid and input_initial_funds.valid and input_trading_fee.valid)
+                    on_press: root._save()
+                Button:
+                    text: 'Cancel'
+                    on_press: root.dismiss()
+
+
+
+
+# Base style of all table cells.
+<TableCell@Label>:
+    shorten: True
+    shorten_from: 'right'
+    text_size: self.size
+
+    padding: mm(0.5), mm(0.5)
+
+
+# Style of table header cells.
+<HeaderCell@TableCell>:
+    bold: True
+    halign: 'center'
+    valign: 'bottom'
+
+
+# Style of table body cells.
+<BodyCell@TableCell>:
+    halign: 'left'
+    valign: 'center'
+    padding: mm(4), mm(0.5)
+
+    # Improve readability when row is selected
+    outline_width: sp(2)
+    outline_color: 0.35, 0.35, 0.35  # Same gray as button
+
+
+# Style of dollar-value table body cells.
+<BodyCellDollars@BodyCell>:
+    halign: 'right'
+    font_name: 'RobotoMono-Regular'
+
+
+# Vertical bar dividing cell columns.
+<CellDivider@Widget>:
+    pos_hint: {'y': 0.1}
+    size_hint: None, 0.8
+    width: sp(1)
+
+    canvas:
+        Color:
+            rgba: 1, 1, 1, 0.5  # Translucent white
+        Rectangle:
+            size: self.size
+            pos: self.pos
+
+
+# Base styles of table column cells.
+<ColumnTraderName@Widget>:
+    size_hint_x: 0.3
+<ColumnTradingAlgorithm@Widget>:
+    size_hint_x: 0.3
+<ColumnInitialFunds@Widget>:
+    size_hint_x: 0.2
+<ColumnTradingFee@Widget>:
+    size_hint_x: 0.2
+
+
+# Table header cells.
+<HeaderCellTraderName@HeaderCell+ColumnTraderName>:
+    text: 'Trader Name'
+<HeaderCellTradingAlgorithm@HeaderCell+ColumnTradingAlgorithm>:
+    text: 'Trading Algorithm'
+<HeaderCellInitialFunds@HeaderCell+ColumnInitialFunds>:
+    text: 'Initial Funds'
+<HeaderCellTradingFee@HeaderCell+ColumnTradingFee>:
+    text: 'Trading Fee'
+
+
+# Table body cells.
+<BodyCellTraderName@BodyCell+ColumnTraderName>:
+<BodyCellTradingAlgorithm@BodyCell+ColumnTradingAlgorithm>:
+<BodyCellInitialFunds@BodyCellDollars+ColumnInitialFunds>:
+<BodyCellTradingFee@BodyCellDollars+ColumnTradingFee>:
+
+
+
+
+# Selectable table body row representing a trader.
+<TraderRow>:
+    size_hint_y: None
+    height: cm(1)
+
+    ToggleButton:
+        group: 'Traders'
+
+        pos_hint: {'x': 0, 'y': 0}
+
+        on_state: root.tab.selected_trader_row = root if self.state == 'down' else None
+
+    BoxLayout:
+        orientation: 'horizontal'
+
+        spacing: mm(1)
+        pos_hint: {'x': 0, 'y': 0}
+
+        BodyCellTraderName:
+            text: repr(root.trader_name)
+        CellDivider:
+        BodyCellTradingAlgorithm:
+            text: root.trading_algorithm
+        CellDivider:
+        BodyCellInitialFunds:
+            text: '${:,.2f}'.format(root.initial_funds)
+        CellDivider:
+        BodyCellTradingFee:
+            text: '${:,.2f}'.format(root.trading_fee)
+
+
+
+
+# Button along bottom bar for controlling selected traders.
+<BottomButton@Button>:
+    size_hint_x: None
+    width: cm(3)
+
+
+
+
+<TradersTab>:
+    text: 'Traders'
+    id: tab
+
+    table_rows: table_rows.__self__
+
+
+    # Tab contents
+    BoxLayout:
+        orientation: 'vertical'
+
+        padding: 0, mm(4), 0, 0  # Only top padding
+
+        # Black background
+        canvas:
+            Color:
+                rgba: 0, 0, 0, 1
+            Rectangle:
+                size: self.size
+                pos: self.pos
+
+
+        # Trader list table
+        BoxLayout:
+            orientation: 'vertical'
+
+            padding: mm(4), 0  # Left and right padding
+            spacing: mm(2)
+
+            # Table header
+            BoxLayout:
+                orientation: 'horizontal'
+                spacing: mm(1)
+                size_hint_y: None
+                height: cm(1)
+
+                # Gray background
+                canvas:
+                    Color:
+                        rgba: 0.2, 0.2, 0.2, 1
+                    Rectangle:
+                        size: self.size
+                        pos: self.pos
+
+                HeaderCellTraderName:
+                CellDivider:
+                HeaderCellTradingAlgorithm:
+                CellDivider:
+                HeaderCellInitialFunds:
+                CellDivider:
+                HeaderCellTradingFee:
+
+            # Table body
+            ScrollView:
+                do_scroll_x: False
+
+                # Row container
+                BoxLayout:
+                    id: table_rows
+                    orientation: 'vertical'
+
+                    spacing: mm(2)
+                    size_hint_y: None
+                    height: self.minimum_height
+
+
+
+        # Bottom buttons
+        BoxLayout:
+            orientation: 'horizontal'
+
+            size_hint_y: None
+            height: cm(1.5)
+
+            # Gray background
+            canvas:
+                Color:
+                    rgba: 0.2, 0.2, 0.2, 1
+                Rectangle:
+                    size: self.size
+                    pos: self.pos
+
+            BottomButton:
+                text: 'Add'
+
+                on_release: root.on_add_clicked()
+
+            BottomButton:
+                text: 'Edit'
+                disabled: root.selected_trader_row is None
+
+                on_release: root.on_edit_clicked()
+
+            BottomButton:
+                text: 'Remove'
+                disabled: root.selected_trader_row is None
+
+                on_release: root.on_remove_clicked()
+
+            # Spacer
+            Widget:
