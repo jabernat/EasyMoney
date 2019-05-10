@@ -1,128 +1,226 @@
 #:kivy 1.9
-# Defines templates related to the view.trading_bots_tab module.
+# Defines templates related to the view.traders_tab module.
 
-<StockSymbolsTab>:
-    text: 'Stock Symbols'
-    id: tab
+<FilePopup@popup>:
+    title: 'Add Symbol'
+    auto_dismiss: False
 
-    button_add: button_add.__self__	
-    button_remove: button_remove.__self__
+    size_hint: .5, .5
 
     BoxLayout:
         orientation: 'vertical'
-        BoxLayout: # Stock symbol info panel
+
+        FileChooser:
+            id: filechooser	
+            orientation: 'vertical'
+            FileChooserListLayout
+
+        BoxLayout:
+            orientation: 'horizontal'
+
+            size_hint_y: None
+            height: cm(1.0)
+
+            Button:
+                text: 'Open'
+            Button:
+                text: 'Cancel'
+                on_press: root.dismiss()
+
+
+
+
+# Base style of all table cells.
+<TableCell@Label>:
+    shorten: True
+    shorten_from: 'right'
+    text_size: self.size
+
+    padding: mm(0.5), mm(0.5)
+
+
+# Style of table header cells.
+<HeaderCell@TableCell>:
+    bold: True
+    halign: 'center'
+    valign: 'bottom'
+
+
+# Style of table body cells.
+<BodyCell@TableCell>:
+    halign: 'left'
+    valign: 'center'
+    padding: mm(4), mm(0.5)
+
+    # Improve readability when row is selected
+    outline_width: sp(2)
+    outline_color: 0.35, 0.35, 0.35  # Same gray as button
+
+
+# Style of dollar-value table body cells.
+<BodyCellDollars@BodyCell>:
+    halign: 'right'
+    font_name: 'RobotoMono-Regular'
+
+
+# Vertical bar dividing cell columns.
+<CellDivider@Widget>:
+    pos_hint: {'y': 0.1}
+    size_hint: None, 0.8
+    width: sp(1)
+
+    canvas:
+        Color:
+            rgba: 1, 1, 1, 0.5  # Translucent white
+        Rectangle:
+            size: self.size
+            pos: self.pos
+
+
+# Base styles of table column cells.
+<ColumnExchangeName@Widget>:
+    size_hint_x: 0.3
+<ColumnSymbol@Widget>:
+    size_hint_x: 0.3
+
+
+# Table header cells.
+<HeaderCellExchangeName@HeaderCell+ColumnExchangeName>:
+    text: 'Exchange'
+<HeaderCellSymbol@HeaderCell+ColumnSymbol>:
+    text: 'Symbol'
+
+# Table body cells.
+<BodyCellExchangeName@BodyCell+ColumnExchangeName>:
+<BodyCellSymbol@BodyCell+ColumnSymbol>:
+
+
+
+# Selectable table body row representing a trader.
+<SymbolRow>:
+    size_hint_y: None
+    height: cm(1)
+
+    ToggleButton:
+        group: 'Symbols'
+
+        pos_hint: {'x': 0, 'y': 0}
+
+        on_state: root.tab.selected_symbol_row = root if self.state == 'down' else None
+
+    BoxLayout:
+        orientation: 'horizontal'
+
+        spacing: mm(1)
+        pos_hint: {'x': 0, 'y': 0}
+
+        BodyCellExchangeName:
+            text: 'NYSE'
+        CellDivider:
+        BodyCellSymbol:
+            text: root.symbol_name
+        CellDivider:
+
+
+
+
+# Button along bottom bar for controlling selected traders.
+<BottomButton@Button>:
+    size_hint_x: None
+    width: cm(3)
+
+
+
+
+<StockSymbolsTab>:
+    text: 'Symbols'
+    id: tab
+
+    table_rows: table_rows.__self__
+
+
+    # Tab contents
+    BoxLayout:
+        orientation: 'vertical'
+
+        padding: 0, mm(4), 0, 0  # Only top padding
+
+        # Black background
+        canvas:
+            Color:
+                rgba: 0, 0, 0, 1
+            Rectangle:
+                size: self.size
+                pos: self.pos
+
+
+        # Trader list table
+        BoxLayout:
             orientation: 'vertical'
 
-            BoxLayout: # Row 1
-                canvas.before:
-                    Color:
-                        rgb: 25/255.0, 135/255.0, 184/255.0
-                    Rectangle:
-                        pos: self.pos
-                        size: self.size
-                Label:
-                    text: 'Stock Exchange'
-                Label:
-                    text: 'Stock Symbol'
-                Label:
-                Label:
+            padding: mm(4), 0  # Left and right padding
+            spacing: mm(2)
 
-            BoxLayout: # Row 2
-                Label:
-                    text: 'NYSE'
-                Label:
-                    text: 'AAPL'
-                ToggleButton:
-                    text: 'Select'
-                    group: 'g1'
-                    on_press: root.on_symbol_label_select('AAPL') 
-                Label:
-                Label:
-            BoxLayout: # Row 3
-                Label:
-                    text: 'NYSE'
-                Label:
-                    text: 'AMD'
-                ToggleButton:
-                    text: 'Select'
-                    group: 'g1'
-                    on_press: root.on_symbol_label_select('AMD')
-                Label:
-                Label:
-            BoxLayout: # Row 4
-                Label:
-                    text: 'NYSE'
-                Label:
-                    text: 'CHSP'
-                ToggleButton:
-                    text: 'Select'
-                    group: 'g1'
-                    on_press: root.on_symbol_label_select('CHSP')
-                Label:
-                Label:
-            BoxLayout: # Row 5
-                Label:
-                    text: 'NYSE'
-                Label:
-                    text: 'MSFT'
-                ToggleButton:
-                    text: 'Select'
-                    group: 'g1'
-                    on_press: root.on_symbol_label_select('MSFT')
-                Label:
-                Label:
-            BoxLayout: # Row 6
-                Label:
-                    text: 'NYSE'
-                Label:
-                    text: 'JCOM'
-                ToggleButton:
-                    text: 'Select'
-                    group: 'g1'
-                    on_press: root.on_symbol_label_select('JCOM') 
-                Label:
-                Label:
-            BoxLayout: # Row 7
-                Label:
-                    text: 'NYSE'
-                Label:
-                    text: 'MMS'
-                ToggleButton:
-                    text: 'Select'
-                    group: 'g1'
-                    on_press: root.on_symbol_label_select('MMS') 
-                Label:
-                Label:
-            BoxLayout: # Row 8
-                Label:
-                    text: 'NYSE'
-                Label:
-                    text: 'MU'
-                ToggleButton:
-                    text: 'Select'
-                    group: 'g1'
-                    on_press: root.on_symbol_label_select('MU') 
-                Label:
-                Label:
-            BoxLayout: # Row 9
-                Label:
-                    text: 'NYSE'
-                Label:
-                    text: 'PEB'
-                ToggleButton:
-                    text: 'Select'
-                    group: 'g1'
-                    on_press: root.on_symbol_label_select('PEB') 
-                Label:
-                Label:
-        BoxLayout:
+            # Table header
+            BoxLayout:
+                orientation: 'horizontal'
+                spacing: mm(1)
+                size_hint_y: None
+                height: cm(1)
+
+                # Gray background
+                canvas:
+                    Color:
+                        rgba: 0.2, 0.2, 0.2, 1
+                    Rectangle:
+                        size: self.size
+                        pos: self.pos
+
+                HeaderCellExchangeName:
+                CellDivider:
+                HeaderCellSymbol:
+                CellDivider:
+
+            # Table body
+            ScrollView:
+                do_scroll_x: False
+
+                # Row container
+                BoxLayout:
+                    id: table_rows
+                    orientation: 'vertical'
+
+                    spacing: mm(2)
+                    size_hint_y: None
+                    height: self.minimum_height
+
+
+
         # Bottom buttons
         BoxLayout:
-            Button:
-                id: button_add
+            orientation: 'horizontal'
+
+            size_hint_y: None
+            height: cm(1.5)
+
+            # Gray background
+            canvas:
+                Color:
+                    rgba: 0.2, 0.2, 0.2, 1
+                Rectangle:
+                    size: self.size
+                    pos: self.pos
+
+            BottomButton:
                 text: 'Add'
-                on_release: root.on_add_button_click(app.get_controller())
-            Button:
-                id: button_remove
+
+                on_release: root.on_add_clicked()
+
+            BottomButton:
                 text: 'Remove'
-                on_release: root.on_remove_button_click(app.get_controller())	
+                disabled: root.selected_symbol_row is None
+
+                on_release: root.on_remove_clicked()
+
+            # Spacer
+            Widget:
