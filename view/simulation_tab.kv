@@ -1,24 +1,67 @@
 #:kivy 1.9
 # Defines templates related to the view.simulation_tab module.
 
-<ImageButton@ButtonBehavior+Image>:
+<SymbolRow>:
+
+<TraderBox>:
+    BoxLayout:
+        # Gray background
+        canvas:
+            Color:
+                rgba: 0.2, 0.2, 0.2, 1
+            Rectangle:
+                size: self.size
+                pos: self.pos
+        spacing: mm(1)
+        pos_hint: {'x': 0, 'y': 0}
+        orientation: 'vertical'
+        BoxLayout:
+            text: root.trader_name
+        BoxLayout:
+            text: root.bought_str
+        BoxLayout:
+            text: root.sold_str
 
 <SimulationTab>:
     text: 'Simulation'
+
+    label_time: label_time.__self__
+
     BoxLayout:
         orientation: 'vertical'
-        BoxLayout: # Sim control panel
+
+        BottomButtonBar:
+            BottomButton:
+                text: 'Reset'
+                disabled: root.updater_state == 'reset'
+                on_release: root.reset_simulation()
+            BottomButton:
+                text: 'Play'
+                disabled: root.updater_state == 'playing'
+                on_release: root.play_simulation()
+            BottomButton:
+                text: 'Pause'
+                disabled: root.updater_state != 'playing'
+                on_release: root.pause_simulation()
+            BottomButton:
+                opacity: 0
+                text: 'Test'
+                on_press: root.run_console_test()
+
+            Label:
+                text: 'Simulation Time:'
+                halign: 'right'
+                valign: 'middle'
+                text_size: self.size
             BoxLayout:
-                Label:
-                ImageButton:
-                    source: 'view/pause.png'
-                    on_press: root.run_console_test()
-                Label:
-                Image:
-                    source: 'view/reset.png'
-            Label:
-            Label:
-            Label:
-            Label:
-            Label:
-        BoxLayout:
+                padding: mm(2), mm(2)
+                size_hint_x: None
+                width: sp(200)
+
+                TextInput:
+                    id: label_time
+                    font_name: 'RobotoMono-Regular'
+                    disabled: True
+                    multiline: False
+
+                    padding: mm(2.5), mm(2.5)
