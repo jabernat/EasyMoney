@@ -45,11 +45,10 @@ class SymbolRow(FloatLayout):
     symbol_name: str = StringProperty()
 
     def __init__(self,
-        symbol: str
+        *args: typing.Any,
+        **kwargs: typing.Any
     ) -> None:
-        super().__init__()
-
-        self.symbol_name = symbol
+        super().__init__(*args, **kwargs)
         assert self.symbol_name is not None, \
             'Attempt to create table row for non-existent symbol.'
 
@@ -93,9 +92,8 @@ class StockSymbolsTab(TabbedPanelItem):
         datasource: 'MarketDatasource',
         stock_symbol: str
     ) -> None:
-
         """Add a table row for the newly added symbol."""
-        symbol_row = SymbolRow(stock_symbol)
+        symbol_row = SymbolRow(tab=self, symbol_name=stock_symbol)
 
         self.table_rows.add_widget(symbol_row)
         self.symbol_names_to_rows[stock_symbol] = symbol_row
@@ -115,10 +113,10 @@ class StockSymbolsTab(TabbedPanelItem):
         stock_symbol: str
     ) -> None:
         """Remove the table row for deleted `symbol`."""
-        symbol_row = self.symbol_names_to_rows[symbol]
+        symbol_row = self.symbol_names_to_rows[stock_symbol]
 
-        self.table_rows.remove_widget(symbol)
-        del self.symbol_names_to_rows[symbol]
+        self.table_rows.remove_widget(symbol_row)
+        del self.symbol_names_to_rows[stock_symbol]
 
         if self.selected_symbol_row == symbol_row:
             self.selected_symbol_row = None
