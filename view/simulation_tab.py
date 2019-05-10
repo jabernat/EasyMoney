@@ -52,11 +52,13 @@ class SimulationTab(TabbedPanelItem):
 
 
         print('Adding datasources')
+        import os
+        root_dir = os.path.dirname(os.path.abspath(__file__))
         for filename in [
-            'data/AAPL.json',
-            'data/MSFT.json',
-            'data/AMD.json',
-            'data/JCOM.json'
+            os.path.join(root_dir, '..', 'data/NYSE-AAPL.json'),
+            os.path.join(root_dir, '..', 'data/NYSE-MSFT.json'),
+            os.path.join(root_dir, '..', 'data/NYSE-AMD.json'),
+            os.path.join(root_dir, '..', 'data/NYSE-JCOM.json')
         ]:
             controller.get_datasource().add_stock_symbol(filename)
         controller.get_datasource().confirm()
