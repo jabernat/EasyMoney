@@ -1,4 +1,4 @@
-"""Defines `TradersTab` and supporting classes."""
+"""Defines `StockSymbolsTab` and supporting classes."""
 
 
 __copyright__ = 'Copyright © 2019, Erik Anderson, James Abernathy, and Tyler Gerritsen'
@@ -22,7 +22,6 @@ from kivy.uix.filechooser import FileChooserLayout
 # Local package imports duplicated at end of file to resolve circular dependencies
 if typing.TYPE_CHECKING:
     from model.sim_model import SimModel
-    from model.trader import Trader
 
 
 class FilePopup(Popup):
@@ -48,7 +47,7 @@ class SymbolRow(FloatLayout):
     def __init__(self,
         symbol: str
     ) -> None:
-        super().__init__(symbol)
+        super().__init__()
 
         self.symbol_name = symbol
         assert self.symbol_name is not None, \
@@ -56,8 +55,8 @@ class SymbolRow(FloatLayout):
 
 
 class StockSymbolsTab(TabbedPanelItem):
-    """Class associated with the `<TradersTab>` template defined within
-    `traders_tab.kv`.
+    """Class associated with the `<symbolsTab>` template defined within
+    `symbols_tab.kv`.
     """
 
     # References to component widgets
@@ -67,8 +66,8 @@ class StockSymbolsTab(TabbedPanelItem):
         None, allownone=True)
     """The selected symbol's table row, or `None` when unselected."""
 
-    trader_names_to_rows: typing.Dict[str, SymbolRow]
-    """Mapping of trader names to their corresponding table rows."""
+    symbol_names_to_rows: typing.Dict[str, SymbolRow]
+    """Mapping of symbol names to their corresponding table rows."""
 
 
     def __init__(self,
@@ -92,14 +91,14 @@ class StockSymbolsTab(TabbedPanelItem):
 
     def on_datasource_symbol_added(self,
         datasource: 'MarketDatasource',
-        symbol: str
+        stock_symbol: str
     ) -> None:
 
         """Add a table row for the newly added symbol."""
-        symbol_row = SymbolRow(symbol)
+        symbol_row = SymbolRow(stock_symbol)
 
         self.table_rows.add_widget(symbol_row)
-        self.symbol_names_to_rows[symbol] = symbol_row
+        self.symbol_names_to_rows[stock_symbol] = symbol_row
 
     def on_remove_clicked(self
     ) -> None:
@@ -113,13 +112,13 @@ class StockSymbolsTab(TabbedPanelItem):
 
     def on_datasource_symbol_removed(self,
         datasource: 'MarketDatasource',
-        symbol: str
+        stock_symbol: str
     ) -> None:
         """Remove the table row for deleted `symbol`."""
-        symbol_row = self.trader_names_to_rows[symbol]
+        symbol_row = self.symbol_names_to_rows[symbol]
 
         self.table_rows.remove_widget(symbol)
-        del self.trader_names_to_rows[symbol]
+        del self.symbol_names_to_rows[symbol]
 
         if self.selected_symbol_row == symbol_row:
             self.selected_symbol_row = None
@@ -129,4 +128,3 @@ class StockSymbolsTab(TabbedPanelItem):
 
 # Imported last to avoid circular dependencies
 from model.sim_model import SimModel
-from model.trader import Trader
