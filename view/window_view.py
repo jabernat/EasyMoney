@@ -8,17 +8,27 @@ __license__ = 'MIT'
 import typing
 
 from kivy.app import App
-from kivy.uix.tabbedpanel import TabbedPanel, TabbedPanelItem
 from kivy.lang import Builder
-
-from view.traders_tab import TradersTab
-from view.stock_symbols_tab import StockSymbolsTab
-from view.simulation_tab import SimulationTab
-from view.statistics_tab import StatisticsTab
+from kivy.properties import ObjectProperty, StringProperty
+from kivy.uix.popup import Popup
+from kivy.uix.tabbedpanel import TabbedPanel, TabbedPanelItem
 
 # Local package imports duplicated at end of file to resolve circular dependencies
 if typing.TYPE_CHECKING:
     from controller.sim_controller import SimController
+    from view.simulation_tab import SimulationTab
+    from view.statistics_tab import StatisticsTab
+    from view.stock_symbols_tab import StockSymbolsTab
+    from view.traders_tab import TradersTab
+
+
+
+
+class ErrorPopup(Popup):
+    """Popup dialog for showing simple error messages."""
+
+    description = StringProperty()
+    exception = ObjectProperty()
 
 
 
@@ -48,10 +58,10 @@ class WindowView(App):
     """MVC controller tied to an underlying model and driven by this view."""
 
     # References to tab widgets
-    traders_tab: TradersTab
-    stock_symbols_tab: StockSymbolsTab
-    simulation_tab: SimulationTab
-    statistics_tab: StatisticsTab
+    traders_tab: 'TradersTab'
+    stock_symbols_tab: 'StockSymbolsTab'
+    simulation_tab: 'SimulationTab'
+    statistics_tab: 'StatisticsTab'
 
 
     def __init__(self,
@@ -102,3 +112,7 @@ class WindowView(App):
 
 # Imported last to avoid circular dependencies
 from controller.sim_controller import SimController
+from view.simulation_tab import SimulationTab
+from view.statistics_tab import StatisticsTab
+from view.stock_symbols_tab import StockSymbolsTab
+from view.traders_tab import TradersTab

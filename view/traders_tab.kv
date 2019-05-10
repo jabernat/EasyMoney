@@ -136,52 +136,7 @@
 
 
 
-# Base style of all table cells.
-<TableCell@Label>:
-    shorten: True
-    shorten_from: 'right'
-    text_size: self.size
-
-    padding: mm(0.5), mm(0.5)
-
-
-# Style of table header cells.
-<HeaderCell@TableCell>:
-    bold: True
-    halign: 'center'
-    valign: 'bottom'
-
-
-# Style of table body cells.
-<BodyCell@TableCell>:
-    halign: 'left'
-    valign: 'center'
-    padding: mm(4), mm(0.5)
-
-    # Improve readability when row is selected
-    outline_width: sp(2)
-    outline_color: 0.35, 0.35, 0.35  # Same gray as button
-
-
-# Style of dollar-value table body cells.
-<BodyCellDollars@BodyCell>:
-    halign: 'right'
-    font_name: 'RobotoMono-Regular'
-
-
-# Vertical bar dividing cell columns.
-<CellDivider@Widget>:
-    pos_hint: {'y': 0.1}
-    size_hint: None, 0.8
-    width: sp(1)
-
-    canvas:
-        Color:
-            rgba: 1, 1, 1, 0.5  # Translucent white
-        Rectangle:
-            size: self.size
-            pos: self.pos
-
+# Table parts
 
 # Base styles of table column cells.
 <ColumnTraderName@Widget>:
@@ -243,14 +198,6 @@
         CellDivider:
         BodyCellTradingFee:
             text: '${:,.2f}'.format(root.trading_fee)
-
-
-
-
-# Button along bottom bar for controlling selected traders.
-<BottomButton@Button>:
-    size_hint_x: None
-    width: cm(3)
 
 
 
@@ -323,35 +270,19 @@
 
 
         # Bottom buttons
-        BoxLayout:
-            orientation: 'horizontal'
-
-            size_hint_y: None
-            height: cm(1.5)
-
-            # Gray background
-            canvas:
-                Color:
-                    rgba: 0.2, 0.2, 0.2, 1
-                Rectangle:
-                    size: self.size
-                    pos: self.pos
-
+        BottomButtonBar:
             BottomButton:
                 text: 'Add'
-
                 on_release: root.on_add_clicked()
 
             BottomButton:
                 text: 'Edit'
                 disabled: root.selected_trader_row is None
-
                 on_release: root.on_edit_clicked()
 
             BottomButton:
                 text: 'Remove'
                 disabled: root.selected_trader_row is None
-
                 on_release: root.on_remove_clicked()
 
             # Spacer

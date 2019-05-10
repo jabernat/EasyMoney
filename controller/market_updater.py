@@ -163,6 +163,12 @@ class MarketUpdater(dispatch.Dispatcher):
             updater=self)
 
 
+    def is_reset(self
+    ) -> bool:
+        """Return `True` if this `MarketUpdater` is reset and inactive.
+        """
+        return self._state == self.State.RESET
+
     def reset(self,
         force: typing.Optional[bool] = False
     ) -> None:
@@ -170,7 +176,7 @@ class MarketUpdater(dispatch.Dispatcher):
         trader accounts, and unlocks the datasource. If `force` is specified,
         another reset will occur even if already in the `RESET` state.
         """
-        if not (force or self.is_playing() or self.is_paused()):
+        if self.is_reset() and not force:
             return  # Already reset
 
         self.pause()  # Stop updates if playing
