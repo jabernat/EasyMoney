@@ -26,7 +26,6 @@
 
 <SimulationTab>:
     text: 'Simulation'
-    trader_boxes: trader_boxes
     BoxLayout:
         orientation: 'vertical'
 
@@ -35,21 +34,30 @@
         # Center area: scrollable stock symbol display
         # Bottom area: Trade bots behavior
 
-        # Top area
+        # Button area
         BoxLayout:
-            size_hint: 1, .1
+            size_hint_y: None
+            height: cm(1.5)
             padding: 10, 10
             BoxLayout:
-                padding: 0, 0, 15, 0
+                padding: 0, 0, 30, 0
                 orientation: 'horizontal'
-                BoxLayout:
-                    ImageButton:
-                        source: 'view/pause.png'
-                        on_press: root.run_console_test()
-                BoxLayout:
-                    ImageButton:
-                        source: 'view/reset.png'
-                        #on_press:
+                Button:
+                    text: 'Reset'
+                    on_release: root.reset_simulation
+                Button:
+                    text: 'Play'
+                    disabled: root.state == 'playing'
+                    on_release: root.play_simulation()
+                Button:
+                    text: 'Pause'
+                    disabled: root.state == 'paused'
+                    on_release: root.pause_simulation()
+                ImageButton:
+                    opacity: 0
+                    source: 'view/pause.png'
+                    on_press: root.run_console_test()
+
                 # Spacer
                 Label:
                 Label:
@@ -65,45 +73,3 @@
                         Rectangle:
                             size: self.size
                             pos: self.pos
-        # Center area
-        BoxLayout:
-            size_hint: 1, .1
-            Label:
-                text: "Bot's Daily Statistics"
-            # Spacers
-            Label:
-            Label:
-            Label:
-        BoxLayout:
-            padding: 10, 0, 10, 10
-            size_hint_y: .5
-            ScrollView:
-                canvas.before:
-                    Color:
-                        rgba: 1, 1, 1, 1
-                    Rectangle:
-                        pos: self.pos
-                        size: self.size
-        # Bottom area
-        BoxLayout:
-            size_hint: 1, .1
-            Label:
-                text: "Trade Bots"
-            # Spacers
-            Label:
-            Label:
-            Label:
-        BoxLayout:
-            padding: 10, 0, 10, 10
-            size_hint_y: .2
-            ScrollView:
-                do_scroll_x: False
-
-                # Row container
-                BoxLayout:
-                    id: trader_boxes
-                    orientation: 'horizontal'
-
-                    spacing: mm(2)
-                    size_hint_y: None
-                    height: self.minimum_height
