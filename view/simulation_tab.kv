@@ -43,7 +43,7 @@
                 Button:
                     text: 'Reset'
                     disabled: root.updater_state == 'reset'
-                    on_release: root.reset_simulation
+                    on_release: root.reset_simulation()
                 Button:
                     text: 'Play'
                     disabled: root.updater_state == 'playing'
