@@ -8,16 +8,11 @@ __license__ = 'MIT'
 import typing
 
 from kivy.app import App
-from kivy.properties import (
-    NumericProperty, ObjectProperty, StringProperty, ListProperty)
+from kivy.properties import (ObjectProperty, StringProperty)
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.popup import Popup
-from kivy.uix.spinner import Spinner
 from kivy.uix.tabbedpanel import TabbedPanelItem
-from kivy.uix.textinput import TextInput
-from kivy.uix.filechooser import FileChooser
-from kivy.uix.filechooser import FileChooserLayout
 
 # Local package imports duplicated at end of file to resolve circular dependencies
 if typing.TYPE_CHECKING:
