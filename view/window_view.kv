@@ -1,17 +1,63 @@
 #:kivy 1.9
 # Defines templates related to the WindowView's root widget.
 
-#:include view/trading_bots_tab.kv
+#:include view/traders_tab.kv
 #:include view/stock_symbols_tab.kv
 #:include view/simulation_tab.kv
 #:include view/statistics_tab.kv
 
+
+# Global styles
+<ScrollView>:
+    bar_width: mm(4)
+
+    # Allow swiping over the content, or dragging the scroll bar
+    scroll_type: ['bars', 'content']
+
+    # Disable overscrolling beyond contents
+    effect_cls: 'ScrollEffect'
+
+    # Blue scroll indicator
+    bar_color: 0.2, 0.6, 0.8, 0.9  # Light blue
+    bar_inactive_color: 0.2, 0.6, 0.8, 0.2
+
+<TabbedPanelItem>:
+    color: 0.4, 0.8, 1, 1  # Light blue
+    outline_width: sp(2)
+    outline_color: 0.3, 0.3, 0.3
+
+    shorten: True
+    shorten_from: 'right'
+    text_size: self.size
+
+<TextInput>:
+    write_tab: False  # Tab focuses next control
+
+    cursor_color: 0.2, 0.6, 0.8, 0.9  # Light blue
+    cursor_width: sp(4)
+
+<Popup>:
+    background_color: 0.4, 0.4, 0.4, 0.7  # Light gray
+
+
 <RootWidget>:
-    size_hint: 1, 1
-    pos_hint: {'center_x': .5, 'center_y': .5}
+    tab_width: self.width / 4
     do_default_tab: False
 
-    TradingBotsTab:
+    size_hint: 1, 1
+    pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+
+    # Make references to tabs available as instance attributes.
+    traders_tab: traders_tab.__self__
+    stock_symbols_tab: stock_symbols_tab.__self__
+    simulation_tab: simulation_tab.__self__
+    statistics_tab: statistics_tab.__self__
+
+    TradersTab:
+        id: traders_tab
     StockSymbolsTab:
+        id: stock_symbols_tab
     SimulationTab:
+        id: simulation_tab
     StatisticsTab:
+        id: statistics_tab
