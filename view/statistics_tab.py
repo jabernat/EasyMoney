@@ -137,13 +137,13 @@ class StatisticsTab(TabbedPanelItem):
             account = selected_trader.get_account()
             if account:
                 # Statistics available from simulation
+                statistics_daily = self.statistics_to_string(
+                    account.get_statistics_daily())
                 statistics_overall = self.statistics_to_string(
                     account.get_statistics_overall())
-                statistics_daily = self.statistics_to_string(
-                    account.get_statistics_overall())
 
+        self.statistics_daily_label_text = statistics_daily
         self.statistics_overall_label_text = statistics_overall
-        self.statistics_overall_label_text = statistics_daily
 
 
     def get_active_trader_names(self
