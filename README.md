@@ -20,20 +20,24 @@ https://www.python.org/dev/peps/pep-0287/ ).
 ## Screenshots
 *   The Traders tab controls which trading algorithms will participate in the
     simulation:
+
     ![EasyMoney's Traders tab with a table listing participating traders](
         ./Pictures/WindowView%20Traders%20Tab.png)
 
 *   The Symbols tab controls which stock symbol data will be available for
     traders to buy and sell during the simulation:
+
     ![EasyMoney's Symbols tab with a table listing imported stock symbols](
         ./Pictures/WindowView%20Symbols%20Tab.png)
 
 *   The Simulation tab can start, stop, and reset the simulation:
+
     ![EasyMoney's Simulation tab with buttons to control the simulation](
         ./Pictures/WindowView%20Simulation%20Tab.png)
 
 *   The Statistics tab provides access to trader statistics during and after
     simulations, as well as the ability to save result files:
+
     ![EasyMoney's Statistics tab displaying a trader's simulated performance](
         ./Pictures/WindowView%20Statistics%20Tab.png)
 
